@@ -1,0 +1,13 @@
+{
+    "name": "Dashboard",
+    "alias": "dashboard",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Dashboard\\App\\Providers\\DashboardServiceProvider",
+        "Modules\\Dashboard\\App\\Providers\\EventServiceProvider",
+        "Modules\\Dashboard\\App\\Providers\\RouteServiceProvider"
+    ],
+    "files": []
+}

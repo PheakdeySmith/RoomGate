@@ -1,0 +1,13 @@
+{
+    "name": "Core",
+    "alias": "Core",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Core\\App\\Providers\\CoreServiceProvider",
+        "Modules\\Core\\App\\Providers\\EventServiceProvider",
+        "Modules\\Core\\App\\Providers\\RouteServiceProvider"
+    ],
+    "files": []
+}

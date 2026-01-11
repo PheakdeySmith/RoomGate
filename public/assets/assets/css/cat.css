@@ -1,0 +1,113 @@
+code {
+    background: #f3f4f6;
+    color: #111827;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.box {
+    display: none;
+}
+/* Toast-like message box above the cat */
+.cat-toast {
+    position: fixed !important;
+    left: auto !important;
+    right: 20px !important;
+    bottom: 160px !important;
+    z-index: 999999 !important;
+    max-width: 300px !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+    pointer-events: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    backdrop-filter: blur(8px) !important;
+    transform-origin: left bottom;
+    animation: toastInOut 4s ease-in-out forwards;
+    white-space: pre-wrap;
+}
+
+.cat-toast.success {
+    background: rgba(34, 197, 94, 0.18) !important;
+    border-color: rgba(34, 197, 94, 0.55) !important;
+}
+
+.cat-toast.error {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.55) !important;
+}
+
+.cat-toast.info {
+    background: rgba(59, 130, 246, 0.18) !important;
+    border-color: rgba(59, 130, 246, 0.55) !important;
+}
+
+.cat-toast .title {
+    font-size: 12px;
+    letter-spacing: .3px;
+    opacity: .92;
+    margin-bottom: 4px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.cat-toast .msg {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+@keyframes toastInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(14px) scale(0.92);
+    }
+
+    14% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    86% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.96);
+    }
+}
+
+.cat-hover-message {
+    position: fixed !important;
+    background: linear-gradient(135deg, #ff6b6b, #feca57) !important;
+    color: #fff !important;
+    padding: 8px 12px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    z-index: 999999 !important;
+    max-width: 240px !important;
+    word-wrap: break-word !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    animation: hoverMessageFadeIn 0.3s ease-out !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+}
+
+.live2d-widget-container {
+    left: auto !important;
+    right: 0 !important;
+}
+
+@keyframes hoverMessageFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

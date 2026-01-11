@@ -1,0 +1,1190 @@
+// =========================
+// TENANTS
+// =========================
+Schema::create('tenants', function (Blueprint $table) {
+    $table->bigIncrements('id');
+    $table->string('name', 255);
+    $table->string('slug', 100)->unique();
+    $table->string('status', 20)->default('active'); // active|suspended|closed
+    $table->char('default_currency', 3)->default('USD');
+    $table->string('timezone', 64)->default('UTC');
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+});
+
+// =========================
+// USERS (global)
+// =========================
+Schema::create('users', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->string('name', 255);
+    $table->string('email', 255)->unique();
+    $table->timestampTz('email_verified_at', 3)->nullable();
+
+    $table->string('password', 255);
+    $table->string('phone', 32)->nullable();
+    $table->string('avatar_path', 255)->nullable();
+
+    $table->string('status', 20)->default('active'); // active|inactive|suspended
+    $table->rememberToken();
+
+    // platform_role: none|platform_admin|support|billing_admin
+    $table->string('platform_role', 30)->default('none');
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+});
+
+// =========================
+// AUTH IDENTITIES
+// =========================
+Schema::create('auth_identities', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('user_id');
+
+    $table->string('provider', 50);  // google, telegram, apple, microsoft...
+    $table->string('provider_user_id', 191); // provider unique id
+    $table->string('email', 255)->nullable();
+
+    $table->text('access_token')->nullable();
+    $table->text('refresh_token')->nullable();
+    $table->timestampTz('expires_at', 3)->nullable();
+    $table->text('scopes')->nullable();
+
+    $table->json('meta_json')->nullable();
+    $table->json('raw_profile_json')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique(['provider', 'provider_user_id'], 'uq_provider_user');
+    $table->index('user_id', 'idx_ai_user');
+    $table->index(['provider', 'email'], 'idx_ai_provider_email');
+
+    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+});
+
+// =========================
+// TENANT MEMBERSHIP
+// =========================
+Schema::create('tenant_users', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->string('role', 20)->default('tenant');   // owner|admin|staff|tenant
+    $table->string('status', 20)->default('active'); // active|invited|disabled
+
+    $table->timestampsTz(3);
+
+    $table->primary(['tenant_id', 'user_id']);
+    $table->index('user_id', 'idx_tu_user');
+    $table->index(['tenant_id', 'role'], 'idx_tu_tenant_role');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+});
+
+Schema::create('tenant_invitations', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->string('email', 255);
+    $table->string('role', 20)->default('tenant'); // owner|admin|staff|tenant
+    $table->binary('token_hash'); // SHA-256(invite_token)
+    $table->timestampTz('expires_at', 3);
+    $table->timestampTz('accepted_at', 3)->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique('token_hash', 'uq_invite_token');
+    $table->index(['tenant_id', 'email'], 'idx_invite_tenant_email');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+});
+
+// =========================
+// OPTIONAL: QR TOKENS
+// =========================
+Schema::create('user_qr_codes', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->string('purpose', 30); // login|checkin|door_access|payment|other
+    $table->binary('token_hash');  // SHA-256(token)
+    $table->string('label', 255)->nullable();
+
+    $table->string('status', 20)->default('active'); // active|revoked|expired
+    $table->timestampTz('expires_at', 3)->nullable();
+    $table->timestampTz('last_used_at', 3)->nullable();
+    $table->timestampsTz(3);
+    $table->timestampTz('revoked_at', 3)->nullable();
+
+    $table->unique(['tenant_id', 'token_hash'], 'uq_qr_tenant_token');
+    $table->index(['tenant_id', 'user_id', 'status'], 'idx_qr_user_status');
+    $table->index(['tenant_id', 'status', 'expires_at'], 'idx_qr_status_expiry');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
+});
+
+// =========================
+// PROPERTIES
+// =========================
+Schema::create('properties', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->string('name', 255);
+    $table->string('property_type', 255)->nullable();
+    $table->text('description')->nullable();
+
+    $table->text('address_line_1')->nullable();
+    $table->string('address_line_2', 255)->nullable();
+    $table->string('city', 255)->nullable();
+    $table->string('state_province', 255)->nullable();
+    $table->string('postal_code', 32)->nullable();
+    $table->string('country', 64)->nullable();
+
+    $table->integer('year_built')->nullable();
+    $table->string('cover_image_path', 255)->nullable();
+    $table->json('extra_metadata')->nullable();
+
+    $table->string('status', 20)->default('active'); // active|inactive|archived
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['id', 'tenant_id'], 'uq_properties_id_tenant');
+
+    $table->index(['tenant_id', 'status'], 'idx_properties_tenant_status');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_properties_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+});
+
+// =========================
+// ROOM TYPES
+// =========================
+Schema::create('room_types', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->string('name', 255);
+    $table->text('description')->nullable();
+    $table->unsignedSmallInteger('capacity')->nullable();
+
+    $table->string('status', 20)->default('active'); // active|inactive
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'name'], 'uq_room_types_tenant_name');
+    $table->unique(['id', 'tenant_id'], 'uq_room_types_id_tenant');
+
+    $table->index(['tenant_id', 'status'], 'idx_room_types_tenant_status');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_room_types_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+});
+
+// =========================
+// ROOMS
+// =========================
+Schema::create('rooms', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('property_id');
+    $table->unsignedBigInteger('room_type_id')->nullable();
+
+    $table->string('room_number', 255);
+    $table->text('description')->nullable();
+    $table->text('features')->nullable();
+    $table->json('extra_metadata')->nullable();
+
+    $table->string('size', 255)->nullable();
+    $table->integer('floor')->nullable();
+
+    $table->unsignedInteger('max_occupants')->default(1);
+
+    $table->unsignedBigInteger('monthly_rent_cents')->default(0);
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('status', 20)->default('available'); // available|occupied|maintenance|inactive
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['property_id', 'room_number'], 'uq_rooms_property_number');
+    $table->unique(['id', 'tenant_id'], 'uq_rooms_id_tenant');
+
+    $table->index(['tenant_id', 'status'], 'idx_rooms_tenant_status');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_rooms_tenant_deleted');
+    $table->index(['property_id', 'status'], 'idx_rooms_property_status');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->restrictOnDelete();
+    $table->foreign('room_type_id')->references('id')->on('room_types')->nullOnDelete();
+});
+
+// =========================
+// PROPERTY USERS (staff assignment)
+// =========================
+Schema::create('property_users', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('property_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->string('role', 20)->default('staff'); // manager|staff|viewer
+
+    $table->timestampsTz(3);
+
+    $table->primary(['tenant_id', 'property_id', 'user_id']);
+    $table->index(['tenant_id', 'user_id'], 'idx_pu_user');
+    $table->index(['tenant_id', 'property_id'], 'idx_pu_property');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+});
+
+// =========================
+// AMENITIES
+// =========================
+Schema::create('amenities', function (Blueprint $table) {
+    $table->bigIncrements('id');
+    $table->unsignedBigInteger('tenant_id');
+
+    $table->string('name', 255);
+    $table->text('description')->nullable();
+
+    $table->unsignedBigInteger('price_cents')->default(0);
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('status', 20)->default('active'); // active|inactive
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'name'], 'uq_amenities_tenant_name');
+    $table->unique(['id', 'tenant_id'], 'uq_amenities_id_tenant');
+
+    $table->index(['tenant_id', 'status'], 'idx_amenities_tenant_status');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_amenities_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+});
+
+Schema::create('amenity_room', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('room_id');
+    $table->unsignedBigInteger('amenity_id');
+
+    $table->primary(['tenant_id', 'room_id', 'amenity_id']);
+    $table->index(['tenant_id', 'room_id'], 'idx_ar_room');
+    $table->index(['tenant_id', 'amenity_id'], 'idx_ar_amenity');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+
+    $table->foreign(['room_id', 'tenant_id'], 'fk_ar_room_tenant')
+->references(['id', 'tenant_id'])->on('rooms')
+->cascadeOnDelete();
+
+    $table->foreign(['amenity_id', 'tenant_id'], 'fk_ar_amenity_tenant')
+->references(['id', 'tenant_id'])->on('amenities')
+->cascadeOnDelete();
+});
+
+Schema::create('amenity_room_type', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('room_type_id');
+    $table->unsignedBigInteger('amenity_id');
+
+    $table->primary(['tenant_id', 'room_type_id', 'amenity_id']);
+    $table->index(['tenant_id', 'room_type_id'], 'idx_art_rt');
+    $table->index(['tenant_id', 'amenity_id'], 'idx_art_amenity');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+
+    $table->foreign(['room_type_id', 'tenant_id'], 'fk_art_rt_tenant')
+->references(['id', 'tenant_id'])->on('room_types')
+->cascadeOnDelete();
+
+    $table->foreign(['amenity_id', 'tenant_id'], 'fk_art_amenity_tenant')
+->references(['id', 'tenant_id'])->on('amenities')
+->cascadeOnDelete();
+});
+
+// =========================
+// PRICING
+// =========================
+Schema::create('base_prices', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('property_id');
+    $table->unsignedBigInteger('room_type_id');
+
+    $table->unsignedBigInteger('price_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->date('effective_date');
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'property_id', 'room_type_id', 'effective_date'], 'uq_bp_scope');
+    $table->index(['tenant_id', 'effective_date'], 'idx_bp_tenant_effective');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_bp_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->restrictOnDelete();
+    $table->foreign('room_type_id')->references('id')->on('room_types')->restrictOnDelete();
+});
+
+Schema::create('price_overrides', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('property_id');
+    $table->unsignedBigInteger('room_type_id');
+
+    $table->string('title', 255);
+    $table->unsignedBigInteger('price_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->timestampTz('start_at', 3);
+    $table->timestampTz('end_at', 3)->nullable();
+
+    $table->string('color', 50)->default('info');
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->index(['tenant_id', 'property_id', 'room_type_id'], 'idx_po_scope');
+    $table->index(['tenant_id', 'start_at', 'end_at'], 'idx_po_dates');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_po_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->restrictOnDelete();
+    $table->foreign('room_type_id')->references('id')->on('room_types')->restrictOnDelete();
+});
+
+// =========================
+// UTILITIES (global + tenant custom)
+// =========================
+Schema::create('utility_types', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id')->nullable(); // NULL = global catalog
+    $table->string('code', 50)->nullable();
+    $table->string('name', 255);
+    $table->string('unit_of_measure', 255);
+    $table->string('billing_type', 20); // metered|flat_rate
+    $table->boolean('is_active')->default(true);
+
+    $table->timestampsTz(3);
+
+    $table->unique(['code'], 'uq_ut_global_code');
+    $table->unique(['tenant_id', 'name'], 'uq_ut_tenant_name');
+    $table->index(['tenant_id', 'is_active'], 'idx_ut_scope');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+});
+
+Schema::create('meters', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('utility_type_id');
+    $table->unsignedBigInteger('property_id');
+    $table->unsignedBigInteger('room_id')->nullable();
+
+    $table->string('meter_number', 255);
+    $table->string('description', 255)->nullable();
+    $table->decimal('initial_reading', 14, 3)->default(0);
+
+    $table->date('installed_at');
+    $table->string('status', 20)->default('active'); // active|inactive
+    $table->date('last_reading_date')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'meter_number'], 'uq_meter_number');
+    $table->index(['tenant_id', 'status'], 'idx_meters_scope_status');
+    $table->index(['room_id', 'utility_type_id'], 'idx_meters_room_ut');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_meters_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('utility_type_id')->references('id')->on('utility_types')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->restrictOnDelete();
+    $table->foreign('room_id')->references('id')->on('rooms')->nullOnDelete();
+});
+
+Schema::create('meter_readings', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('meter_id');
+
+    $table->decimal('reading_value', 14, 3);
+    $table->date('reading_date');
+
+    $table->unsignedBigInteger('recorded_by_id');
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'meter_id', 'reading_date'], 'uq_meter_day');
+    $table->index(['tenant_id', 'reading_date'], 'idx_mr_tenant_date');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_mr_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('meter_id')->references('id')->on('meters')->cascadeOnDelete();
+    $table->foreign('recorded_by_id')->references('id')->on('users')->restrictOnDelete();
+});
+
+Schema::create('utility_rates', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('property_id');
+    $table->unsignedBigInteger('utility_type_id');
+
+    $table->decimal('rate', 19, 8);
+    $table->date('effective_from');
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'property_id', 'utility_type_id', 'effective_from'], 'uq_ur_scope');
+    $table->index(['tenant_id', 'effective_from'], 'idx_ur_tenant_effective');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_ur_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->restrictOnDelete();
+    $table->foreign('utility_type_id')->references('id')->on('utility_types')->restrictOnDelete();
+});
+
+// =========================
+// PAYMENT METHODS
+// =========================
+Schema::create('payment_methods', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->string('provider', 50);
+    $table->string('provider_ref', 255)->nullable();
+    $table->string('label', 255)->nullable();
+
+    $table->boolean('is_default')->default(false);
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->index(['tenant_id', 'user_id'], 'idx_pm_scope');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_pm_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
+});
+
+// =========================
+// CONTRACTS (leases)
+// =========================
+Schema::create('contracts', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('occupant_user_id');
+    $table->unsignedBigInteger('room_id');
+
+    $table->date('start_date');
+    $table->date('end_date');
+
+    $table->unsignedBigInteger('monthly_rent_cents')->default(0);
+    $table->unsignedBigInteger('deposit_cents')->default(0);
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('billing_cycle', 20)->default('monthly'); // monthly|weekly|daily|custom
+    $table->unsignedSmallInteger('payment_due_day')->default(1);
+
+    $table->date('next_invoice_date')->nullable();
+    $table->date('last_invoiced_through')->nullable();
+
+    $table->string('contract_image_path', 255)->nullable();
+    $table->string('status', 20)->default('active'); // active|pending|terminated|expired|cancelled
+
+    $table->text('notes')->nullable();
+    $table->boolean('auto_renew')->default(false);
+
+    $table->timestampTz('terminated_at', 3)->nullable();
+    $table->text('termination_reason')->nullable();
+
+    $table->unsignedBigInteger('previous_contract_id')->nullable();
+
+    $table->boolean('auto_payment')->default(false);
+    $table->unsignedBigInteger('payment_method_id')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['id', 'tenant_id'], 'uq_contracts_id_tenant');
+
+    $table->index(['tenant_id', 'room_id', 'status', 'start_date', 'end_date'], 'idx_contracts_room_status_dates');
+    $table->index(['tenant_id', 'status', 'end_date'], 'idx_contracts_scope_status');
+    $table->index(['tenant_id', 'occupant_user_id', 'status'], 'idx_contracts_occupant');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_contracts_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('occupant_user_id')->references('id')->on('users')->restrictOnDelete();
+    $table->foreign('room_id')->references('id')->on('rooms')->restrictOnDelete();
+    $table->foreign('previous_contract_id')->references('id')->on('contracts')->nullOnDelete();
+    $table->foreign('payment_method_id')->references('id')->on('payment_methods')->nullOnDelete();
+});
+
+// =========================
+// UTILITY BILLS (after contracts)
+// =========================
+Schema::create('utility_bills', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('contract_id');
+    $table->unsignedBigInteger('utility_type_id');
+
+    $table->date('billing_period_start');
+    $table->date('billing_period_end');
+
+    $table->decimal('start_reading', 14, 3)->nullable();
+    $table->decimal('end_reading', 14, 3)->nullable();
+    $table->decimal('consumption', 14, 3)->nullable();
+
+    $table->decimal('rate_applied', 19, 8)->nullable();
+
+    $table->unsignedBigInteger('amount_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'contract_id', 'utility_type_id', 'billing_period_end'], 'uq_ub_period');
+    $table->index(['tenant_id', 'billing_period_start', 'billing_period_end'], 'idx_ub_period');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_ub_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('contract_id')->references('id')->on('contracts')->restrictOnDelete();
+    $table->foreign('utility_type_id')->references('id')->on('utility_types')->restrictOnDelete();
+});
+
+// =========================
+// DOCUMENTS
+// =========================
+Schema::create('documents', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->unsignedBigInteger('room_id')->nullable();
+    $table->unsignedBigInteger('contract_id')->nullable();
+
+    $table->string('name', 255);
+    $table->string('doc_type', 64);
+    $table->string('file_path', 255);
+    $table->text('description')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->index(['tenant_id', 'user_id'], 'idx_docs_scope');
+    $table->index(['tenant_id', 'contract_id'], 'idx_docs_tenant_contract');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_docs_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
+    $table->foreign('room_id')->references('id')->on('rooms')->nullOnDelete();
+    $table->foreign('contract_id')->references('id')->on('contracts')->nullOnDelete();
+});
+
+// =========================
+// INVOICES
+// =========================
+Schema::create('invoices', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('contract_id');
+
+    $table->string('invoice_number', 64);
+
+    $table->date('issue_date');
+    $table->date('due_date');
+
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->unsignedBigInteger('subtotal_cents')->default(0);
+    $table->unsignedBigInteger('discount_cents')->default(0);
+    $table->unsignedBigInteger('total_cents')->default(0);
+    $table->unsignedBigInteger('paid_cents')->default(0);
+
+    $table->string('status', 20)->default('draft'); // draft|sent|paid|partial|overdue|void
+    $table->timestampTz('sent_at', 3)->nullable();
+
+    $table->timestampTz('last_reminder_at', 3)->nullable();
+    $table->timestampTz('next_reminder_at', 3)->nullable();
+    $table->unsignedInteger('reminder_count')->default(0);
+
+    $table->text('notes')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'invoice_number'], 'uq_inv_number');
+
+    $table->index(['tenant_id', 'status', 'due_date'], 'idx_inv_due');
+    $table->index(['tenant_id', 'contract_id', 'issue_date'], 'idx_inv_contract_issue');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_inv_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('contract_id')->references('id')->on('contracts')->restrictOnDelete();
+});
+
+Schema::create('invoice_items', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('invoice_id');
+
+    $table->string('description', 255);
+    $table->bigInteger('amount_cents'); // signed, negative allowed
+
+    $table->string('item_type', 20)->default('other'); // rent|deposit|utility|amenity|fee|discount|other
+
+    $table->string('ref_table', 64)->nullable();
+    $table->unsignedBigInteger('ref_id')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->index(['tenant_id', 'invoice_id'], 'idx_ii_invoice');
+    $table->index(['ref_table', 'ref_id'], 'idx_ii_ref');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_ii_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('invoice_id')->references('id')->on('invoices')->cascadeOnDelete();
+});
+
+// =========================
+// PAYMENTS / ALLOCATIONS / REFUNDS / DISPUTES
+// =========================
+Schema::create('payments', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('payer_user_id')->nullable();
+    $table->unsignedBigInteger('payment_method_id')->nullable();
+
+    $table->string('provider', 50)->default('other');
+    $table->string('provider_payment_id', 255)->nullable();
+    $table->string('provider_status', 50)->nullable();
+
+    $table->unsignedBigInteger('amount_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('status', 30)->default('pending'); // pending|succeeded|failed|cancelled|refunded|partially_refunded|disputed
+    $table->timestampTz('paid_at', 3)->nullable();
+
+    $table->string('description', 255)->nullable();
+    $table->json('metadata')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'provider', 'provider_payment_id'], 'uq_pay_provider');
+
+    $table->index(['tenant_id', 'status', 'paid_at'], 'idx_pay_scope_status');
+    $table->index(['tenant_id', 'payer_user_id', 'paid_at'], 'idx_pay_payer');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_pay_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('payer_user_id')->references('id')->on('users')->nullOnDelete();
+    $table->foreign('payment_method_id')->references('id')->on('payment_methods')->nullOnDelete();
+});
+
+Schema::create('payment_allocations', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('payment_id');
+    $table->unsignedBigInteger('invoice_id');
+
+    $table->unsignedBigInteger('applied_cents');
+    $table->timestampTz('applied_at', 3)->useCurrent();
+
+    $table->timestampTz('created_at', 3)->useCurrent();
+
+    $table->unique(['payment_id', 'invoice_id'], 'uq_pa_payment_invoice');
+    $table->index(['tenant_id', 'invoice_id', 'applied_at'], 'idx_pa_invoice');
+    $table->index(['tenant_id', 'payment_id'], 'idx_pa_payment');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('payment_id')->references('id')->on('payments')->cascadeOnDelete();
+    $table->foreign('invoice_id')->references('id')->on('invoices')->restrictOnDelete();
+});
+
+Schema::create('refunds', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('payment_id');
+
+    $table->string('provider_refund_id', 255)->nullable();
+    $table->unsignedBigInteger('amount_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('status', 20)->default('pending'); // pending|succeeded|failed|cancelled
+    $table->timestampTz('refunded_at', 3)->nullable();
+
+    $table->string('reason', 255)->nullable();
+    $table->json('metadata')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'provider_refund_id'], 'uq_ref_provider');
+    $table->index(['tenant_id', 'payment_id', 'refunded_at'], 'idx_ref_payment');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('payment_id')->references('id')->on('payments')->cascadeOnDelete();
+});
+
+Schema::create('disputes', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('payment_id');
+
+    $table->string('provider_dispute_id', 255)->nullable();
+
+    $table->string('status', 30); // warning_needs_response|needs_response|under_review|won|lost|closed
+
+    $table->unsignedBigInteger('amount_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->timestampTz('opened_at', 3)->nullable();
+    $table->timestampTz('closed_at', 3)->nullable();
+
+    $table->string('reason', 255)->nullable();
+    $table->json('metadata')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'provider_dispute_id'], 'uq_dis_provider');
+    $table->index(['tenant_id', 'payment_id', 'status'], 'idx_dis_payment');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('payment_id')->references('id')->on('payments')->cascadeOnDelete();
+});
+
+// =========================
+// NOTIFICATIONS / MESSAGES
+// =========================
+Schema::create('message_templates', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id')->nullable(); // NULL=global template
+    $table->string('template_key', 100);
+    $table->string('channel', 20); // email|sms|push|whatsapp
+
+    $table->string('subject', 255)->nullable();
+    $table->text('body');
+
+    $table->boolean('is_active')->default(true);
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'template_key', 'channel'], 'uq_templates_scope');
+    $table->index(['tenant_id', 'is_active'], 'idx_templates_active');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+});
+
+Schema::create('outbound_messages', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('user_id')->nullable();
+
+    $table->string('channel', 20); // email|sms|push|whatsapp
+    $table->string('template_key', 100)->nullable();
+
+    $table->string('subject', 255)->nullable();
+    $table->text('body')->nullable();
+
+    $table->string('to_address', 255);
+    $table->string('to_name', 255)->nullable();
+
+    $table->string('related_type', 64)->nullable();
+    $table->unsignedBigInteger('related_id')->nullable();
+
+    $table->string('status', 30)->default('queued'); // queued|sending|sent|delivered|failed|bounced|undeliverable|cancelled
+
+    $table->timestampTz('queued_at', 3)->useCurrent();
+    $table->timestampTz('sent_at', 3)->nullable();
+    $table->timestampTz('delivered_at', 3)->nullable();
+
+    $table->string('provider', 50)->nullable();
+    $table->string('provider_message_id', 255)->nullable();
+
+    $table->text('last_error')->nullable();
+    $table->unsignedInteger('attempt_count')->default(0);
+    $table->timestampTz('next_attempt_at', 3)->nullable();
+
+    $table->json('render_vars')->nullable();
+    $table->string('dedupe_key', 191)->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'dedupe_key'], 'uq_om_dedupe');
+
+    $table->index(['tenant_id', 'user_id', 'created_at'], 'idx_om_user_time');
+    $table->index(['tenant_id', 'status', 'next_attempt_at'], 'idx_om_status_next');
+    $table->index(['tenant_id', 'template_key', 'channel', 'created_at'], 'idx_om_template');
+    $table->index(['tenant_id', 'related_type', 'related_id'], 'idx_om_related');
+    $table->index(['tenant_id', 'provider', 'provider_message_id'], 'idx_om_provider');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
+});
+
+// =========================
+// MAINTENANCE
+// =========================
+Schema::create('maintenance_requests', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+
+    $table->unsignedBigInteger('created_by_user_id');
+    $table->unsignedBigInteger('assigned_to_user_id')->nullable();
+
+    $table->unsignedBigInteger('property_id')->nullable();
+    $table->unsignedBigInteger('room_id')->nullable();
+    $table->unsignedBigInteger('contract_id')->nullable();
+
+    $table->string('title', 255);
+    $table->text('description')->nullable();
+    $table->string('category', 50)->default('other');
+
+    $table->string('status', 20)->default('open'); // open|in_progress|resolved|closed|cancelled
+    $table->string('priority', 20)->default('medium'); // low|medium|high|urgent
+
+    $table->timestampTz('requested_at', 3)->useCurrent();
+    $table->timestampTz('first_response_at', 3)->nullable();
+    $table->timestampTz('resolved_at', 3)->nullable();
+    $table->timestampTz('closed_at', 3)->nullable();
+
+    $table->unsignedSmallInteger('satisfaction_rating')->nullable();
+    $table->text('satisfaction_comment')->nullable();
+
+    $table->json('extra_metadata')->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->index(['tenant_id', 'status', 'priority', 'requested_at'], 'idx_mr_scope_status');
+    $table->index(['tenant_id', 'property_id', 'status'], 'idx_mr_property');
+    $table->index(['tenant_id', 'room_id', 'status'], 'idx_mr_room');
+    $table->index(['tenant_id', 'assigned_to_user_id', 'status'], 'idx_mr_assigned');
+    $table->index(['tenant_id', 'deleted_at'], 'idx_mr_tenant_deleted');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('created_by_user_id')->references('id')->on('users')->restrictOnDelete();
+    $table->foreign('assigned_to_user_id')->references('id')->on('users')->nullOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->nullOnDelete();
+    $table->foreign('room_id')->references('id')->on('rooms')->nullOnDelete();
+    $table->foreign('contract_id')->references('id')->on('contracts')->nullOnDelete();
+});
+
+Schema::create('maintenance_status_events', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('maintenance_request_id');
+    $table->unsignedBigInteger('changed_by_user_id');
+
+    $table->string('from_status', 20)->nullable(); // open|in_progress|resolved|closed|cancelled
+    $table->string('to_status', 20);      // open|in_progress|resolved|closed|cancelled
+
+    $table->string('note', 255)->nullable();
+
+    $table->timestampTz('created_at', 3)->useCurrent();
+
+    $table->index(['tenant_id', 'maintenance_request_id', 'created_at'], 'idx_mse_request_time');
+    $table->index(['tenant_id', 'to_status', 'created_at'], 'idx_mse_to_status_time');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('maintenance_request_id')->references('id')->on('maintenance_requests')->cascadeOnDelete();
+    $table->foreign('changed_by_user_id')->references('id')->on('users')->restrictOnDelete();
+});
+
+Schema::create('maintenance_comments', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('maintenance_request_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->text('body');
+    $table->boolean('is_internal')->default(false);
+
+    $table->timestampTz('created_at', 3)->useCurrent();
+
+    $table->index(['tenant_id', 'maintenance_request_id', 'created_at'], 'idx_mc_request_time');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('maintenance_request_id')->references('id')->on('maintenance_requests')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
+});
+
+Schema::create('maintenance_attachments', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('maintenance_request_id');
+
+    $table->unsignedBigInteger('comment_id')->nullable();
+    $table->unsignedBigInteger('uploaded_by_user_id');
+
+    $table->string('file_path', 255);
+    $table->string('mime_type', 100)->nullable();
+    $table->unsignedBigInteger('file_size_bytes')->nullable();
+
+    $table->timestampTz('created_at', 3)->useCurrent();
+
+    $table->index(['tenant_id', 'maintenance_request_id', 'created_at'], 'idx_ma_request_time');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('maintenance_request_id')->references('id')->on('maintenance_requests')->cascadeOnDelete();
+    $table->foreign('comment_id')->references('id')->on('maintenance_comments')->nullOnDelete();
+    $table->foreign('uploaded_by_user_id')->references('id')->on('users')->restrictOnDelete();
+});
+
+Schema::create('work_orders', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('maintenance_request_id');
+
+    $table->string('vendor_name', 255)->nullable();
+    $table->timestampTz('scheduled_for', 3)->nullable();
+    $table->timestampTz('completed_at', 3)->nullable();
+
+    $table->unsignedBigInteger('cost_cents')->nullable();
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('status', 20)->default('created'); // created|scheduled|in_progress|completed|cancelled
+    $table->text('notes')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->index(['tenant_id', 'maintenance_request_id'], 'idx_wo_request');
+    $table->index(['tenant_id', 'status', 'scheduled_for'], 'idx_wo_status');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('maintenance_request_id')->references('id')->on('maintenance_requests')->cascadeOnDelete();
+});
+
+// =========================
+// DOORS / ACCESS MANAGEMENT
+// =========================
+Schema::create('doors', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('property_id');
+
+    $table->string('name', 255);
+    $table->text('description')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique(['id', 'tenant_id'], 'uq_doors_id_tenant');
+    $table->index(['tenant_id', 'property_id'], 'idx_doors_property');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_id')->references('id')->on('properties')->restrictOnDelete();
+});
+
+Schema::create('door_rooms', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('door_id');
+    $table->unsignedBigInteger('room_id');
+
+    $table->primary(['tenant_id', 'door_id', 'room_id']);
+
+    $table->index(['tenant_id', 'room_id'], 'idx_dr_room');
+    $table->index(['tenant_id', 'door_id'], 'idx_dr_door');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+
+    $table->foreign(['door_id', 'tenant_id'], 'fk_dr_door_tenant')
+->references(['id', 'tenant_id'])->on('doors')
+->cascadeOnDelete();
+
+    $table->foreign(['room_id', 'tenant_id'], 'fk_dr_room_tenant')
+->references(['id', 'tenant_id'])->on('rooms')
+->cascadeOnDelete();
+});
+
+Schema::create('physical_keys', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+
+    $table->string('key_code', 64);
+    $table->string('label', 255)->nullable();
+
+    $table->string('key_type', 20)->default('metal');   // metal|fob|card
+    $table->string('status', 20)->default('in_stock');  // in_stock|issued|lost|destroyed
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'key_code'], 'uq_key_code');
+    $table->unique(['id', 'tenant_id'], 'uq_pk_id_tenant');
+    $table->index(['tenant_id', 'status'], 'idx_key_status');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+});
+
+Schema::create('physical_key_doors', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('physical_key_id');
+    $table->unsignedBigInteger('door_id');
+
+    $table->primary(['tenant_id', 'physical_key_id', 'door_id']);
+
+    $table->index(['tenant_id', 'door_id'], 'idx_pkd_door');
+    $table->index(['tenant_id', 'physical_key_id'], 'idx_pkd_key');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+
+    $table->foreign(['physical_key_id', 'tenant_id'], 'fk_pkd_key_tenant')
+->references(['id', 'tenant_id'])->on('physical_keys')
+->cascadeOnDelete();
+
+    $table->foreign(['door_id', 'tenant_id'], 'fk_pkd_door_tenant')
+->references(['id', 'tenant_id'])->on('doors')
+->cascadeOnDelete();
+});
+
+Schema::create('key_issues', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('physical_key_id');
+    $table->unsignedBigInteger('issued_to_user_id');
+
+    $table->unsignedBigInteger('contract_id')->nullable();
+
+    $table->timestampTz('issued_at', 3)->useCurrent();
+    $table->timestampTz('due_back_at', 3)->nullable();
+    $table->timestampTz('returned_at', 3)->nullable();
+
+    $table->boolean('is_active')->default(true);
+    $table->text('notes')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'physical_key_id', 'is_active'], 'uq_key_one_active');
+    $table->index(['tenant_id', 'issued_to_user_id', 'is_active'], 'idx_ki_user');
+    $table->index(['tenant_id', 'contract_id'], 'idx_ki_contract');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('physical_key_id')->references('id')->on('physical_keys')->restrictOnDelete();
+    $table->foreign('issued_to_user_id')->references('id')->on('users')->restrictOnDelete();
+    $table->foreign('contract_id')->references('id')->on('contracts')->nullOnDelete();
+});
+
+Schema::create('lock_devices', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('door_id');
+
+    $table->string('provider', 64);
+    $table->string('provider_ref', 255);
+
+    $table->string('status', 20)->default('active'); // active|inactive
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'provider', 'provider_ref'], 'uq_lock_provider_ref');
+    $table->index(['tenant_id', 'door_id', 'status'], 'idx_lock_door');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('door_id')->references('id')->on('doors')->cascadeOnDelete();
+});
+
+Schema::create('door_access_permissions', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('door_id');
+    $table->unsignedBigInteger('user_id');
+
+    $table->unsignedBigInteger('qr_code_id')->nullable();
+    $table->unsignedBigInteger('granted_by_user_id')->nullable();
+
+    $table->timestampTz('access_start', 3)->nullable();
+    $table->timestampTz('access_end', 3)->nullable();
+
+    $table->string('status', 20)->default('active'); // active|revoked|expired
+    $table->timestampTz('revoked_at', 3)->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->index(['tenant_id', 'door_id', 'user_id', 'status'], 'idx_dap_lookup');
+    $table->index(['tenant_id', 'status', 'access_start', 'access_end'], 'idx_dap_window');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('door_id')->references('id')->on('doors')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+    $table->foreign('qr_code_id')->references('id')->on('user_qr_codes')->nullOnDelete();
+    $table->foreign('granted_by_user_id')->references('id')->on('users')->nullOnDelete();
+});
+
+Schema::create('access_events', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('door_id');
+
+    $table->unsignedBigInteger('user_id')->nullable();
+    $table->unsignedBigInteger('qr_code_id')->nullable();
+
+    $table->string('method', 20)->default('qr');  // qr|pin|card|key|api
+    $table->string('event_type', 20);     // granted|denied
+    $table->string('reason', 255)->nullable();
+
+    $table->timestampTz('occurred_at', 3)->useCurrent();
+
+    $table->string('provider', 64)->nullable();
+    $table->string('provider_ref', 255)->nullable();
+
+    $table->timestampTz('created_at', 3)->useCurrent();
+
+    $table->index(['tenant_id', 'door_id', 'occurred_at'], 'idx_ae_door_time');
+    $table->index(['tenant_id', 'user_id', 'occurred_at'], 'idx_ae_user_time');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('door_id')->references('id')->on('doors')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
+    $table->foreign('qr_code_id')->references('id')->on('user_qr_codes')->nullOnDelete();
+});
