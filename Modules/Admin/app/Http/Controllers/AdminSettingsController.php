@@ -4,6 +4,7 @@ namespace Modules\Admin\App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessSetting;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -73,7 +74,17 @@ class AdminSettingsController extends Controller
             mkdir($targetDir, 0755, true);
         }
         $file->move($targetDir, $filename);
+        $path = 'uploads/images/' . $filename;
 
-        return 'uploads/images/' . $filename;
+        app(AuditLogger::class)->log(
+            'uploaded',
+            'BrandAsset',
+            $path,
+            null,
+            ['path' => $path, 'field' => $key],
+            $request
+        );
+
+        return $path;
     }
 }
