@@ -448,6 +448,17 @@
       if (table && window.DataTable) {
         new DataTable(table, {
           order: [[2, 'asc']],
+          columnDefs: [
+            {
+              targets: 0,
+              className: 'control',
+              orderable: false,
+              searchable: false,
+              render: function () {
+                return '';
+              }
+            }
+          ],
           layout: {
             topStart: {
               rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',

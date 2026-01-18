@@ -182,6 +182,17 @@
     if (table && window.DataTable) {
       new DataTable(table, {
         order: [[2, 'desc']],
+        columnDefs: [
+          {
+            targets: 0,
+            className: 'control',
+            orderable: false,
+            searchable: false,
+            render: function () {
+              return '';
+            }
+          }
+        ],
         layout: {
           topStart: {
             rowClass: 'row m-3 my-0 justify-content-between',
