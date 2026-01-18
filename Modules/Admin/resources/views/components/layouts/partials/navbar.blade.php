@@ -13,6 +13,61 @@
         </div>
 
         <ul class="navbar-nav align-items-center">
+            <li class="nav-item dropdown-language dropdown me-2 me-xl-0">
+                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <i class="icon-base ti tabler-language icon-22px text-heading"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item waves-effect active" href="javascript:void(0);" data-language="en" data-text-direction="ltr">
+                            <span>English</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item waves-effect" href="javascript:void(0);" data-language="km" data-text-direction="ltr">
+                            <span>Khmer</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item waves-effect" href="javascript:void(0);" data-language="fr" data-text-direction="ltr">
+                            <span>French</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item waves-effect" href="javascript:void(0);" data-language="de" data-text-direction="ltr">
+                            <span>German</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill waves-effect" id="nav-theme" href="javascript:void(0);" data-bs-toggle="dropdown" aria-label="Toggle theme">
+                    <i class="tabler-moon-stars icon-base ti icon-22px theme-icon-active text-heading"></i>
+                    <span class="d-none ms-2" id="nav-theme-text">Toggle theme</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-theme-text">
+                    <li>
+                        <button type="button" class="dropdown-item align-items-center waves-effect" data-bs-theme-value="light">
+                            <span><i class="icon-base ti tabler-sun icon-22px me-3" data-icon="sun"></i>Light</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item align-items-center waves-effect" data-bs-theme-value="dark">
+                            <span><i class="icon-base ti tabler-moon-stars icon-22px me-3" data-icon="moon-stars"></i>Dark</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item align-items-center waves-effect" data-bs-theme-value="system">
+                            <span><i class="icon-base ti tabler-device-desktop-analytics icon-22px me-3" data-icon="device-desktop-analytics"></i>System</span>
+                        </button>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item d-flex align-items-center me-2">
+                <a class="nav-link btn btn-icon btn-text-secondary rounded-pill waves-effect" href="javascript:void(0);" data-cat-toggle aria-label="Toggle cat">
+                    <i class="icon-base ti tabler-cat icon-22px text-heading"></i>
+                </a>
+            </li>
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">

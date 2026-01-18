@@ -98,6 +98,14 @@ code {
 .live2d-widget-container {
     left: auto !important;
     right: 0 !important;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    contain: layout paint;
+    pointer-events: none;
+}
+
+.live2d-widget-container.cat-ready {
+    opacity: 1;
 }
 
 @keyframes hoverMessageFadeIn {

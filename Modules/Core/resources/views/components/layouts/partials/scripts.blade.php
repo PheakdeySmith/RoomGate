@@ -17,7 +17,6 @@
 
     <script src="{{ asset('assets/assets') }}/vendor/js/menu.js"></script>
 
-    <script src="https://unpkg.com/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
     <script src="{{ asset('assets/assets') }}/js/cat.js"></script>
 
 

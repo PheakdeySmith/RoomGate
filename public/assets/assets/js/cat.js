@@ -37,7 +37,9 @@ function clearAllLive2DElements() {
 // --- Init Live2D ---
 function initializeCat() {
     console.log('🐱 Booting cat...');
-    clearAllLive2DElements();
+    if (document.querySelector('.live2d-widget-container')) {
+        clearAllLive2DElements();
+    }
 
     setTimeout(() => {
         if (typeof L2Dwidget === 'undefined') {
@@ -74,12 +76,18 @@ function initializeCat() {
             });
 
             console.log('✅ Cat loaded.');
-            showToast('success', 'Success', 'Cat online. Please do not feed it production bugs.');
 
             setTimeout(() => {
                 setupCatMessages();
                 setupMouseHover();
             }, 2000);
+
+            setTimeout(() => {
+                const container = document.querySelector('.live2d-widget-container');
+                if (container) {
+                    container.classList.add('cat-ready');
+                }
+            }, 200);
 
         } catch (error) {
             console.error('❌ Live2D init failed:', error);
@@ -126,10 +134,7 @@ function setupCatMessages() {
         }
     });
 
-    // Welcome
-    setTimeout(() => {
-        showToast('success', 'Welcome', getWelcomeMessage());
-    }, 900);
+    // Welcome toast disabled to avoid page flash on navigation
 }
 
 // --- Hover messages ---
@@ -213,6 +218,67 @@ function hideHoverMessage() {
 function isMobile() {
     return window.innerWidth < 768 ||
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+function isCatEnabled() {
+    const stored = localStorage.getItem('roomgate-cat-enabled');
+    if (stored === null) return true;
+    return stored === 'true';
+}
+
+function setCatEnabled(enabled) {
+    localStorage.setItem('roomgate-cat-enabled', enabled ? 'true' : 'false');
+}
+
+function disableCat() {
+    clearAllLive2DElements();
+    document.querySelectorAll('.cat-toast, .cat-hover-message').forEach(el => el.remove());
+}
+
+function enableCat() {
+    if (isMobile()) return;
+    loadLive2DScript().then(() => {
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(() => initializeCat(), { timeout: 1500 });
+        } else {
+            setTimeout(() => initializeCat(), 800);
+        }
+    });
+}
+
+function bindCatToggle() {
+    document.querySelectorAll('[data-cat-toggle]').forEach((el) => {
+        el.addEventListener('click', (event) => {
+            event.preventDefault();
+            const next = !isCatEnabled();
+            setCatEnabled(next);
+            if (next) enableCat();
+            else disableCat();
+            updateCatToggleUI();
+            if (window.RoomGateNotyf) {
+                window.RoomGateNotyf.success(next ? 'Cat enabled.' : 'Cat disabled.');
+            }
+        });
+    });
+    document.querySelectorAll('[data-cat-toggle-input]').forEach((el) => {
+        el.addEventListener('change', () => {
+            const next = !!el.checked;
+            setCatEnabled(next);
+            if (next) enableCat();
+            else disableCat();
+            updateCatToggleUI();
+            if (window.RoomGateNotyf) {
+                window.RoomGateNotyf.success(next ? 'Cat enabled.' : 'Cat disabled.');
+            }
+        });
+    });
+}
+
+function updateCatToggleUI() {
+    const enabled = isCatEnabled();
+    document.querySelectorAll('[data-cat-toggle-input]').forEach((el) => {
+        el.checked = enabled;
+    });
 }
 
 
@@ -306,6 +372,53 @@ function bindButtons() {
 // --- Boot ---
 document.addEventListener('DOMContentLoaded', () => {
     bindButtons();
-    if (!isMobile()) initializeCat();
-    else showToast('info', 'Mobile', 'Live2D disabled on mobile. Cat is on vacation.');
+    bindCatToggle();
+    updateCatToggleUI();
+    if (!isCatEnabled()) {
+        disableCat();
+    }
 });
+
+window.addEventListener('load', () => {
+    if (isCatEnabled()) {
+        enableCat();
+    }
+});
+
+window.RoomGateCat = {
+    enable: () => {
+        setCatEnabled(true);
+        enableCat();
+        updateCatToggleUI();
+    },
+    disable: () => {
+        setCatEnabled(false);
+        disableCat();
+        updateCatToggleUI();
+    },
+    toggle: () => {
+        const next = !isCatEnabled();
+        setCatEnabled(next);
+        if (next) enableCat();
+        else disableCat();
+        updateCatToggleUI();
+    }
+};
+
+function loadLive2DScript() {
+    if (window.L2Dwidget) {
+        return Promise.resolve();
+    }
+    if (window.RoomGateL2DLoading) {
+        return window.RoomGateL2DLoading;
+    }
+    window.RoomGateL2DLoading = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/live2d-widget@3.1.4/lib/L2Dwidget.min.js';
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Live2D script failed to load.'));
+        document.head.appendChild(script);
+    });
+    return window.RoomGateL2DLoading;
+}

@@ -5,6 +5,7 @@ use Modules\Admin\App\Http\Controllers\AdminController;
 use Modules\Admin\App\Http\Controllers\AdminAuditLogController;
 use Modules\Admin\App\Http\Controllers\AdminPermissionController;
 use Modules\Admin\App\Http\Controllers\AdminRoleController;
+use Modules\Admin\App\Http\Controllers\AdminTranslationController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
     ->prefix('admin')
@@ -27,4 +28,9 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::patch('/permissions/{permission}', [AdminPermissionController::class, 'update'])->name('permissions.update');
         Route::patch('/permissions/{permission}/toggle', [AdminPermissionController::class, 'toggle'])->name('permissions.toggle');
         Route::delete('/permissions/{permission}', [AdminPermissionController::class, 'destroy'])->name('permissions.destroy');
+
+        Route::get('/translations', [AdminTranslationController::class, 'index'])->name('translations');
+        Route::post('/translations', [AdminTranslationController::class, 'store'])->name('translations.store');
+        Route::patch('/translations/{key}', [AdminTranslationController::class, 'update'])->name('translations.update');
+        Route::delete('/translations/{key}', [AdminTranslationController::class, 'destroy'])->name('translations.destroy');
     });

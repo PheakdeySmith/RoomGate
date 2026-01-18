@@ -258,12 +258,12 @@
                         <ul class="menu-sub">
                             <li class="menu-item {{ request()->routeIs('Core.access-roles') ? 'active' : '' }}">
                                 <a href="{{ route('Core.access-roles') }}" class="menu-link">
-                                    <div data-i18n="Roles">Roles</div>
+                                    <div data-i18n="menu.roles">Roles</div>
                                 </a>
                             </li>
                             <li class="menu-item {{ request()->routeIs('Core.access-permission') ? 'active' : '' }}">
                                 <a href="{{ route('Core.access-permission') }}" class="menu-link">
-                                    <div data-i18n="Permissions">Permissions</div>
+                                    <div data-i18n="menu.permissions">Permissions</div>
                                 </a>
                             </li>
                         </ul>

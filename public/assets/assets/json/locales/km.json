@@ -1,0 +1,21 @@
+{
+    "menu.dashboard": "ផ្ទាំងគ្រប់គ្រង",
+    "menu.roles": "តួនាទី",
+    "menu.permissions": "សិទ្ធិ",
+    "menu.audit_logs": "កំណត់ហេតុផ្ទៀងផ្ទាត់",
+    "menu.translations": "ការបកប្រែ",
+    "menu.tenant_dashboard": "ផ្ទាំងអ្នកជួល",
+    "actions.filter": "តម្រង",
+    "actions.reset": "កំណត់ឡើងវិញ",
+    "actions.view": "មើល",
+    "actions.restore": "ស្ដារឡើងវិញ",
+    "labels.search": "ស្វែងរក",
+    "labels.action": "សកម្មភាព",
+    "labels.model": "ម៉ូឌែល",
+    "labels.user": "អ្នកប្រើប្រាស់",
+    "labels.from": "ពី",
+    "labels.to": "ដល់",
+    "audit.title": "កំណត់ហេតុផ្ទៀងផ្ទាត់",
+    "Roles": "តួនាទី",
+    "Permissions": "សិទ្ធិ"
+}

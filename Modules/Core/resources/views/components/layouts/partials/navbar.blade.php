@@ -36,6 +36,12 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="javascript:void(0);" data-language="km"
+                                            data-text-direction="ltr">
+                                            <span>Khmer</span>
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="javascript:void(0);" data-language="fr"
                                             data-text-direction="ltr">
                                             <span>French</span>
@@ -467,6 +473,11 @@
                                     </li>
                                 </ul>
                             </li>
+                            <li class="nav-item d-flex align-items-center me-2">
+                                <a class="nav-link btn btn-icon btn-text-secondary rounded-pill waves-effect" href="javascript:void(0);" data-cat-toggle aria-label="Toggle cat">
+                                    <i class="icon-base ti tabler-cat icon-22px text-heading"></i>
+                                </a>
+                            </li>
                             <!--/ Notification -->
 
                             <!-- User -->
@@ -500,8 +511,8 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="pages-profile-user.html">
-                                            <i class="icon-base ti tabler-user me-3 icon-md"></i><span
-                                                class="align-middle">My Profile</span>
+                                            <i class="icon-base ti tabler-user me-4 icon-md"></i><span
+                                                class="align-middle ms-1">My Profile</span>
                                         </a>
                                     </li>
                                     <li>

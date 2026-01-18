@@ -43,7 +43,7 @@
         <li class="menu-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('admin.dashboard') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-layout-dashboard"></i>
-                <div data-i18n="Dashboard">Dashboard</div>
+                <div data-i18n="menu.dashboard">Dashboard</div>
             </a>
         </li>
 
@@ -53,19 +53,25 @@
         <li class="menu-item {{ request()->routeIs('admin.roles') ? 'active' : '' }}">
             <a href="{{ route('admin.roles') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-shield-lock"></i>
-                <div data-i18n="Roles">Roles</div>
+                <div data-i18n="menu.roles">Roles</div>
             </a>
         </li>
         <li class="menu-item {{ request()->routeIs('admin.permissions') ? 'active' : '' }}">
             <a href="{{ route('admin.permissions') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-lock-access"></i>
-                <div data-i18n="Permissions">Permissions</div>
+                <div data-i18n="menu.permissions">Permissions</div>
             </a>
         </li>
         <li class="menu-item {{ request()->routeIs('admin.audit-logs') ? 'active' : '' }}">
             <a href="{{ route('admin.audit-logs') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-history"></i>
-                <div data-i18n="Audit Logs">Audit Logs</div>
+                <div data-i18n="menu.audit_logs">Audit Logs</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.translations') ? 'active' : '' }}">
+            <a href="{{ route('admin.translations') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-language"></i>
+                <div data-i18n="menu.translations">Translations</div>
             </a>
         </li>
 
@@ -75,7 +81,7 @@
         <li class="menu-item">
             <a href="{{ url('/core/crm-dashboard') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-building-community"></i>
-                <div data-i18n="Tenant Dashboard">Tenant Dashboard</div>
+                <div data-i18n="menu.tenant_dashboard">Tenant Dashboard</div>
             </a>
         </li>
     </ul>

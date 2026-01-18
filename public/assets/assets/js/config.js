@@ -70,6 +70,9 @@ window.templateName = document.documentElement.getAttribute('data-template');
  */
 
 if (typeof TemplateCustomizer !== 'undefined') {
+  if (TemplateCustomizer.LANGUAGES && !TemplateCustomizer.LANGUAGES.km) {
+    TemplateCustomizer.LANGUAGES.km = { ...TemplateCustomizer.LANGUAGES.en };
+  }
   window.templateCustomizer = new TemplateCustomizer({
     displayCustomizer: true,
     lang: localStorage.getItem('templateCustomizer-' + templateName + '--Lang') || 'en', // Set default language here

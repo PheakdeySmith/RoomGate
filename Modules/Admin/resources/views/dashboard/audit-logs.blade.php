@@ -11,17 +11,17 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
-  <h4 class="mb-4">Audit Logs</h4>
+  <h4 class="mb-4" data-i18n="audit.title">Audit Logs</h4>
 
   <div class="card mb-4">
     <div class="card-body">
       <form method="GET" class="row g-3 align-items-end">
         <div class="col-sm-6 col-lg-3">
-          <label class="form-label" for="q">Search</label>
+          <label class="form-label" for="q" data-i18n="labels.search">Search</label>
           <input type="text" id="q" name="q" class="form-control" value="{{ request('q') }}" placeholder="Model, id, action" />
         </div>
         <div class="col-sm-6 col-lg-3">
-          <label class="form-label" for="action">Action</label>
+          <label class="form-label" for="action" data-i18n="labels.action">Action</label>
           <select id="action" name="action" class="select2 form-select" data-allow-clear="true">
             <option value="">All</option>
             @foreach (['created', 'updated', 'deleted', 'restored'] as $action)
@@ -30,7 +30,7 @@
           </select>
         </div>
         <div class="col-sm-6 col-lg-3">
-          <label class="form-label" for="model_type">Model</label>
+          <label class="form-label" for="model_type" data-i18n="labels.model">Model</label>
           <select id="model_type" name="model_type" class="select2 form-select" data-allow-clear="true">
             <option value="">All</option>
             @foreach ($models as $model)
@@ -39,7 +39,7 @@
           </select>
         </div>
         <div class="col-sm-6 col-lg-3">
-          <label class="form-label" for="user_id">User</label>
+          <label class="form-label" for="user_id" data-i18n="labels.user">User</label>
           <select id="user_id" name="user_id" class="select2 form-select" data-allow-clear="true">
             <option value="">All</option>
             @foreach ($users as $user)
@@ -50,7 +50,7 @@
           </select>
         </div>
         <div class="col-sm-6 col-lg-3">
-          <label class="form-label" for="from">From</label>
+          <label class="form-label" for="from" data-i18n="labels.from">From</label>
           <input
             type="text"
             id="from"
@@ -60,7 +60,7 @@
             value="{{ request('from') }}" />
         </div>
         <div class="col-sm-6 col-lg-3">
-          <label class="form-label" for="to">To</label>
+          <label class="form-label" for="to" data-i18n="labels.to">To</label>
           <input
             type="text"
             id="to"
@@ -70,8 +70,8 @@
             value="{{ request('to') }}" />
         </div>
         <div class="col-12">
-          <button class="btn btn-primary me-2" type="submit">Filter</button>
-          <a href="{{ route('admin.audit-logs') }}" class="btn btn-label-secondary">Reset</a>
+          <button class="btn btn-primary me-2" type="submit" data-i18n="actions.filter">Filter</button>
+          <a href="{{ route('admin.audit-logs') }}" class="btn btn-label-secondary" data-i18n="actions.reset">Reset</a>
         </div>
       </form>
     </div>
