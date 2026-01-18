@@ -190,5 +190,6 @@
     "labels.user": "User",
     "labels.from": "From",
     "labels.to": "To",
-    "audit.title": "Audit Logs"
+    "audit.title": "Audit Logs",
+    "menu.settings": "Settings"
 }

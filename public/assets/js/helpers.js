@@ -619,7 +619,9 @@ const Helpers = {
     switchImagesList.forEach(imageEl => {
       const setImage = imageEl.getAttribute(`data-app-${style}-img`)
       if (setImage) {
-        const imagePath = `${assetsPath}img/${setImage}` // Using window.assetsPath for relative path
+        const imagePath = setImage.startsWith('http') || setImage.startsWith('/')
+          ? setImage
+          : `${assetsPath}img/${setImage}` // Using window.assetsPath for relative path
 
         // Preload the image to prevent flickering
         const img = new Image()

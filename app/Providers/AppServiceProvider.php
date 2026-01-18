@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\View;
+use App\Models\BusinessSetting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -80,6 +82,10 @@ class AppServiceProvider extends ServiceProvider
                 'url' => $request?->fullUrl(),
                 'method' => $request?->method(),
             ]);
+        });
+
+        View::composer('*', function ($view): void {
+            $view->with('appSettings', BusinessSetting::current());
         });
     }
 }

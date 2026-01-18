@@ -3,12 +3,16 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>@yield('title', 'Dashboard - Analytics')</title>
+    @php
+        $appTitle = $appSettings->app_name ?: 'RoomGate';
+        $favicon = $appSettings->favicon_path ? asset($appSettings->favicon_path) : asset('assets/assets/img/favicon/favicon.ico');
+    @endphp
+    <title>@yield('title', $appTitle)</title>
 
-    <meta name="description" content />
+    <meta name="description" content="{{ $appSettings->description ?? '' }}" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/assets') }}/img/favicon/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="{{ $favicon }}" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

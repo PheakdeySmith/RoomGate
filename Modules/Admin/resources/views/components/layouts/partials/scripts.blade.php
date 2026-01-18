@@ -5,6 +5,7 @@
 <script src="{{ asset('assets/assets') }}/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
 <script src="{{ asset('assets/assets') }}/vendor/libs/hammer/hammer.js"></script>
 <script src="{{ asset('assets/assets') }}/vendor/libs/i18n/i18n.js"></script>
+<script src="{{ asset('assets/assets') }}/vendor/libs/pickr/pickr.js"></script>
 <script src="{{ asset('assets/assets') }}/vendor/js/menu.js"></script>
 
 <script src="{{ asset('assets/assets') }}/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -17,6 +18,17 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('img[data-app-light-img], img[data-app-dark-img]').forEach((img) => {
+      const light = img.getAttribute('data-app-light-img');
+      const dark = img.getAttribute('data-app-dark-img');
+      const absolute = [light, dark].find((value) => value && (value.startsWith('/') || value.startsWith('http')));
+      if (absolute) {
+        img.src = absolute;
+        img.removeAttribute('data-app-light-img');
+        img.removeAttribute('data-app-dark-img');
+      }
+    });
+
     if (!window.Notyf || window.RoomGateNotyf) {
       return;
     }

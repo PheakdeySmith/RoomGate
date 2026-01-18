@@ -5,6 +5,7 @@ use Modules\Admin\App\Http\Controllers\AdminController;
 use Modules\Admin\App\Http\Controllers\AdminAuditLogController;
 use Modules\Admin\App\Http\Controllers\AdminPermissionController;
 use Modules\Admin\App\Http\Controllers\AdminRoleController;
+use Modules\Admin\App\Http\Controllers\AdminSettingsController;
 use Modules\Admin\App\Http\Controllers\AdminTranslationController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
@@ -33,4 +34,7 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::post('/translations', [AdminTranslationController::class, 'store'])->name('translations.store');
         Route::patch('/translations/{key}', [AdminTranslationController::class, 'update'])->name('translations.update');
         Route::delete('/translations/{key}', [AdminTranslationController::class, 'destroy'])->name('translations.destroy');
+
+        Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings');
+        Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
     });

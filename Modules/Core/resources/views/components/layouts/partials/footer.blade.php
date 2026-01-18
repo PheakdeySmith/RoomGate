@@ -3,13 +3,21 @@
                         <div class="container-xxl">
                             <div
                                 class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
-                                <div class="text-body">
-                                    &#169;
-                                    <script>
-                                        document.write(new Date().getFullYear());
-                                    </script>
-                                    , made with ❤️ by <a href="https://pixinvent.com" target="_blank"
-                                        class="footer-link">Pixinvent</a>
+                                @php
+                                    $companyName = $appSettings->company_name ?: ($appSettings->app_name ?: 'RoomGate');
+                                    $footerLogo = $appSettings->footer_logo_path ? asset($appSettings->footer_logo_path) : null;
+                                @endphp
+                                <div class="text-body d-flex align-items-center gap-2">
+                                    @if ($footerLogo)
+                                        <img src="{{ $footerLogo }}" alt="{{ $companyName }}" style="height: 20px;">
+                                    @endif
+                                    <span>
+                                        &#169;
+                                        <script>
+                                            document.write(new Date().getFullYear());
+                                        </script>
+                                        {{ $companyName }}
+                                    </span>
                                 </div>
                                 <div class="d-none d-lg-inline-block">
                                     <a href="https://themeforest.net/licenses/standard" class="footer-link me-4"
