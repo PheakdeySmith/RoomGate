@@ -1,5 +1,5 @@
 {
     "Core": true,
     "User": true,
-    "Dashboard": true
+    "Admin": true
 }

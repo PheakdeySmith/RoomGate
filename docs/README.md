@@ -105,7 +105,7 @@ Now the app knows:
 ```php
 public function index(CurrentTenant $currentTenant)
 {
-    return view('dashboard::dashboard', [
+    return view('core::dashboard.dashboard', [
         'tenant' => $currentTenant->get(),
     ]);
 }
@@ -147,7 +147,7 @@ Middleware does:
 
 ---
 
-## 5) Module wiring (Dashboard + Property)
+## 5) Module wiring (Core + Property)
 
 ### CoreServiceProvider binding (example)
 ```php
@@ -173,89 +173,7 @@ Note: Namespace casing must match your module folder structure.
 
 ---
 
-## 6) Dashboard module
-
-### Route
-File: `Modules/Dashboard/routes/web.php`
-```php
-Route::middleware(['web', 'auth', 'tenant'])
-    ->prefix('t/{tenant}')
-    ->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
-    });
-```
-
-### Controller
-File: `Modules/Dashboard/app/Http/Controllers/DashboardController.php`
-```php
-namespace Modules\Dashboard\App\Http\Controllers;
-
-use Illuminate\Routing\Controller;
-use Modules\Core\App\Services\CurrentTenant;
-
-class DashboardController extends Controller
-{
-    public function index(CurrentTenant $currentTenant)
-    {
-        return view('dashboard::dashboard', [
-            'tenant' => $currentTenant->get(),
-        ]);
-    }
-}
-```
-
-### Layout (app shell)
-File: `Modules/Dashboard/resources/views/layouts/app.blade.php`
-```php
-<title>{{ $title ?? 'Dashboard' }}</title>
-</head>
-<body style="font-family: sans-serif;">
-    <div style="display:flex; min-height:100vh;">
-        <!-- Sidebar -->
-        <aside style="width:240px; padding:16px; border-right:1px solid #ddd;">
-            <div style="font-weight:bold; margin-bottom:12px;">
-                Tenant: {{ $tenant->name ?? 'Unknown' }}
-            </div>
-            <nav style="display:flex; flex-direction:column; gap:8px;">
-                <a href="{{ route('tenant.dashboard', ['tenant' => $tenant->slug]) }}">Dashboard</a>
-                <a href="{{ route('tenant.properties.index', ['tenant' => $tenant->slug]) }}">Properties</a>
-            </nav>
-        </aside>
-
-        <!-- Main -->
-        <main style="flex:1; padding:16px;">
-            <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h2 style="margin:0;">{{ $title ?? '' }}</h2>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit">Logout</button>
-                </form>
-            </header>
-
-            @yield('content')
-        </main>
-    </div>
-</body>
-</html>
-```
-
-### Dashboard view
-File: `Modules/Dashboard/resources/views/dashboard.blade.php`
-```php
-@extends('dashboard::layouts.app')
-@php
-    $title = 'Dashboard';
-@endphp
-
-@section('content')
-    <p>Welcome to {{ $tenant->name }} dashboard.</p>
-@endsection
-```
-
----
-
-## 7) Property module
+## 6) Property module
 
 ### Route
 File: `Modules/Property/routes/web.php`
@@ -310,7 +228,7 @@ File: `Modules/Property/resources/views/index.blade.php`
 
 ---
 
-## 8) Example domain flows (data + behavior)
+## 7) Example domain flows (data + behavior)
 
 ### Create a property
 `properties`
@@ -431,7 +349,7 @@ Expected checks:
 
 ---
 
-## 9) Flutter API flow (Sanctum)
+## 8) Flutter API flow (Sanctum)
 
 Login:
 ```
@@ -471,7 +389,7 @@ Expected:
 
 ---
 
-## 10) One-time check: module views and routes are loaded
+## 9) One-time check: module views and routes are loaded
 
 Make sure each module's RouteServiceProvider loads its `routes/web.php` and the module service provider loads views.
 Usually nwidart already does this.

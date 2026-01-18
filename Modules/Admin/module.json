@@ -1,0 +1,13 @@
+{
+    "name": "Admin",
+    "alias": "Admin",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Admin\\App\\Providers\\AdminServiceProvider",
+        "Modules\\Admin\\App\\Providers\\EventServiceProvider",
+        "Modules\\Admin\\App\\Providers\\RouteServiceProvider"
+    ],
+    "files": []
+}
