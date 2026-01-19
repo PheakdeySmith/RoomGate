@@ -3,7 +3,7 @@
  */
 'use strict';
 
-document.addEventListener('DOMContentLoaded', function (e) {
+function initUserViewAccount() {
   // Variable declaration for table
   const dt_project_table = document.querySelector('.datatable-project'),
     dt_invoice_table = document.querySelector('.datatable-invoice');
@@ -558,4 +558,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
       });
     });
   }, 100);
-});
+}
+document.addEventListener('DOMContentLoaded', initUserViewAccount);
+document.addEventListener('user-view:loaded', initUserViewAccount);
+

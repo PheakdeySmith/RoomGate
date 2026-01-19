@@ -204,7 +204,7 @@
           columnDefs: [
             {
               targets: 0,
-              className: 'control',
+                className: 'control',
               orderable: false,
               searchable: false,
               render: function () {

@@ -179,12 +179,18 @@
                     </span>
                   </td>
                   <td><span class="badge {{ $statusLabel }}">{{ ucfirst($user->status) }}</span></td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <button
-                        class="btn btn-icon btn-text-secondary rounded-pill waves-effect"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editUserModal"
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <a
+                          href="{{ route('admin.users.account', $user) }}"
+                          class="btn btn-icon btn-text-secondary rounded-pill waves-effect"
+                          title="View user">
+                          <i class="icon-base ti tabler-eye icon-md"></i>
+                        </a>
+                        <button
+                          class="btn btn-icon btn-text-secondary rounded-pill waves-effect"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editUserModal"
                         data-user-id="{{ $user->id }}"
                         data-user-name="{{ $user->name }}"
                         data-user-email="{{ $user->email }}"
@@ -451,7 +457,7 @@
           columnDefs: [
             {
               targets: 0,
-              className: 'control',
+                className: 'control',
               orderable: false,
               searchable: false,
               render: function () {

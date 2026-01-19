@@ -36,7 +36,6 @@ function clearAllLive2DElements() {
 
 // --- Init Live2D ---
 function initializeCat() {
-    console.log('🐱 Booting cat...');
     if (document.querySelector('.live2d-widget-container')) {
         clearAllLive2DElements();
     }
@@ -49,13 +48,10 @@ function initializeCat() {
         }
 
         try {
+            const jsonPath = getCatModelPath();
             L2Dwidget.init({
                 model: {
-                    // Swap model here:
-                    // Tororo (cat):  https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json
-                    // Wanko (dog):   https://unpkg.com/live2d-widget-model-wanko@1.0.5/assets/wanko.model.json
-                    // Shizuku:       https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json
-                    jsonPath: "https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json",
+                    jsonPath,
                     scale: 1
                 },
                 display: {
@@ -75,7 +71,6 @@ function initializeCat() {
                 log: true
             });
 
-            console.log('✅ Cat loaded.');
 
             setTimeout(() => {
                 setupCatMessages();
@@ -94,6 +89,67 @@ function initializeCat() {
             showToast('error', 'Error', 'Cat refused to load. Check DevTools console for the drama.');
         }
     }, 800);
+}
+
+function resolveThemeMode() {
+    const root = document.documentElement;
+    const dataTheme = root.getAttribute('data-bs-theme') || root.getAttribute('data-theme');
+    if (dataTheme === 'system') {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    if (dataTheme === 'dark' || dataTheme === 'light') {
+        return dataTheme;
+    }
+    if (root.classList.contains('dark')) {
+        return 'dark';
+    }
+    return 'light';
+}
+
+function getCatModelPath() {
+    return resolveThemeMode() === 'dark'
+        ? '/assets/live2d/tororo/model.json'
+        : '/assets/live2d/hijiki/model.json';
+}
+
+function updateCatForTheme() {
+    if (!isCatEnabled() || isMobile()) return;
+    const desired = getCatModelPath();
+    if (window.RoomGateCatModelPath === desired) return;
+    window.RoomGateCatModelPath = desired;
+    resetLive2D();
+    setTimeout(() => enableCat(), 250);
+}
+
+function resetLive2D() {
+    disableCat();
+    document.querySelectorAll('script[src*="L2Dwidget"]').forEach((script) => script.remove());
+    window.RoomGateL2DLoading = null;
+    window.L2Dwidget = undefined;
+}
+
+function hookThemeHelpers() {
+    if (window.RoomGateCatThemeHooked) return true;
+    if (!window.Helpers || typeof window.Helpers.setTheme !== 'function') return false;
+
+    const originalSetTheme = window.Helpers.setTheme.bind(window.Helpers);
+    window.Helpers.setTheme = function (theme) {
+        const result = originalSetTheme(theme);
+        updateCatForTheme();
+        return result;
+    };
+
+    if (typeof window.Helpers.showActiveTheme === 'function') {
+        const originalShowActiveTheme = window.Helpers.showActiveTheme.bind(window.Helpers);
+        window.Helpers.showActiveTheme = function (theme, focus = false) {
+            const result = originalShowActiveTheme(theme, focus);
+            updateCatForTheme();
+            return result;
+        };
+    }
+
+    window.RoomGateCatThemeHooked = true;
+    return true;
 }
 
 // --- Funny message pool ---
@@ -237,6 +293,7 @@ function disableCat() {
 
 function enableCat() {
     if (isMobile()) return;
+    window.RoomGateCatModelPath = getCatModelPath();
     loadLive2DScript().then(() => {
         if (typeof requestIdleCallback === 'function') {
             requestIdleCallback(() => initializeCat(), { timeout: 1500 });
@@ -377,6 +434,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isCatEnabled()) {
         disableCat();
     }
+    const observer = new MutationObserver(updateCatForTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-bs-theme', 'class'] });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateCatForTheme);
+    if (!hookThemeHelpers()) {
+        let attempts = 0;
+        const timer = setInterval(() => {
+            attempts += 1;
+            if (hookThemeHelpers() || attempts >= 10) {
+                clearInterval(timer);
+            }
+        }, 300);
+    }
+
+    document.querySelectorAll('[data-bs-theme-value]').forEach((toggle) => {
+        toggle.addEventListener('click', () => {
+            setTimeout(updateCatForTheme, 100);
+        });
+    });
+
+    let lastTheme = resolveThemeMode();
+    setInterval(() => {
+        const currentTheme = resolveThemeMode();
+        if (currentTheme !== lastTheme) {
+            lastTheme = currentTheme;
+            updateCatForTheme();
+        }
+    }, 800);
 });
 
 window.addEventListener('load', () => {
@@ -414,7 +498,7 @@ function loadLive2DScript() {
     }
     window.RoomGateL2DLoading = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'https://unpkg.com/live2d-widget@3.1.4/lib/L2Dwidget.min.js';
+        script.src = '/assets/js/L2Dwidget.min.js';
         script.async = true;
         script.onload = () => resolve();
         script.onerror = () => reject(new Error('Live2D script failed to load.'));

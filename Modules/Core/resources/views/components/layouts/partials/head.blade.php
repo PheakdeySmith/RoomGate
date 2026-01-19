@@ -48,6 +48,30 @@
         href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
     <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/fonts/flag-icons.css" />
     <link rel="stylesheet" href="{{ asset('assets/assets') }}/css/cat.css" />
+    <link rel="stylesheet" href="{{ asset('assets/assets') }}/css/roomgate-ajax.css" />
+    <style>
+        table.dataTable td.control:before {
+            content: '+';
+            display: inline-block;
+            box-sizing: border-box;
+            width: 20px;
+            height: 20px;
+            border: 1px solid currentColor;
+            border-radius: 3px;
+            font-size: 12px;
+            line-height: 18px;
+            text-align: center;
+            color: var(--bs-secondary-color);
+        }
+        table.dataTable tr.dt-hasChild td.control:before {
+            content: '-';
+        }
+        html.dark table.dataTable td.control:before,
+        :root[data-bs-theme=dark] table.dataTable td.control:before,
+        :root[data-theme=dark] table.dataTable td.control:before {
+            color: rgba(255, 255, 255, 0.75);
+        }
+    </style>
 
 
     <!-- Page CSS -->

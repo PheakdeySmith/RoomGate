@@ -1,0 +1,20 @@
+.rg-ajax-loading {
+  position: relative;
+}
+
+.rg-ajax-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.65);
+  z-index: 10;
+}
+
+html.dark .rg-ajax-overlay,
+:root[data-bs-theme=dark] .rg-ajax-overlay,
+:root[data-theme=dark] .rg-ajax-overlay {
+  background: rgba(0, 0, 0, 0.45);
+}

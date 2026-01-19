@@ -4,7 +4,7 @@
 
 'use strict';
 
-document.addEventListener('DOMContentLoaded', function (e) {
+function initUserViewSecurity() {
   const formChangePass = document.querySelector('#formChangePassword'),
     phoneMask = document.querySelector('.phone-number-mask');
 
@@ -76,4 +76,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
       delimiter: ' '
     });
   }
-});
+}
+document.addEventListener('DOMContentLoaded', initUserViewSecurity);
+document.addEventListener('user-view:loaded', initUserViewSecurity);
+

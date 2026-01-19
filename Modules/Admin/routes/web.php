@@ -7,6 +7,7 @@ use Modules\Admin\App\Http\Controllers\AdminPermissionController;
 use Modules\Admin\App\Http\Controllers\AdminRoleController;
 use Modules\Admin\App\Http\Controllers\AdminSettingsController;
 use Modules\Admin\App\Http\Controllers\AdminTranslationController;
+use Modules\Admin\App\Http\Controllers\AdminUserViewController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
     ->prefix('admin')
@@ -23,6 +24,11 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::patch('/users/{user}', [AdminRoleController::class, 'updateUser'])->name('users.update');
         Route::patch('/users/{user}/toggle', [AdminRoleController::class, 'toggleUser'])->name('users.toggle');
         Route::delete('/users/{user}', [AdminRoleController::class, 'destroyUser'])->name('users.destroy');
+        Route::get('/users/{user}/account', [AdminUserViewController::class, 'account'])->name('users.account');
+        Route::get('/users/{user}/security', [AdminUserViewController::class, 'security'])->name('users.security');
+        Route::get('/users/{user}/billing', [AdminUserViewController::class, 'billing'])->name('users.billing');
+        Route::get('/users/{user}/notifications', [AdminUserViewController::class, 'notifications'])->name('users.notifications');
+        Route::get('/users/{user}/connections', [AdminUserViewController::class, 'connections'])->name('users.connections');
 
         Route::get('/permissions', [AdminPermissionController::class, 'index'])->name('permissions');
         Route::post('/permissions', [AdminPermissionController::class, 'store'])->name('permissions.store');

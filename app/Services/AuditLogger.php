@@ -8,6 +8,17 @@ use Illuminate\Support\Facades\Auth;
 
 class AuditLogger
 {
+    private const SENSITIVE_KEYS = [
+        'password',
+        'password_confirmation',
+        'current_password',
+        'remember_token',
+        'token',
+        'api_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+    ];
+
     public function log(
         string $action,
         string $modelType,
@@ -17,6 +28,8 @@ class AuditLogger
         ?Request $request = null
     ): void {
         $request = $request ?? request();
+        $before = $this->sanitizePayload($before);
+        $after = $this->sanitizePayload($after);
 
         AuditLog::create([
             'action' => $action,
@@ -30,5 +43,30 @@ class AuditLogger
             'url' => $request?->fullUrl(),
             'method' => $request?->method(),
         ]);
+    }
+
+    private function sanitizePayload(?array $payload): ?array
+    {
+        if (!$payload) {
+            return $payload;
+        }
+
+        return $this->scrubArray($payload);
+    }
+
+    private function scrubArray(array $payload): array
+    {
+        foreach ($payload as $key => $value) {
+            if (is_string($key) && in_array(strtolower($key), self::SENSITIVE_KEYS, true)) {
+                $payload[$key] = '[redacted]';
+                continue;
+            }
+
+            if (is_array($value)) {
+                $payload[$key] = $this->scrubArray($value);
+            }
+        }
+
+        return $payload;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class BusinessSetting extends Model
 {
@@ -34,20 +35,17 @@ class BusinessSetting extends Model
 
     public static function current(): self
     {
-        static $cached = null;
-        if ($cached instanceof self) {
-            return $cached;
-        }
+        return Cache::remember('business_settings:current', 300, function () {
+            $settings = self::query()->first();
+            if (!$settings) {
+                $settings = self::query()->create([
+                    'app_name' => 'RoomGate',
+                    'app_short_name' => 'RoomGate',
+                    'company_name' => 'RoomGate',
+                ]);
+            }
 
-        $cached = self::query()->first();
-        if (!$cached) {
-            $cached = self::query()->create([
-                'app_name' => 'RoomGate',
-                'app_short_name' => 'RoomGate',
-                'company_name' => 'RoomGate',
-            ]);
-        }
-
-        return $cached;
+            return $settings;
+        });
     }
 }

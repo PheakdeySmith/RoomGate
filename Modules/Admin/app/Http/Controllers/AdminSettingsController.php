@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessSetting;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class AdminSettingsController extends Controller
@@ -57,6 +58,7 @@ class AdminSettingsController extends Controller
         $settings->favicon_path = $this->storeAsset($request, 'favicon', $settings->favicon_path);
 
         $settings->save();
+        Cache::forget('business_settings:current');
 
         return back()->with('status', 'Settings updated.');
     }

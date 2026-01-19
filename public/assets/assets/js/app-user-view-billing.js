@@ -4,7 +4,7 @@
 
 'use strict';
 
-document.addEventListener('DOMContentLoaded', function (e) {
+function initUserViewBilling() {
   // Cancel Subscription alert
   const cancelSubscription = document.querySelector('.cancel-subscription');
 
@@ -50,8 +50,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
     addressTitle = document.querySelector('.address-title'),
     addressSubTitle = document.querySelector('.address-subtitle');
 
-  addressEdit.onclick = function () {
-    addressTitle.innerHTML = 'Edit Address'; // reset text
-    addressSubTitle.innerHTML = 'Edit your current address';
-  };
-});
+  if (addressEdit && addressTitle && addressSubTitle) {
+    addressEdit.onclick = function () {
+      addressTitle.innerHTML = 'Edit Address'; // reset text
+      addressSubTitle.innerHTML = 'Edit your current address';
+    };
+  }
+}
+document.addEventListener('DOMContentLoaded', initUserViewBilling);
+document.addEventListener('user-view:loaded', initUserViewBilling);
+
