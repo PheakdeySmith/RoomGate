@@ -3,18 +3,24 @@
             <aside id="layout-menu" class="layout-menu menu-vertical menu">
                 @php
                     $brandName = $appSettings->app_short_name ?: ($appSettings->app_name ?: 'RoomGate');
-                    $lightLogo = $appSettings->logo_light_path ? asset($appSettings->logo_light_path) : null;
-                    $darkLogo = $appSettings->logo_dark_path ? asset($appSettings->logo_dark_path) : $lightLogo;
+        $lightLogo = $appSettings->logo_light_path ? asset($appSettings->logo_light_path) : null;
+        $darkLogo = $appSettings->logo_dark_path ? asset($appSettings->logo_dark_path) : $lightLogo;
+        $smallLogo = $appSettings->logo_small_path ? asset($appSettings->logo_small_path) : ($lightLogo ?? $darkLogo);
                 @endphp
                 <div class="app-brand demo ">
                     <a href="index.html" class="app-brand-link">
                         <span class="app-brand-logo demo">
-                            @if ($lightLogo || $darkLogo)
-                                <img
-                                    src="{{ $lightLogo ?? $darkLogo }}"
-                                    alt="{{ $brandName }}"
-                                    class="img-fluid"
-                                    style="height: 26px;">
+                              @if ($lightLogo || $darkLogo || $smallLogo)
+                                  <img
+                                      src="{{ $lightLogo ?? $darkLogo ?? $smallLogo }}"
+                                      alt="{{ $brandName }}"
+                                      class="img-fluid app-brand-img"
+                                      style="height: 26px;">
+                                  <img
+                                      src="{{ $smallLogo ?? $lightLogo ?? $darkLogo }}"
+                                      alt="{{ $brandName }}"
+                                      class="img-fluid app-brand-img-collapsed"
+                                      style="height: 26px;">
                             @else
                                 <span class="text-primary">
                                     <svg width="32" height="22" viewBox="0 0 32 22" fill="none"

@@ -61,6 +61,28 @@
         :root[data-theme=dark] table.dataTable td.control:before {
             color: rgba(255, 255, 255, 0.75);
         }
+
+        .layout-menu-collapsed .app-brand-logo,
+        .menu-collapsed .app-brand-logo {
+            width: 26px;
+            min-width: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layout-menu-collapsed .app-brand-img,
+        .menu-collapsed .app-brand-img {
+            display: none !important;
+        }
+
+        .layout-menu-collapsed .app-brand-img-collapsed,
+        .menu-collapsed .app-brand-img-collapsed {
+            display: block !important;
+            width: 26px;
+            max-width: 26px;
+            height: auto;
+        }
     </style>
 
     @stack('page-styles')

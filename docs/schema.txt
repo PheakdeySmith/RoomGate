@@ -104,6 +104,120 @@ Schema::create('tenant_invitations', function (Blueprint $table) {
 });
 
 // =========================
+// SUBSCRIPTIONS / PLANS
+// =========================
+Schema::create('plans', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->string('name', 100);
+    $table->string('code', 50)->unique();
+
+    $table->unsignedBigInteger('price_cents');
+    $table->char('currency_code', 3)->default('USD');
+    $table->string('interval', 20)->default('monthly'); // monthly|yearly
+
+    $table->boolean('is_active')->default(true);
+
+    $table->timestampsTz(3);
+});
+
+Schema::create('plan_limits', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('plan_id');
+    $table->string('limit_key', 64);  // seats|properties|storage_mb|feature_x
+    $table->string('limit_value', 64);
+
+    $table->timestampsTz(3);
+
+    $table->unique(['plan_id', 'limit_key'], 'uq_plan_limit_key');
+    $table->index(['plan_id', 'limit_key'], 'idx_plan_limit_key');
+
+    $table->foreign('plan_id')->references('id')->on('plans')->cascadeOnDelete();
+});
+
+Schema::create('subscriptions', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('plan_id');
+
+    $table->string('status', 20)->default('active'); // active|trialing|past_due|cancelled|expired
+    $table->boolean('auto_renew')->default(true);
+
+    $table->timestampTz('current_period_start', 3);
+    $table->timestampTz('current_period_end', 3);
+    $table->timestampTz('trial_ends_at', 3)->nullable();
+    $table->timestampTz('cancelled_at', 3)->nullable();
+
+    $table->string('provider', 50)->default('manual'); // bakong|stripe|paddle|manual
+    $table->string('provider_ref', 255)->nullable();
+
+    $table->timestampsTz(3);
+    $table->softDeletesTz(3);
+
+    $table->unique(['tenant_id', 'plan_id', 'status'], 'uq_sub_tenant_plan_status');
+    $table->index(['tenant_id', 'status'], 'idx_sub_tenant_status');
+    $table->index(['tenant_id', 'current_period_end'], 'idx_sub_tenant_period_end');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+    $table->foreign('plan_id')->references('id')->on('plans')->restrictOnDelete();
+});
+
+Schema::create('subscription_invoices', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('subscription_id');
+
+    $table->string('invoice_number', 50)->unique();
+    $table->unsignedBigInteger('amount_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('status', 20)->default('unpaid'); // unpaid|paid|void
+    $table->date('billing_period_start');
+    $table->date('billing_period_end');
+    $table->date('due_date');
+    $table->timestampTz('paid_at', 3)->nullable();
+
+    $table->json('metadata')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->index(['tenant_id', 'status'], 'idx_subinv_tenant_status');
+    $table->index(['tenant_id', 'billing_period_end'], 'idx_subinv_tenant_period_end');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+    $table->foreign('subscription_id')->references('id')->on('subscriptions')->cascadeOnDelete();
+});
+
+Schema::create('subscription_payments', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id');
+    $table->unsignedBigInteger('subscription_invoice_id');
+
+    $table->unsignedBigInteger('amount_cents');
+    $table->char('currency_code', 3)->default('USD');
+
+    $table->string('provider', 50)->default('manual'); // bakong|stripe|paddle|manual
+    $table->string('provider_ref', 255)->nullable();
+
+    $table->string('status', 20)->default('pending'); // pending|paid|failed|cancelled
+    $table->timestampTz('paid_at', 3)->nullable();
+
+    $table->json('metadata')->nullable();
+
+    $table->timestampsTz(3);
+
+    $table->index(['tenant_id', 'status'], 'idx_subpay_tenant_status');
+    $table->index(['tenant_id', 'provider', 'provider_ref'], 'idx_subpay_provider');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+    $table->foreign('subscription_invoice_id')->references('id')->on('subscription_invoices')->cascadeOnDelete();
+});
+
+// =========================
 // OPTIONAL: QR TOKENS
 // =========================
 Schema::create('user_qr_codes', function (Blueprint $table) {
@@ -234,6 +348,7 @@ Schema::create('rooms', function (Blueprint $table) {
 // PROPERTY USERS (staff assignment)
 // =========================
 Schema::create('property_users', function (Blueprint $table) {
+    // Use this to scope staff/admin access to specific properties when needed.
     $table->unsignedBigInteger('tenant_id');
     $table->unsignedBigInteger('property_id');
     $table->unsignedBigInteger('user_id');

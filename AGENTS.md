@@ -34,6 +34,30 @@ Follow these rules when making changes in this repo.
 - Apply throttle middleware for auth POST routes unless told otherwise.
 - Remove demo data in production seeders.
 
+### Plans & Feature Gating
+- Use `plans`, `plan_limits`, `subscriptions`, `subscription_invoices`, `subscription_payments` for SaaS billing.
+- Gate enterprise features (e.g., staff/property assignment) behind plan checks.
+- Centralize plan checks in a shared service/helper; do not scatter hard-coded plan logic.
+
+### Notifications
+- Use event-driven notifications with `message_templates` + `outbound_messages`.
+- Queue sends with retries; update status + attempt_count.
+- Use `dedupe_key` to prevent duplicate sends.
+- Support tenant-specific templates with global fallbacks.
+
+### Production Readiness Checklist
+- Enforce tenant scoping in queries/policies (always filter by tenant_id).
+- Use a single plan/feature gating service for UI + backend checks.
+- Ensure DB backups + upload backups are documented.
+- Use queues for emails/invoices/background jobs and configure retries.
+- Set up error monitoring (Sentry/Bugsnag) and log audit-critical actions.
+- Protect private uploads via controller + auth checks.
+- Keep admin/tenant route separation with middleware guards.
+- Keep controllers thin; put business logic in services/actions for web + API reuse.
+- Wrap multi-table writes in DB transactions with retries for deadlocks.
+- Store webhook payloads with idempotency keys for replay safety.
+- Use feature flags sparingly; document toggle ownership and sunset plan.
+
 ### Security
 - Keep `SecurityHeaders` middleware enabled for all web routes.
 - Do not add inline third‑party scripts without a clear reason.

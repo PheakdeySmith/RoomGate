@@ -3,15 +3,21 @@
         $brandName = $appSettings->app_short_name ?: ($appSettings->app_name ?: 'RoomGate');
         $lightLogo = $appSettings->logo_light_path ? asset($appSettings->logo_light_path) : null;
         $darkLogo = $appSettings->logo_dark_path ? asset($appSettings->logo_dark_path) : $lightLogo;
+        $smallLogo = $appSettings->logo_small_path ? asset($appSettings->logo_small_path) : ($lightLogo ?? $darkLogo);
     @endphp
     <div class="app-brand demo">
         <a href="{{ route('admin.dashboard') }}" class="app-brand-link">
             <span class="app-brand-logo demo">
-                @if ($lightLogo || $darkLogo)
+                @if ($lightLogo || $darkLogo || $smallLogo)
                     <img
-                        src="{{ $lightLogo ?? $darkLogo }}"
+                        src="{{ $lightLogo ?? $darkLogo ?? $smallLogo }}"
                         alt="{{ $brandName }}"
-                        class="img-fluid"
+                        class="img-fluid app-brand-img"
+                        style="height: 26px;">
+                    <img
+                        src="{{ $smallLogo ?? $lightLogo ?? $darkLogo }}"
+                        alt="{{ $brandName }}"
+                        class="img-fluid app-brand-img-collapsed"
                         style="height: 26px;">
                 @else
                     <span class="text-primary">
