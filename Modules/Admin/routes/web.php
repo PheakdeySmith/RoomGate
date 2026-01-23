@@ -6,8 +6,12 @@ use Modules\Admin\App\Http\Controllers\AdminAuditLogController;
 use Modules\Admin\App\Http\Controllers\AdminPermissionController;
 use Modules\Admin\App\Http\Controllers\AdminRoleController;
 use Modules\Admin\App\Http\Controllers\AdminSettingsController;
+use Modules\Admin\App\Http\Controllers\AdminPlanController;
+use Modules\Admin\App\Http\Controllers\AdminSubscriptionController;
 use Modules\Admin\App\Http\Controllers\AdminTranslationController;
+use Modules\Admin\App\Http\Controllers\AdminTenantController;
 use Modules\Admin\App\Http\Controllers\AdminUserViewController;
+use Modules\Admin\App\Http\Controllers\AdminPropertyController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
     ->prefix('admin')
@@ -24,6 +28,15 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::patch('/users/{user}', [AdminRoleController::class, 'updateUser'])->name('users.update');
         Route::patch('/users/{user}/toggle', [AdminRoleController::class, 'toggleUser'])->name('users.toggle');
         Route::delete('/users/{user}', [AdminRoleController::class, 'destroyUser'])->name('users.destroy');
+        Route::get('/tenants', [AdminTenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/data', [AdminTenantController::class, 'data'])->name('tenants.data');
+        Route::post('/tenants', [AdminTenantController::class, 'store'])->name('tenants.store');
+        Route::patch('/tenants/{tenant}', [AdminTenantController::class, 'update'])->name('tenants.update');
+        Route::delete('/tenants/{tenant}', [AdminTenantController::class, 'destroy'])->name('tenants.destroy');
+        Route::get('/tenants/{tenant}', [AdminTenantController::class, 'show'])->name('tenants.show');
+        Route::post('/tenants/{tenant}/members', [AdminTenantController::class, 'storeMember'])->name('tenants.members.store');
+        Route::patch('/tenants/{tenant}/members/{user}', [AdminTenantController::class, 'updateMember'])->name('tenants.members.update');
+        Route::delete('/tenants/{tenant}/members/{user}', [AdminTenantController::class, 'destroyMember'])->name('tenants.members.destroy');
         Route::get('/users/{user}/account', [AdminUserViewController::class, 'account'])->name('users.account');
         Route::get('/users/{user}/security', [AdminUserViewController::class, 'security'])->name('users.security');
         Route::get('/users/{user}/billing', [AdminUserViewController::class, 'billing'])->name('users.billing');
@@ -43,4 +56,32 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
 
         Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings');
         Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+
+        Route::get('/plans', [AdminPlanController::class, 'index'])->name('plans.index');
+        Route::post('/plans', [AdminPlanController::class, 'store'])->name('plans.store');
+        Route::patch('/plans/{plan}', [AdminPlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [AdminPlanController::class, 'destroy'])->name('plans.destroy');
+        Route::post('/plan-limits', [AdminPlanController::class, 'storeLimit'])->name('plan-limits.store');
+        Route::patch('/plan-limits/{planLimit}', [AdminPlanController::class, 'updateLimit'])->name('plan-limits.update');
+        Route::delete('/plan-limits/{planLimit}', [AdminPlanController::class, 'destroyLimit'])->name('plan-limits.destroy');
+
+        Route::get('/properties', [AdminPropertyController::class, 'index'])->name('properties.index');
+        Route::post('/properties', [AdminPropertyController::class, 'store'])->name('properties.store');
+        Route::patch('/properties/{property}', [AdminPropertyController::class, 'update'])->name('properties.update');
+        Route::delete('/properties/{property}', [AdminPropertyController::class, 'destroy'])->name('properties.destroy');
+
+        Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('/subscriptions/invoices', [AdminSubscriptionController::class, 'invoices'])->name('subscriptions.invoices');
+        Route::get('/subscriptions/payments', [AdminSubscriptionController::class, 'payments'])->name('subscriptions.payments');
+        Route::get('/subscription-invoices', [AdminSubscriptionController::class, 'invoices'])->name('subscription-invoices.index');
+        Route::get('/subscription-invoices/create', [AdminSubscriptionController::class, 'createInvoice'])->name('subscription-invoices.create');
+        Route::get('/subscription-invoices/{subscriptionInvoice}', [AdminSubscriptionController::class, 'showInvoice'])->name('subscription-invoices.show');
+        Route::get('/subscription-invoices/{subscriptionInvoice}/edit', [AdminSubscriptionController::class, 'editInvoice'])->name('subscription-invoices.edit');
+        Route::post('/subscriptions', [AdminSubscriptionController::class, 'store'])->name('subscriptions.store');
+        Route::patch('/subscriptions/{subscription}', [AdminSubscriptionController::class, 'update'])->name('subscriptions.update');
+        Route::delete('/subscriptions/{subscription}', [AdminSubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
+        Route::post('/subscription-invoices', [AdminSubscriptionController::class, 'storeInvoice'])->name('subscription-invoices.store');
+        Route::patch('/subscription-invoices/{subscriptionInvoice}', [AdminSubscriptionController::class, 'updateInvoice'])->name('subscription-invoices.update');
+        Route::post('/subscription-payments', [AdminSubscriptionController::class, 'storePayment'])->name('subscription-payments.store');
+        Route::patch('/subscription-payments/{subscriptionPayment}', [AdminSubscriptionController::class, 'updatePayment'])->name('subscription-payments.update');
     });

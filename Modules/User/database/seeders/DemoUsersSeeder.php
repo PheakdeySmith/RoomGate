@@ -11,50 +11,14 @@ class DemoUsersSeeder extends Seeder
 {
     public function run(): void
     {
-        $password = Hash::make('password');
+        $password = Hash::make('11111111');
 
         $users = [
             [
-                'name' => 'Platform Admin',
-                'email' => 'platform.admin@roomgate.test',
+                'name' => 'Admin',
+                'email' => 'admin@gmail.com',
                 'platform_role' => 'platform_admin',
                 'roles' => ['platform_admin'],
-            ],
-            [
-                'name' => 'Support User',
-                'email' => 'support@roomgate.test',
-                'platform_role' => 'support',
-                'roles' => ['support'],
-            ],
-            [
-                'name' => 'Billing Admin',
-                'email' => 'billing.admin@roomgate.test',
-                'platform_role' => 'billing_admin',
-                'roles' => ['billing_admin'],
-            ],
-            [
-                'name' => 'Tenant Owner',
-                'email' => 'owner@roomgate.test',
-                'platform_role' => 'none',
-                'roles' => ['owner'],
-            ],
-            [
-                'name' => 'Tenant Admin',
-                'email' => 'tenant.admin@roomgate.test',
-                'platform_role' => 'none',
-                'roles' => ['admin'],
-            ],
-            [
-                'name' => 'Tenant Staff',
-                'email' => 'staff@roomgate.test',
-                'platform_role' => 'none',
-                'roles' => ['staff'],
-            ],
-            [
-                'name' => 'Tenant User',
-                'email' => 'tenant@roomgate.test',
-                'platform_role' => 'none',
-                'roles' => ['tenant'],
             ],
         ];
 

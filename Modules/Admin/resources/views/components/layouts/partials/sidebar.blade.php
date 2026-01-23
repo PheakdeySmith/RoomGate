@@ -81,6 +81,19 @@
                 <div data-i18n="menu.permissions">Permissions</div>
             </a>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.tenants.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-users"></i>
+                <div data-i18n="menu.tenants">Tenants</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.tenants.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.tenants.index') }}" class="menu-link">
+                        <div data-i18n="menu.tenants_list">List</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.audit-logs') ? 'active' : '' }}">
             <a href="{{ route('admin.audit-logs') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-history"></i>
@@ -97,10 +110,45 @@
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">System</span>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.plans.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-credit-card"></i>
+                <div data-i18n="menu.plans">Plans</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.subscriptions.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-receipt-2"></i>
+                <div data-i18n="menu.subscriptions">Subscriptions</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.subscriptions.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscriptions.index') }}" class="menu-link">
+                        <div data-i18n="menu.subscriptions_list">Subscriptions</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.subscriptions.invoices') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscriptions.invoices') }}" class="menu-link">
+                        <div data-i18n="menu.subscription_invoices">Invoices</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.subscriptions.payments') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscriptions.payments') }}" class="menu-link">
+                        <div data-i18n="menu.subscription_payments">Payments</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
             <a href="{{ route('admin.settings') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-settings"></i>
                 <div data-i18n="menu.settings">Settings</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.properties.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.properties.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-building-community"></i>
+                <div data-i18n="menu.properties">Properties</div>
             </a>
         </li>
 

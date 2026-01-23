@@ -18,5 +18,8 @@
     "audit.title": "កំណត់ហេតុផ្ទៀងផ្ទាត់",
     "Roles": "តួនាទី",
     "Permissions": "សិទ្ធិ",
-    "menu.settings": "ការកំណត់"
+    "menu.settings": "????????",
+    "menu.tenants": "អ្នកប្រើប្រាស់",
+    "menu.tenants_list": "តារាងអ្នកប្រើប្រាស់",
+    "menu.plans": "គម្រោង"
 }

@@ -127,7 +127,15 @@
             </tr>
           @empty
             <tr>
-              <td colspan="9" class="text-center text-body-secondary">No audit logs found.</td>
+              <td class="text-center text-body-secondary">No audit logs found.</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
             </tr>
           @endforelse
         </tbody>

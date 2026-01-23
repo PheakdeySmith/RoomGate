@@ -14,26 +14,48 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
   // Variable declaration for table
   const dt_user_table = document.querySelector('.datatables-users'),
-    userView = 'app-user-view-account.html',
+    userViewBase = window.roomGateUserViewBase || null,
+    userViewFallback = window.roomGateUserViewFallback || 'app-user-view-account.html',
+    dataUrl = window.roomGateUserListDataUrl || assetsPath + 'json/user-list.json',
     statusObj = {
       1: { title: 'Pending', class: 'bg-label-warning' },
       2: { title: 'Active', class: 'bg-label-success' },
       3: { title: 'Inactive', class: 'bg-label-secondary' }
     };
+  const getUserViewLink = (userId) => {
+    if (isTenantList) {
+      return `/admin/tenants/${userId}`;
+    }
+    if (userViewBase) {
+      return `${userViewBase}/${userId}/account`;
+    }
+    return userViewFallback;
+  };
+  const isTenantList = window.roomGateUserListMode === 'tenants';
+
   var select2 = $('.select2');
 
   if (select2.length) {
-    var $this = select2;
-    $this.wrap('<div class="position-relative"></div>').select2({
-      placeholder: 'Select Country',
-      dropdownParent: $this.parent()
+    select2.each(function () {
+      var $this = $(this);
+      if ($this.hasClass('select2-hidden-accessible')) {
+        return;
+      }
+      var placeholder =
+        $this.data('placeholder') ||
+        $this.find('option[value=""]').first().text() ||
+        'Select';
+      $this.wrap('<div class="position-relative"></div>').select2({
+        placeholder: placeholder,
+        dropdownParent: $this.parent()
+      });
     });
   }
 
   // Users datatable
   if (dt_user_table) {
     const dt_user = new DataTable(dt_user_table, {
-      ajax: assetsPath + 'json/user-list.json', // JSON file to add data
+      ajax: dataUrl,
       columns: [
         // columns according to JSON
         { data: 'id' },
@@ -103,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
               '</div>' +
               '<div class="d-flex flex-column">' +
               '<a href="' +
-              userView +
+              getUserViewLink(full['id']) +
               '" class="text-heading text-truncate"><span class="fw-medium">' +
               name +
               '</span></a>' +
@@ -164,12 +186,33 @@ document.addEventListener('DOMContentLoaded', function (e) {
           searchable: false,
           orderable: false,
           render: (data, type, full, meta) => {
+            if (isTenantList) {
+              return `
+                <div class="d-flex align-items-center">
+                  <a href="javascript:;" class="btn btn-text-secondary rounded-pill waves-effect btn-icon tenant-edit"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvasEditTenant"
+                    data-tenant-id="${full['id']}"
+                    data-tenant-name="${full['full_name']}"
+                    data-tenant-email="${full['email']}"
+                    data-tenant-status="${full['status_raw'] || 'active'}"
+                    data-tenant-plan="${full['current_plan_id'] || ''}">
+                    <i class="icon-base ti tabler-edit icon-22px"></i>
+                  </a>
+                  <a href="javascript:;" class="btn btn-text-danger rounded-pill waves-effect btn-icon tenant-delete"
+                    data-tenant-id="${full['id']}"
+                    data-tenant-name="${full['full_name']}">
+                    <i class="icon-base ti tabler-trash icon-22px"></i>
+                  </a>
+                </div>
+              `;
+            }
             return `
               <div class="d-flex align-items-center">
                 <a href="javascript:;" class="btn btn-text-secondary rounded-pill waves-effect btn-icon delete-record">
                   <i class="icon-base ti tabler-trash icon-22px"></i>
                 </a>
-                <a href="${userView}" class="btn btn-text-secondary rounded-pill waves-effect btn-icon">
+                <a href="${getUserViewLink(full['id'])}" class="btn btn-text-secondary rounded-pill waves-effect btn-icon">
                   <i class="icon-base ti tabler-eye icon-22px"></i>
                 </a>
                 <a href="javascript:;" class="btn btn-text-secondary rounded-pill waves-effect btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
@@ -480,6 +523,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
       },
       initComplete: function () {
+        if (window.roomGateUserListStaticFilters) {
+          return;
+        }
         const api = this.api();
 
         // Helper function to create a select dropdown and append options
@@ -590,6 +636,61 @@ document.addEventListener('DOMContentLoaded', function (e) {
     });
   }
 
+  if (isTenantList) {
+    const editForm = document.getElementById('editTenantForm');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    document.addEventListener('click', function (event) {
+      const editTrigger = event.target.closest('.tenant-edit');
+      if (editTrigger && editForm) {
+        editForm.action = `/admin/tenants/${editTrigger.getAttribute('data-tenant-id')}`;
+        document.getElementById('edit-tenant-name').value = editTrigger.getAttribute('data-tenant-name') || '';
+        document.getElementById('edit-tenant-email').value = editTrigger.getAttribute('data-tenant-email') || '';
+        document.getElementById('edit-tenant-status').value = editTrigger.getAttribute('data-tenant-status') || 'active';
+        document.getElementById('edit-tenant-plan').value = editTrigger.getAttribute('data-tenant-plan') || '';
+        const passwordInput = document.getElementById('edit-tenant-password');
+        if (passwordInput) {
+          passwordInput.value = '';
+        }
+      }
+
+      const deleteTrigger = event.target.closest('.tenant-delete');
+      if (deleteTrigger) {
+        const tenantId = deleteTrigger.getAttribute('data-tenant-id');
+        const tenantName = deleteTrigger.getAttribute('data-tenant-name') || 'this tenant';
+        const confirmDelete = () => {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = `/admin/tenants/${tenantId}`;
+          form.innerHTML = `
+            <input type="hidden" name="_token" value="${token}">
+            <input type="hidden" name="_method" value="DELETE">
+          `;
+          document.body.appendChild(form);
+          form.submit();
+        };
+
+        if (window.Swal) {
+          window.Swal.fire({
+            title: 'Are you sure?',
+            text: `Delete ${tenantName}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+          }).then(result => {
+            if (result.isConfirmed) {
+              confirmDelete();
+            }
+          });
+        } else if (window.confirm(`Delete ${tenantName}?`)) {
+          confirmDelete();
+        }
+      }
+    });
+  }
+
   // Filter form control to default size
   // ? setTimeout used for user-list table initialization
   setTimeout(() => {
@@ -644,20 +745,38 @@ document.addEventListener('DOMContentLoaded', function (e) {
   // Add New User Form Validation
   const fv = FormValidation.formValidation(addNewUserForm, {
     fields: {
-      userFullname: {
+      name: {
         validators: {
           notEmpty: {
-            message: 'Please enter fullname '
+            message: 'Please enter tenant name'
           }
         }
       },
-      userEmail: {
+      owner_email: {
         validators: {
           notEmpty: {
-            message: 'Please enter your email'
+            message: 'Please enter owner email'
           },
           emailAddress: {
             message: 'The value is not a valid email address'
+          }
+        }
+      },
+      owner_password: {
+        validators: {
+          notEmpty: {
+            message: 'Please enter a password'
+          },
+          stringLength: {
+            min: 8,
+            message: 'Password must be at least 8 characters'
+          }
+        }
+      },
+      plan_id: {
+        validators: {
+          notEmpty: {
+            message: 'Please select a plan'
           }
         }
       }
@@ -674,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
       }),
       submitButton: new FormValidation.plugins.SubmitButton(),
       // Submit the form when all fields are valid
-      // defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
+      defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
   });
