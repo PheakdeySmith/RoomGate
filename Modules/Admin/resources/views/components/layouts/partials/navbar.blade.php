@@ -85,6 +85,63 @@
                 </a>
             </li>
 
+            <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
+                <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill waves-effect"
+                    href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="icon-base ti tabler-bell icon-22px text-heading"></i>
+                    @if (($navbarUnreadCount ?? 0) > 0)
+                        <span class="badge bg-danger rounded-pill badge-notifications">{{ $navbarUnreadCount }}</span>
+                    @endif
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end py-0">
+                    <li class="dropdown-menu-header border-bottom">
+                        <div class="dropdown-header d-flex align-items-center py-3">
+                            <h6 class="mb-0 me-auto">Notification</h6>
+                            <span class="badge rounded-pill bg-label-primary">{{ $navbarUnreadCount ?? 0 }} New</span>
+                        </div>
+                    </li>
+                    <li class="dropdown-notifications-list scrollable-container">
+                        <ul class="list-group list-group-flush">
+                            @forelse ($navbarNotifications ?? [] as $notification)
+                                <li class="list-group-item list-group-item-action dropdown-notifications-item">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar">
+                                                <span class="avatar-initial rounded-circle bg-label-primary">
+                                                    <i class="icon-base ti {{ $notification->icon ?? 'tabler-bell' }} icon-18px"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ $notification->title }}</h6>
+                                            <p class="mb-0 text-body-secondary">{{ $notification->body }}</p>
+                                            <small class="text-body-secondary">{{ optional($notification->created_at)->diffForHumans() }}</small>
+                                        </div>
+                                        <div class="flex-shrink-0 dropdown-notifications-actions">
+                                            <form method="POST" action="{{ route('admin.notifications.mark-read', $notification) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-icon btn-text-secondary">
+                                                    <span class="badge badge-dot {{ $notification->read_at ? 'bg-secondary' : 'bg-primary' }}"></span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </li>
+                            @empty
+                                <li class="list-group-item text-center text-body-secondary py-4">
+                                    No notifications yet.
+                                </li>
+                            @endforelse
+                        </ul>
+                    </li>
+                    <li class="dropdown-menu-footer border-top">
+                        <a href="{{ route('admin.notifications.index') }}" class="dropdown-item d-flex justify-content-center text-primary p-3">
+                            View all notifications
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);"
                     data-bs-toggle="dropdown">

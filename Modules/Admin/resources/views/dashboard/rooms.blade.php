@@ -1,6 +1,6 @@
 @extends('admin::components.layouts.master')
-@section('title', 'Properties | RoomGate Admin')
-@section('page-title', 'Properties')
+@section('title', 'Rooms | RoomGate Admin')
+@section('page-title', 'Rooms')
 
 @push('page-styles')
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
@@ -12,59 +12,64 @@
 @section('content')
 @php
   $statusLabels = [
-      'active' => 'bg-label-success',
-      'inactive' => 'bg-label-warning',
-      'archived' => 'bg-label-secondary',
+      'available' => 'bg-label-success',
+      'occupied' => 'bg-label-warning',
+      'maintenance' => 'bg-label-danger',
+      'inactive' => 'bg-label-secondary',
   ];
 @endphp
 
 <div class="container-xxl flex-grow-1 container-p-y">
   <div class="card">
     <div class="card-datatable table-responsive">
-      <table class="datatables-properties table border-top">
+      <table class="datatables-rooms table border-top">
         <thead>
           <tr>
             <th></th>
-            <th>Name</th>
+            <th>Room</th>
             <th>Tenant</th>
+            <th>Property</th>
             <th>Type</th>
-            <th>Location</th>
+            <th>Rent (USD)</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          @foreach ($properties as $property)
+          @foreach ($rooms as $room)
             <tr>
               <td></td>
               <td>
-                <a href="{{ route('admin.properties.show', $property) }}" class="text-heading">
-                  {{ $property->name }}
+                <a href="{{ route('admin.rooms.show', $room) }}" class="text-heading">
+                  {{ $room->room_number }}
                 </a>
               </td>
-              <td>{{ $property->tenant?->name ?? 'Unknown' }}</td>
-              <td>{{ $property->propertyType?->name ?? '-' }}</td>
-              <td>{{ $property->city ?? '�' }}, {{ $property->country ?? '�' }}</td>
+              <td>{{ $room->tenant?->name ?? 'Unknown' }}</td>
+              <td>{{ $room->property?->name ?? 'Unknown' }}</td>
+              <td>{{ $room->roomType?->name ?? '—' }}</td>
+              <td>${{ number_format(($room->monthly_rent_cents ?? 0) / 100, 2) }}</td>
               <td>
-                <span class="badge {{ $statusLabels[$property->status] ?? 'bg-label-secondary' }}">
-                  {{ ucfirst($property->status) }}
+                <span class="badge {{ $statusLabels[$room->status] ?? 'bg-label-secondary' }}">
+                  {{ ucfirst($room->status) }}
                 </span>
               </td>
               <td>
                 <div class="d-flex align-items-center">
-                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editPropertyModal"
-                    data-property-id="{{ $property->id }}"
-                    data-property-name="{{ $property->name }}"
-                    data-property-tenant="{{ $property->tenant_id }}"
-                    data-property-type="{{ $property->property_type_id }}"
-                    data-property-description="{{ $property->description }}"
-                    data-property-address="{{ $property->address_line_1 }}"
-                    data-property-city="{{ $property->city }}"
-                    data-property-country="{{ $property->country }}"
-                    data-property-status="{{ $property->status }}">
+                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editRoomModal"
+                    data-room-id="{{ $room->id }}"
+                    data-room-tenant="{{ $room->tenant_id }}"
+                    data-room-property="{{ $room->property_id }}"
+                    data-room-type="{{ $room->room_type_id }}"
+                    data-room-number="{{ $room->room_number }}"
+                    data-room-description="{{ $room->description }}"
+                    data-room-size="{{ $room->size }}"
+                    data-room-floor="{{ $room->floor }}"
+                    data-room-max-occupants="{{ $room->max_occupants }}"
+                    data-room-rent="{{ number_format(($room->monthly_rent_cents ?? 0) / 100, 2, '.', '') }}"
+                    data-room-status="{{ $room->status }}">
                     <i class="icon-base ti tabler-edit icon-22px"></i>
                   </a>
-                  <form method="POST" action="{{ route('admin.properties.destroy', $property) }}" data-confirm="Delete this property?">
+                  <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" data-confirm="Delete this room?">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-icon btn-text-secondary rounded-pill waves-effect">
@@ -81,23 +86,23 @@
   </div>
 </div>
 
-<div class="modal fade" id="addPropertyModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Add Property</h5>
+        <h5 class="modal-title">Add Room</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" action="{{ route('admin.properties.store') }}" class="row g-3">
+        <form method="POST" action="{{ route('admin.rooms.store') }}" class="row g-3">
           @csrf
           <div class="col-md-6">
-            <label class="form-label" for="propertyName">Property Name</label>
-            <input type="text" id="propertyName" name="name" class="form-control" placeholder="RoomGate Tower" required />
+            <label class="form-label" for="roomNumber">Room Number</label>
+            <input type="text" id="roomNumber" name="room_number" class="form-control" placeholder="A-101" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyTenant">Tenant</label>
-            <select id="propertyTenant" name="tenant_id" class="select2 form-select" required>
+            <label class="form-label" for="roomTenant">Tenant</label>
+            <select id="roomTenant" name="tenant_id" class="select2 form-select" required>
               <option value="">Select tenant</option>
               @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
@@ -105,40 +110,54 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyType">Property Type</label>
-            <select id="propertyType" name="property_type_id" class="select2 form-select">
-              <option value="">Select type</option>
-              @foreach ($propertyTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
+            <label class="form-label" for="roomProperty">Property</label>
+            <select id="roomProperty" name="property_id" class="select2 form-select" required>
+              <option value="">Select property</option>
+              @foreach ($properties as $property)
+                <option value="{{ $property->id }}">{{ $property->name }}</option>
               @endforeach
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyStatus">Status</label>
-            <select id="propertyStatus" name="status" class="form-select" required>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+            <label class="form-label" for="roomType">Room Type</label>
+            <select id="roomType" name="room_type_id" class="select2 form-select">
+              <option value="">Select type</option>
+              @foreach ($roomTypes as $roomType)
+                <option value="{{ $roomType->id }}">{{ $roomType->name }}</option>
+              @endforeach
             </select>
           </div>
-          <div class="col-12">
-            <label class="form-label" for="propertyAddress">Address</label>
-            <input type="text" id="propertyAddress" name="address_line_1" class="form-control" placeholder="Street address" />
+          <div class="col-md-6">
+            <label class="form-label" for="roomRent">Monthly Rent (USD)</label>
+            <input type="number" id="roomRent" name="monthly_rent" class="form-control" step="0.01" min="0" placeholder="120.00" />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyCity">City</label>
-            <input type="text" id="propertyCity" name="city" class="form-control" placeholder="City" />
+            <label class="form-label" for="roomStatus">Status</label>
+            <select id="roomStatus" name="status" class="form-select" required>
+              <option value="available">Available</option>
+              <option value="occupied">Occupied</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="propertyCountry">Country</label>
-            <input type="text" id="propertyCountry" name="country" class="form-control" placeholder="Country" />
+          <div class="col-md-4">
+            <label class="form-label" for="roomMaxOccupants">Max Occupants</label>
+            <input type="number" id="roomMaxOccupants" name="max_occupants" class="form-control" min="1" value="1" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="roomSize">Size</label>
+            <input type="text" id="roomSize" name="size" class="form-control" placeholder="25 sqm" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="roomFloor">Floor</label>
+            <input type="number" id="roomFloor" name="floor" class="form-control" placeholder="1" />
           </div>
           <div class="col-12">
-            <label class="form-label" for="propertyDescription">Description</label>
-            <textarea id="propertyDescription" name="description" class="form-control" rows="2" placeholder="Short description"></textarea>
+            <label class="form-label" for="roomDescription">Description</label>
+            <textarea id="roomDescription" name="description" class="form-control" rows="2" placeholder="Short description"></textarea>
           </div>
           <div class="col-12 d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary">Create Property</button>
+            <button type="submit" class="btn btn-primary">Create Room</button>
           </div>
         </form>
       </div>
@@ -146,24 +165,24 @@
   </div>
 </div>
 
-<div class="modal fade" id="editPropertyModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editRoomModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Edit Property</h5>
+        <h5 class="modal-title">Edit Room</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" id="editPropertyForm" action="" class="row g-3">
+        <form method="POST" id="editRoomForm" action="" class="row g-3">
           @csrf
           @method('PATCH')
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyName">Property Name</label>
-            <input type="text" id="editPropertyName" name="name" class="form-control" required />
+            <label class="form-label" for="editRoomNumber">Room Number</label>
+            <input type="text" id="editRoomNumber" name="room_number" class="form-control" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyTenant">Tenant</label>
-            <select id="editPropertyTenant" name="tenant_id" class="select2 form-select" required>
+            <label class="form-label" for="editRoomTenant">Tenant</label>
+            <select id="editRoomTenant" name="tenant_id" class="select2 form-select" required>
               <option value="">Select tenant</option>
               @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
@@ -171,37 +190,51 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyType">Property Type</label>
-            <select id="editPropertyType" name="property_type_id" class="select2 form-select">
-              <option value="">Select type</option>
-              @foreach ($propertyTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
+            <label class="form-label" for="editRoomProperty">Property</label>
+            <select id="editRoomProperty" name="property_id" class="select2 form-select" required>
+              <option value="">Select property</option>
+              @foreach ($properties as $property)
+                <option value="{{ $property->id }}">{{ $property->name }}</option>
               @endforeach
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyStatus">Status</label>
-            <select id="editPropertyStatus" name="status" class="form-select" required>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+            <label class="form-label" for="editRoomType">Room Type</label>
+            <select id="editRoomType" name="room_type_id" class="select2 form-select">
+              <option value="">Select type</option>
+              @foreach ($roomTypes as $roomType)
+                <option value="{{ $roomType->id }}">{{ $roomType->name }}</option>
+              @endforeach
             </select>
           </div>
-          <div class="col-12">
-            <label class="form-label" for="editPropertyAddress">Address</label>
-            <input type="text" id="editPropertyAddress" name="address_line_1" class="form-control" />
+          <div class="col-md-6">
+            <label class="form-label" for="editRoomRent">Monthly Rent (USD)</label>
+            <input type="number" id="editRoomRent" name="monthly_rent" class="form-control" step="0.01" min="0" />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyCity">City</label>
-            <input type="text" id="editPropertyCity" name="city" class="form-control" />
+            <label class="form-label" for="editRoomStatus">Status</label>
+            <select id="editRoomStatus" name="status" class="form-select" required>
+              <option value="available">Available</option>
+              <option value="occupied">Occupied</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editPropertyCountry">Country</label>
-            <input type="text" id="editPropertyCountry" name="country" class="form-control" />
+          <div class="col-md-4">
+            <label class="form-label" for="editRoomMaxOccupants">Max Occupants</label>
+            <input type="number" id="editRoomMaxOccupants" name="max_occupants" class="form-control" min="1" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="editRoomSize">Size</label>
+            <input type="text" id="editRoomSize" name="size" class="form-control" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="editRoomFloor">Floor</label>
+            <input type="number" id="editRoomFloor" name="floor" class="form-control" />
           </div>
           <div class="col-12">
-            <label class="form-label" for="editPropertyDescription">Description</label>
-            <textarea id="editPropertyDescription" name="description" class="form-control" rows="2"></textarea>
+            <label class="form-label" for="editRoomDescription">Description</label>
+            <textarea id="editRoomDescription" name="description" class="form-control" rows="2"></textarea>
           </div>
           <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -317,7 +350,7 @@
         });
       };
 
-      initTable('.datatables-properties', 'Search Property', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Property</span>', '#addPropertyModal');
+      initTable('.datatables-rooms', 'Search Room', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Room</span>', '#addRoomModal');
 
       setTimeout(() => {
         const elementsToModify = [
@@ -349,26 +382,29 @@
         });
       }, 100);
 
-      const editModal = document.getElementById('editPropertyModal');
+      const editModal = document.getElementById('editRoomModal');
       if (editModal) {
         editModal.addEventListener('show.bs.modal', function (event) {
           const trigger = event.relatedTarget;
-          const form = document.getElementById('editPropertyForm');
-          const propertyId = trigger.getAttribute('data-property-id');
+          const form = document.getElementById('editRoomForm');
+          const roomId = trigger.getAttribute('data-room-id');
 
-          form.action = `{{ url('/admin/properties') }}/${propertyId}`;
-          document.getElementById('editPropertyName').value = trigger.getAttribute('data-property-name') || '';
-          document.getElementById('editPropertyTenant').value = trigger.getAttribute('data-property-tenant') || '';
-          document.getElementById('editPropertyType').value = trigger.getAttribute('data-property-type') || '';
-          document.getElementById('editPropertyDescription').value = trigger.getAttribute('data-property-description') || '';
-          document.getElementById('editPropertyAddress').value = trigger.getAttribute('data-property-address') || '';
-          document.getElementById('editPropertyCity').value = trigger.getAttribute('data-property-city') || '';
-          document.getElementById('editPropertyCountry').value = trigger.getAttribute('data-property-country') || '';
-          document.getElementById('editPropertyStatus').value = trigger.getAttribute('data-property-status') || 'active';
+          form.action = `{{ url('/admin/rooms') }}/${roomId}`;
+          document.getElementById('editRoomNumber').value = trigger.getAttribute('data-room-number') || '';
+          document.getElementById('editRoomTenant').value = trigger.getAttribute('data-room-tenant') || '';
+          document.getElementById('editRoomProperty').value = trigger.getAttribute('data-room-property') || '';
+          document.getElementById('editRoomType').value = trigger.getAttribute('data-room-type') || '';
+          document.getElementById('editRoomRent').value = trigger.getAttribute('data-room-rent') || '0.00';
+          document.getElementById('editRoomStatus').value = trigger.getAttribute('data-room-status') || 'available';
+          document.getElementById('editRoomMaxOccupants').value = trigger.getAttribute('data-room-max-occupants') || 1;
+          document.getElementById('editRoomSize').value = trigger.getAttribute('data-room-size') || '';
+          document.getElementById('editRoomFloor').value = trigger.getAttribute('data-room-floor') || '';
+          document.getElementById('editRoomDescription').value = trigger.getAttribute('data-room-description') || '';
 
           if (window.$ && $.fn.select2) {
-            $('#editPropertyTenant').trigger('change');
-            $('#editPropertyType').trigger('change');
+            $('#editRoomTenant').trigger('change');
+            $('#editRoomProperty').trigger('change');
+            $('#editRoomType').trigger('change');
           }
         });
       }

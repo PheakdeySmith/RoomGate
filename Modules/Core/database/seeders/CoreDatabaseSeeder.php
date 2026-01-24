@@ -13,6 +13,8 @@ class CoreDatabaseSeeder extends Seeder
     {
         $this->call([
             PlanSeeder::class,
+            PropertyTypeSeeder::class,
+            PropertyRoomSeeder::class,
         ]);
     }
 }

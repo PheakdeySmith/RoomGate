@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             BusinessSettingsSeeder::class,
             TranslationSeeder::class,
+            NotificationTemplateSeeder::class,
             \Modules\User\Database\Seeders\UserDatabaseSeeder::class,
             \Modules\Core\Database\Seeders\CoreDatabaseSeeder::class,
         ]);

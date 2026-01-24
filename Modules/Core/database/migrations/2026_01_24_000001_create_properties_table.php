@@ -13,7 +13,7 @@ return new class extends Migration
 
             $table->unsignedBigInteger('tenant_id');
             $table->string('name', 255);
-            $table->string('property_type', 255)->nullable();
+            $table->unsignedBigInteger('property_type_id')->nullable();
             $table->text('description')->nullable();
 
             $table->text('address_line_1')->nullable();
@@ -34,6 +34,7 @@ return new class extends Migration
 
             $table->unique(['id', 'tenant_id'], 'uq_properties_id_tenant');
             $table->index(['tenant_id', 'status'], 'idx_properties_tenant_status');
+            $table->index(['tenant_id', 'property_type_id'], 'idx_properties_tenant_type');
             $table->index(['tenant_id', 'deleted_at'], 'idx_properties_tenant_deleted');
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();

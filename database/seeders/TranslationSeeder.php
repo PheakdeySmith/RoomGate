@@ -17,6 +17,7 @@ class TranslationSeeder extends Seeder
             'menu.audit_logs' => ['en' => 'Audit Logs', 'km' => 'កំណត់ហេតុផ្ទៀងផ្ទាត់'],
             'menu.translations' => ['en' => 'Translations', 'km' => 'ការបកប្រែ'],
             'menu.settings' => ['en' => 'Settings', 'km' => '????????'],
+            'menu.notifications' => ['en' => 'Notifications', 'km' => 'ការជូនដំណឹង'],
             'menu.tenant_dashboard' => ['en' => 'Tenant Dashboard', 'km' => 'ផ្ទាំងអ្នកជួល'],
             'actions.filter' => ['en' => 'Filter', 'km' => 'តម្រង'],
             'actions.reset' => ['en' => 'Reset', 'km' => 'កំណត់ឡើងវិញ'],

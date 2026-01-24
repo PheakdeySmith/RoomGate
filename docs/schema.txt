@@ -245,6 +245,24 @@ Schema::create('user_qr_codes', function (Blueprint $table) {
 });
 
 // =========================
+// PROPERTY TYPES
+// =========================
+Schema::create('property_types', function (Blueprint $table) {
+    $table->bigIncrements('id');
+
+    $table->unsignedBigInteger('tenant_id')->nullable(); // NULL = global catalog
+    $table->string('name', 255);
+    $table->string('status', 20)->default('active'); // active|inactive
+
+    $table->timestampsTz(3);
+
+    $table->unique(['tenant_id', 'name'], 'uq_property_types_scope_name');
+    $table->index(['tenant_id', 'status'], 'idx_property_types_scope_status');
+
+    $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+});
+
+// =========================
 // PROPERTIES
 // =========================
 Schema::create('properties', function (Blueprint $table) {
@@ -252,7 +270,7 @@ Schema::create('properties', function (Blueprint $table) {
 
     $table->unsignedBigInteger('tenant_id');
     $table->string('name', 255);
-    $table->string('property_type', 255)->nullable();
+    $table->unsignedBigInteger('property_type_id')->nullable();
     $table->text('description')->nullable();
 
     $table->text('address_line_1')->nullable();
@@ -274,9 +292,11 @@ Schema::create('properties', function (Blueprint $table) {
     $table->unique(['id', 'tenant_id'], 'uq_properties_id_tenant');
 
     $table->index(['tenant_id', 'status'], 'idx_properties_tenant_status');
+    $table->index(['tenant_id', 'property_type_id'], 'idx_properties_tenant_type');
     $table->index(['tenant_id', 'deleted_at'], 'idx_properties_tenant_deleted');
 
     $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+    $table->foreign('property_type_id')->references('id')->on('property_types')->nullOnDelete();
 });
 
 // =========================

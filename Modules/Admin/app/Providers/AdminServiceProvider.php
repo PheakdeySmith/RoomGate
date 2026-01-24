@@ -3,10 +3,12 @@
 namespace Modules\Admin\App\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use App\Models\InAppNotification;
 
 class AdminServiceProvider extends ServiceProvider
 {
@@ -27,6 +29,33 @@ class AdminServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+
+        View::composer('admin::components.layouts.partials.navbar', function ($view) {
+            $user = auth()->user();
+            if (!$user) {
+                $view->with([
+                    'navbarNotifications' => collect(),
+                    'navbarUnreadCount' => 0,
+                ]);
+                return;
+            }
+
+            $notifications = InAppNotification::query()
+                ->where('user_id', $user->id)
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get();
+
+            $unreadCount = InAppNotification::query()
+                ->where('user_id', $user->id)
+                ->whereNull('read_at')
+                ->count();
+
+            $view->with([
+                'navbarNotifications' => $notifications,
+                'navbarUnreadCount' => $unreadCount,
+            ]);
+        });
     }
 
     /**

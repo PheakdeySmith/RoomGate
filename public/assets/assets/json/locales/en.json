@@ -195,5 +195,14 @@
     "menu.tenants": "Tenants",
     "menu.tenants_list": "Tenant Lists",
     "Permissions": "Permissions",
-    "menu.plans": "Plans"
+    "menu.plans": "Plans",
+    "menu.properties": "Properties",
+    "menu.properties_list": "Lists",
+    "menu.room_types": "Room Types",
+    "menu.rooms": "Rooms",
+    "menu.amenities": "Amenities",
+    "menu.leasing": "Leasing",
+    "menu.contracts": "Contracts",
+    "menu.invoices": "Invoices",
+    "menu.notifications": "Notifications"
 }

@@ -1,6 +1,6 @@
 @extends('admin::components.layouts.master')
-@section('title', 'Properties | RoomGate Admin')
-@section('page-title', 'Properties')
+@section('title', 'Amenities | RoomGate Admin')
+@section('page-title', 'Amenities')
 
 @push('page-styles')
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
@@ -14,57 +14,53 @@
   $statusLabels = [
       'active' => 'bg-label-success',
       'inactive' => 'bg-label-warning',
-      'archived' => 'bg-label-secondary',
   ];
 @endphp
 
 <div class="container-xxl flex-grow-1 container-p-y">
   <div class="card">
     <div class="card-datatable table-responsive">
-      <table class="datatables-properties table border-top">
+      <table class="datatables-amenities table border-top">
         <thead>
           <tr>
             <th></th>
             <th>Name</th>
             <th>Tenant</th>
-            <th>Type</th>
-            <th>Location</th>
+            <th>Price (USD)</th>
             <th>Status</th>
+            <th>Rooms</th>
+            <th>Room Types</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          @foreach ($properties as $property)
+          @foreach ($amenities as $amenity)
             <tr>
               <td></td>
+              <td>{{ $amenity->name }}</td>
+              <td>{{ $amenity->tenant?->name ?? 'Unknown' }}</td>
+              <td>${{ number_format(($amenity->price_cents ?? 0) / 100, 2) }}</td>
               <td>
-                <a href="{{ route('admin.properties.show', $property) }}" class="text-heading">
-                  {{ $property->name }}
-                </a>
-              </td>
-              <td>{{ $property->tenant?->name ?? 'Unknown' }}</td>
-              <td>{{ $property->propertyType?->name ?? '-' }}</td>
-              <td>{{ $property->city ?? '�' }}, {{ $property->country ?? '�' }}</td>
-              <td>
-                <span class="badge {{ $statusLabels[$property->status] ?? 'bg-label-secondary' }}">
-                  {{ ucfirst($property->status) }}
+                <span class="badge {{ $statusLabels[$amenity->status] ?? 'bg-label-secondary' }}">
+                  {{ ucfirst($amenity->status) }}
                 </span>
               </td>
+              <td>{{ $amenity->rooms->count() }}</td>
+              <td>{{ $amenity->roomTypes->count() }}</td>
               <td>
                 <div class="d-flex align-items-center">
-                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editPropertyModal"
-                    data-property-id="{{ $property->id }}"
-                    data-property-name="{{ $property->name }}"
-                    data-property-tenant="{{ $property->tenant_id }}"
-                    data-property-type="{{ $property->property_type_id }}"
-                    data-property-description="{{ $property->description }}"
-                    data-property-address="{{ $property->address_line_1 }}"
-                    data-property-city="{{ $property->city }}"
-                    data-property-country="{{ $property->country }}"
-                    data-property-status="{{ $property->status }}">
+                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editAmenityModal"
+                    data-amenity-id="{{ $amenity->id }}"
+                    data-amenity-name="{{ $amenity->name }}"
+                    data-amenity-tenant="{{ $amenity->tenant_id }}"
+                    data-amenity-price="{{ number_format(($amenity->price_cents ?? 0) / 100, 2, '.', '') }}"
+                    data-amenity-description="{{ $amenity->description }}"
+                    data-amenity-status="{{ $amenity->status }}"
+                    data-amenity-rooms="{{ $amenity->rooms->pluck('id')->implode(',') }}"
+                    data-amenity-room-types="{{ $amenity->roomTypes->pluck('id')->implode(',') }}">
                     <i class="icon-base ti tabler-edit icon-22px"></i>
                   </a>
-                  <form method="POST" action="{{ route('admin.properties.destroy', $property) }}" data-confirm="Delete this property?">
+                  <form method="POST" action="{{ route('admin.amenities.destroy', $amenity) }}" data-confirm="Delete this amenity?">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-icon btn-text-secondary rounded-pill waves-effect">
@@ -81,23 +77,23 @@
   </div>
 </div>
 
-<div class="modal fade" id="addPropertyModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addAmenityModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Add Property</h5>
+        <h5 class="modal-title">Add Amenity</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" action="{{ route('admin.properties.store') }}" class="row g-3">
+        <form method="POST" action="{{ route('admin.amenities.store') }}" class="row g-3">
           @csrf
           <div class="col-md-6">
-            <label class="form-label" for="propertyName">Property Name</label>
-            <input type="text" id="propertyName" name="name" class="form-control" placeholder="RoomGate Tower" required />
+            <label class="form-label" for="amenityName">Amenity Name</label>
+            <input type="text" id="amenityName" name="name" class="form-control" placeholder="Wi-Fi" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyTenant">Tenant</label>
-            <select id="propertyTenant" name="tenant_id" class="select2 form-select" required>
+            <label class="form-label" for="amenityTenant">Tenant</label>
+            <select id="amenityTenant" name="tenant_id" class="select2 form-select" required>
               <option value="">Select tenant</option>
               @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
@@ -105,40 +101,38 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyType">Property Type</label>
-            <select id="propertyType" name="property_type_id" class="select2 form-select">
-              <option value="">Select type</option>
-              @foreach ($propertyTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
+            <label class="form-label" for="amenityPrice">Price (USD)</label>
+            <input type="number" id="amenityPrice" name="price" class="form-control" step="0.01" min="0" placeholder="0.00" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="amenityStatus">Status</label>
+            <select id="amenityStatus" name="status" class="form-select" required>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="amenityRooms">Attach Rooms</label>
+            <select id="amenityRooms" name="room_ids[]" class="select2 form-select" multiple>
+              @foreach ($rooms as $room)
+                <option value="{{ $room->id }}">{{ $room->room_number }} ({{ $room->property?->name ?? 'Property' }})</option>
               @endforeach
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyStatus">Status</label>
-            <select id="propertyStatus" name="status" class="form-select" required>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+            <label class="form-label" for="amenityRoomTypes">Attach Room Types</label>
+            <select id="amenityRoomTypes" name="room_type_ids[]" class="select2 form-select" multiple>
+              @foreach ($roomTypes as $roomType)
+                <option value="{{ $roomType->id }}">{{ $roomType->name }}</option>
+              @endforeach
             </select>
           </div>
           <div class="col-12">
-            <label class="form-label" for="propertyAddress">Address</label>
-            <input type="text" id="propertyAddress" name="address_line_1" class="form-control" placeholder="Street address" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="propertyCity">City</label>
-            <input type="text" id="propertyCity" name="city" class="form-control" placeholder="City" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="propertyCountry">Country</label>
-            <input type="text" id="propertyCountry" name="country" class="form-control" placeholder="Country" />
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="propertyDescription">Description</label>
-            <textarea id="propertyDescription" name="description" class="form-control" rows="2" placeholder="Short description"></textarea>
+            <label class="form-label" for="amenityDescription">Description</label>
+            <textarea id="amenityDescription" name="description" class="form-control" rows="2" placeholder="Short description"></textarea>
           </div>
           <div class="col-12 d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary">Create Property</button>
+            <button type="submit" class="btn btn-primary">Create Amenity</button>
           </div>
         </form>
       </div>
@@ -146,24 +140,24 @@
   </div>
 </div>
 
-<div class="modal fade" id="editPropertyModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editAmenityModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Edit Property</h5>
+        <h5 class="modal-title">Edit Amenity</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" id="editPropertyForm" action="" class="row g-3">
+        <form method="POST" id="editAmenityForm" action="" class="row g-3">
           @csrf
           @method('PATCH')
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyName">Property Name</label>
-            <input type="text" id="editPropertyName" name="name" class="form-control" required />
+            <label class="form-label" for="editAmenityName">Amenity Name</label>
+            <input type="text" id="editAmenityName" name="name" class="form-control" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyTenant">Tenant</label>
-            <select id="editPropertyTenant" name="tenant_id" class="select2 form-select" required>
+            <label class="form-label" for="editAmenityTenant">Tenant</label>
+            <select id="editAmenityTenant" name="tenant_id" class="select2 form-select" required>
               <option value="">Select tenant</option>
               @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
@@ -171,37 +165,35 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyType">Property Type</label>
-            <select id="editPropertyType" name="property_type_id" class="select2 form-select">
-              <option value="">Select type</option>
-              @foreach ($propertyTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
+            <label class="form-label" for="editAmenityPrice">Price (USD)</label>
+            <input type="number" id="editAmenityPrice" name="price" class="form-control" step="0.01" min="0" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="editAmenityStatus">Status</label>
+            <select id="editAmenityStatus" name="status" class="form-select" required>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="editAmenityRooms">Attach Rooms</label>
+            <select id="editAmenityRooms" name="room_ids[]" class="select2 form-select" multiple>
+              @foreach ($rooms as $room)
+                <option value="{{ $room->id }}">{{ $room->room_number }} ({{ $room->property?->name ?? 'Property' }})</option>
               @endforeach
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyStatus">Status</label>
-            <select id="editPropertyStatus" name="status" class="form-select" required>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+            <label class="form-label" for="editAmenityRoomTypes">Attach Room Types</label>
+            <select id="editAmenityRoomTypes" name="room_type_ids[]" class="select2 form-select" multiple>
+              @foreach ($roomTypes as $roomType)
+                <option value="{{ $roomType->id }}">{{ $roomType->name }}</option>
+              @endforeach
             </select>
           </div>
           <div class="col-12">
-            <label class="form-label" for="editPropertyAddress">Address</label>
-            <input type="text" id="editPropertyAddress" name="address_line_1" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editPropertyCity">City</label>
-            <input type="text" id="editPropertyCity" name="city" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editPropertyCountry">Country</label>
-            <input type="text" id="editPropertyCountry" name="country" class="form-control" />
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="editPropertyDescription">Description</label>
-            <textarea id="editPropertyDescription" name="description" class="form-control" rows="2"></textarea>
+            <label class="form-label" for="editAmenityDescription">Description</label>
+            <textarea id="editAmenityDescription" name="description" class="form-control" rows="2"></textarea>
           </div>
           <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -317,7 +309,7 @@
         });
       };
 
-      initTable('.datatables-properties', 'Search Property', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Property</span>', '#addPropertyModal');
+      initTable('.datatables-amenities', 'Search Amenity', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Amenity</span>', '#addAmenityModal');
 
       setTimeout(() => {
         const elementsToModify = [
@@ -349,26 +341,27 @@
         });
       }, 100);
 
-      const editModal = document.getElementById('editPropertyModal');
+      const editModal = document.getElementById('editAmenityModal');
       if (editModal) {
         editModal.addEventListener('show.bs.modal', function (event) {
           const trigger = event.relatedTarget;
-          const form = document.getElementById('editPropertyForm');
-          const propertyId = trigger.getAttribute('data-property-id');
+          const form = document.getElementById('editAmenityForm');
+          const amenityId = trigger.getAttribute('data-amenity-id');
 
-          form.action = `{{ url('/admin/properties') }}/${propertyId}`;
-          document.getElementById('editPropertyName').value = trigger.getAttribute('data-property-name') || '';
-          document.getElementById('editPropertyTenant').value = trigger.getAttribute('data-property-tenant') || '';
-          document.getElementById('editPropertyType').value = trigger.getAttribute('data-property-type') || '';
-          document.getElementById('editPropertyDescription').value = trigger.getAttribute('data-property-description') || '';
-          document.getElementById('editPropertyAddress').value = trigger.getAttribute('data-property-address') || '';
-          document.getElementById('editPropertyCity').value = trigger.getAttribute('data-property-city') || '';
-          document.getElementById('editPropertyCountry').value = trigger.getAttribute('data-property-country') || '';
-          document.getElementById('editPropertyStatus').value = trigger.getAttribute('data-property-status') || 'active';
+          form.action = `{{ url('/admin/amenities') }}/${amenityId}`;
+          document.getElementById('editAmenityName').value = trigger.getAttribute('data-amenity-name') || '';
+          document.getElementById('editAmenityTenant').value = trigger.getAttribute('data-amenity-tenant') || '';
+          document.getElementById('editAmenityPrice').value = trigger.getAttribute('data-amenity-price') || '0.00';
+          document.getElementById('editAmenityDescription').value = trigger.getAttribute('data-amenity-description') || '';
+          document.getElementById('editAmenityStatus').value = trigger.getAttribute('data-amenity-status') || 'active';
+
+          const roomIds = (trigger.getAttribute('data-amenity-rooms') || '').split(',').filter(Boolean);
+          const roomTypeIds = (trigger.getAttribute('data-amenity-room-types') || '').split(',').filter(Boolean);
 
           if (window.$ && $.fn.select2) {
-            $('#editPropertyTenant').trigger('change');
-            $('#editPropertyType').trigger('change');
+            $('#editAmenityTenant').val(trigger.getAttribute('data-amenity-tenant') || '').trigger('change');
+            $('#editAmenityRooms').val(roomIds).trigger('change');
+            $('#editAmenityRoomTypes').val(roomTypeIds).trigger('change');
           }
         });
       }

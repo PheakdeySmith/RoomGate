@@ -132,12 +132,18 @@
                         <div data-i18n="menu.subscription_invoices">Invoices</div>
                     </a>
                 </li>
-                <li class="menu-item {{ request()->routeIs('admin.subscriptions.payments') ? 'active' : '' }}">
-                    <a href="{{ route('admin.subscriptions.payments') }}" class="menu-link">
-                        <div data-i18n="menu.subscription_payments">Payments</div>
-                    </a>
-                </li>
-            </ul>
+        <li class="menu-item {{ request()->routeIs('admin.subscriptions.payments') ? 'active' : '' }}">
+            <a href="{{ route('admin.subscriptions.payments') }}" class="menu-link">
+                <div data-i18n="menu.subscription_payments">Payments</div>
+            </a>
+        </li>
+    </ul>
+</li>
+        <li class="menu-item {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.notifications.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-bell"></i>
+                <div data-i18n="menu.notifications">Notifications</div>
+            </a>
         </li>
         <li class="menu-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
             <a href="{{ route('admin.settings') }}" class="menu-link">
@@ -145,11 +151,51 @@
                 <div data-i18n="menu.settings">Settings</div>
             </a>
         </li>
-        <li class="menu-item {{ request()->routeIs('admin.properties.index') ? 'active' : '' }}">
-            <a href="{{ route('admin.properties.index') }}" class="menu-link">
+        <li class="menu-item {{ request()->routeIs('admin.properties.*', 'admin.room-types.*', 'admin.rooms.*', 'admin.amenities.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-building-community"></i>
                 <div data-i18n="menu.properties">Properties</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.properties.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.properties.index') }}" class="menu-link">
+                        <div data-i18n="menu.properties_list">List</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.room-types.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.room-types.index') }}" class="menu-link">
+                        <div data-i18n="menu.room_types">Room Types</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.rooms.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.rooms.index') }}" class="menu-link">
+                        <div data-i18n="menu.rooms">Rooms</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.amenities.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.amenities.index') }}" class="menu-link">
+                        <div data-i18n="menu.amenities">Amenities</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.contracts.*', 'admin.invoices.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-file-invoice"></i>
+                <div data-i18n="menu.leasing">Leasing</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.contracts.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.contracts.index') }}" class="menu-link">
+                        <div data-i18n="menu.contracts">Contracts</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.invoices.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.invoices.index') }}" class="menu-link">
+                        <div data-i18n="menu.invoices">Invoices</div>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="menu-header small text-uppercase">

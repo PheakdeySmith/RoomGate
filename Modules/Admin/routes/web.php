@@ -12,6 +12,12 @@ use Modules\Admin\App\Http\Controllers\AdminTranslationController;
 use Modules\Admin\App\Http\Controllers\AdminTenantController;
 use Modules\Admin\App\Http\Controllers\AdminUserViewController;
 use Modules\Admin\App\Http\Controllers\AdminPropertyController;
+use Modules\Admin\App\Http\Controllers\AdminRoomTypeController;
+use Modules\Admin\App\Http\Controllers\AdminRoomController;
+use Modules\Admin\App\Http\Controllers\AdminAmenityController;
+use Modules\Admin\App\Http\Controllers\AdminContractController;
+use Modules\Admin\App\Http\Controllers\AdminInvoiceController;
+use Modules\Admin\App\Http\Controllers\AdminNotificationController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
     ->prefix('admin')
@@ -66,9 +72,33 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::delete('/plan-limits/{planLimit}', [AdminPlanController::class, 'destroyLimit'])->name('plan-limits.destroy');
 
         Route::get('/properties', [AdminPropertyController::class, 'index'])->name('properties.index');
+        Route::get('/properties/{property}', [AdminPropertyController::class, 'show'])->name('properties.show');
         Route::post('/properties', [AdminPropertyController::class, 'store'])->name('properties.store');
         Route::patch('/properties/{property}', [AdminPropertyController::class, 'update'])->name('properties.update');
         Route::delete('/properties/{property}', [AdminPropertyController::class, 'destroy'])->name('properties.destroy');
+        Route::get('/room-types', [AdminRoomTypeController::class, 'index'])->name('room-types.index');
+        Route::post('/room-types', [AdminRoomTypeController::class, 'store'])->name('room-types.store');
+        Route::patch('/room-types/{roomType}', [AdminRoomTypeController::class, 'update'])->name('room-types.update');
+        Route::delete('/room-types/{roomType}', [AdminRoomTypeController::class, 'destroy'])->name('room-types.destroy');
+        Route::get('/rooms', [AdminRoomController::class, 'index'])->name('rooms.index');
+        Route::get('/rooms/{room}', [AdminRoomController::class, 'show'])->name('rooms.show');
+        Route::post('/rooms', [AdminRoomController::class, 'store'])->name('rooms.store');
+        Route::patch('/rooms/{room}', [AdminRoomController::class, 'update'])->name('rooms.update');
+        Route::delete('/rooms/{room}', [AdminRoomController::class, 'destroy'])->name('rooms.destroy');
+        Route::get('/amenities', [AdminAmenityController::class, 'index'])->name('amenities.index');
+        Route::post('/amenities', [AdminAmenityController::class, 'store'])->name('amenities.store');
+        Route::patch('/amenities/{amenity}', [AdminAmenityController::class, 'update'])->name('amenities.update');
+        Route::delete('/amenities/{amenity}', [AdminAmenityController::class, 'destroy'])->name('amenities.destroy');
+        Route::get('/contracts', [AdminContractController::class, 'index'])->name('contracts.index');
+        Route::post('/contracts', [AdminContractController::class, 'store'])->name('contracts.store');
+        Route::patch('/contracts/{contract}', [AdminContractController::class, 'update'])->name('contracts.update');
+        Route::delete('/contracts/{contract}', [AdminContractController::class, 'destroy'])->name('contracts.destroy');
+        Route::post('/contracts/{contract}/generate-invoice', [AdminContractController::class, 'generateInvoice'])->name('contracts.generate-invoice');
+        Route::get('/invoices', [AdminInvoiceController::class, 'index'])->name('invoices.index');
+
+        Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/mark-read', [AdminNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+        Route::post('/notifications/{notification}/read', [AdminNotificationController::class, 'markRead'])->name('notifications.mark-read');
 
         Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
         Route::get('/subscriptions/invoices', [AdminSubscriptionController::class, 'invoices'])->name('subscriptions.invoices');

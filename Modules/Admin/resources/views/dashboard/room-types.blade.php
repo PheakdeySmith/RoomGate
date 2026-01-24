@@ -1,6 +1,6 @@
 @extends('admin::components.layouts.master')
-@section('title', 'Properties | RoomGate Admin')
-@section('page-title', 'Properties')
+@section('title', 'Room Types | RoomGate Admin')
+@section('page-title', 'Room Types')
 
 @push('page-styles')
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
@@ -14,57 +14,47 @@
   $statusLabels = [
       'active' => 'bg-label-success',
       'inactive' => 'bg-label-warning',
-      'archived' => 'bg-label-secondary',
   ];
 @endphp
 
 <div class="container-xxl flex-grow-1 container-p-y">
   <div class="card">
     <div class="card-datatable table-responsive">
-      <table class="datatables-properties table border-top">
+      <table class="datatables-room-types table border-top">
         <thead>
           <tr>
             <th></th>
             <th>Name</th>
             <th>Tenant</th>
-            <th>Type</th>
-            <th>Location</th>
+            <th>Capacity</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          @foreach ($properties as $property)
+          @foreach ($roomTypes as $roomType)
             <tr>
               <td></td>
+              <td>{{ $roomType->name }}</td>
+              <td>{{ $roomType->tenant?->name ?? 'Unknown' }}</td>
+              <td>{{ $roomType->capacity ?? '—' }}</td>
               <td>
-                <a href="{{ route('admin.properties.show', $property) }}" class="text-heading">
-                  {{ $property->name }}
-                </a>
-              </td>
-              <td>{{ $property->tenant?->name ?? 'Unknown' }}</td>
-              <td>{{ $property->propertyType?->name ?? '-' }}</td>
-              <td>{{ $property->city ?? '�' }}, {{ $property->country ?? '�' }}</td>
-              <td>
-                <span class="badge {{ $statusLabels[$property->status] ?? 'bg-label-secondary' }}">
-                  {{ ucfirst($property->status) }}
+                <span class="badge {{ $statusLabels[$roomType->status] ?? 'bg-label-secondary' }}">
+                  {{ ucfirst($roomType->status) }}
                 </span>
               </td>
               <td>
                 <div class="d-flex align-items-center">
-                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editPropertyModal"
-                    data-property-id="{{ $property->id }}"
-                    data-property-name="{{ $property->name }}"
-                    data-property-tenant="{{ $property->tenant_id }}"
-                    data-property-type="{{ $property->property_type_id }}"
-                    data-property-description="{{ $property->description }}"
-                    data-property-address="{{ $property->address_line_1 }}"
-                    data-property-city="{{ $property->city }}"
-                    data-property-country="{{ $property->country }}"
-                    data-property-status="{{ $property->status }}">
+                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editRoomTypeModal"
+                    data-room-type-id="{{ $roomType->id }}"
+                    data-room-type-name="{{ $roomType->name }}"
+                    data-room-type-tenant="{{ $roomType->tenant_id }}"
+                    data-room-type-capacity="{{ $roomType->capacity }}"
+                    data-room-type-description="{{ $roomType->description }}"
+                    data-room-type-status="{{ $roomType->status }}">
                     <i class="icon-base ti tabler-edit icon-22px"></i>
                   </a>
-                  <form method="POST" action="{{ route('admin.properties.destroy', $property) }}" data-confirm="Delete this property?">
+                  <form method="POST" action="{{ route('admin.room-types.destroy', $roomType) }}" data-confirm="Delete this room type?">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-icon btn-text-secondary rounded-pill waves-effect">
@@ -81,23 +71,23 @@
   </div>
 </div>
 
-<div class="modal fade" id="addPropertyModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addRoomTypeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Add Property</h5>
+        <h5 class="modal-title">Add Room Type</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" action="{{ route('admin.properties.store') }}" class="row g-3">
+        <form method="POST" action="{{ route('admin.room-types.store') }}" class="row g-3">
           @csrf
           <div class="col-md-6">
-            <label class="form-label" for="propertyName">Property Name</label>
-            <input type="text" id="propertyName" name="name" class="form-control" placeholder="RoomGate Tower" required />
+            <label class="form-label" for="roomTypeName">Name</label>
+            <input type="text" id="roomTypeName" name="name" class="form-control" placeholder="Studio" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyTenant">Tenant</label>
-            <select id="propertyTenant" name="tenant_id" class="select2 form-select" required>
+            <label class="form-label" for="roomTypeTenant">Tenant</label>
+            <select id="roomTypeTenant" name="tenant_id" class="select2 form-select" required>
               <option value="">Select tenant</option>
               @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
@@ -105,40 +95,22 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyType">Property Type</label>
-            <select id="propertyType" name="property_type_id" class="select2 form-select">
-              <option value="">Select type</option>
-              @foreach ($propertyTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
-              @endforeach
-            </select>
+            <label class="form-label" for="roomTypeCapacity">Capacity</label>
+            <input type="number" id="roomTypeCapacity" name="capacity" class="form-control" min="1" placeholder="2" />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="propertyStatus">Status</label>
-            <select id="propertyStatus" name="status" class="form-select" required>
+            <label class="form-label" for="roomTypeStatus">Status</label>
+            <select id="roomTypeStatus" name="status" class="form-select" required>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
             </select>
           </div>
           <div class="col-12">
-            <label class="form-label" for="propertyAddress">Address</label>
-            <input type="text" id="propertyAddress" name="address_line_1" class="form-control" placeholder="Street address" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="propertyCity">City</label>
-            <input type="text" id="propertyCity" name="city" class="form-control" placeholder="City" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="propertyCountry">Country</label>
-            <input type="text" id="propertyCountry" name="country" class="form-control" placeholder="Country" />
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="propertyDescription">Description</label>
-            <textarea id="propertyDescription" name="description" class="form-control" rows="2" placeholder="Short description"></textarea>
+            <label class="form-label" for="roomTypeDescription">Description</label>
+            <textarea id="roomTypeDescription" name="description" class="form-control" rows="2" placeholder="Short description"></textarea>
           </div>
           <div class="col-12 d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary">Create Property</button>
+            <button type="submit" class="btn btn-primary">Create Room Type</button>
           </div>
         </form>
       </div>
@@ -146,24 +118,24 @@
   </div>
 </div>
 
-<div class="modal fade" id="editPropertyModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editRoomTypeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Edit Property</h5>
+        <h5 class="modal-title">Edit Room Type</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form method="POST" id="editPropertyForm" action="" class="row g-3">
+        <form method="POST" id="editRoomTypeForm" action="" class="row g-3">
           @csrf
           @method('PATCH')
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyName">Property Name</label>
-            <input type="text" id="editPropertyName" name="name" class="form-control" required />
+            <label class="form-label" for="editRoomTypeName">Name</label>
+            <input type="text" id="editRoomTypeName" name="name" class="form-control" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyTenant">Tenant</label>
-            <select id="editPropertyTenant" name="tenant_id" class="select2 form-select" required>
+            <label class="form-label" for="editRoomTypeTenant">Tenant</label>
+            <select id="editRoomTypeTenant" name="tenant_id" class="select2 form-select" required>
               <option value="">Select tenant</option>
               @foreach ($tenants as $tenant)
                 <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
@@ -171,37 +143,19 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyType">Property Type</label>
-            <select id="editPropertyType" name="property_type_id" class="select2 form-select">
-              <option value="">Select type</option>
-              @foreach ($propertyTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
-              @endforeach
-            </select>
+            <label class="form-label" for="editRoomTypeCapacity">Capacity</label>
+            <input type="number" id="editRoomTypeCapacity" name="capacity" class="form-control" min="1" />
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="editPropertyStatus">Status</label>
-            <select id="editPropertyStatus" name="status" class="form-select" required>
+            <label class="form-label" for="editRoomTypeStatus">Status</label>
+            <select id="editRoomTypeStatus" name="status" class="form-select" required>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
             </select>
           </div>
           <div class="col-12">
-            <label class="form-label" for="editPropertyAddress">Address</label>
-            <input type="text" id="editPropertyAddress" name="address_line_1" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editPropertyCity">City</label>
-            <input type="text" id="editPropertyCity" name="city" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editPropertyCountry">Country</label>
-            <input type="text" id="editPropertyCountry" name="country" class="form-control" />
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="editPropertyDescription">Description</label>
-            <textarea id="editPropertyDescription" name="description" class="form-control" rows="2"></textarea>
+            <label class="form-label" for="editRoomTypeDescription">Description</label>
+            <textarea id="editRoomTypeDescription" name="description" class="form-control" rows="2"></textarea>
           </div>
           <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -317,7 +271,7 @@
         });
       };
 
-      initTable('.datatables-properties', 'Search Property', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Property</span>', '#addPropertyModal');
+      initTable('.datatables-room-types', 'Search Room Type', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Room Type</span>', '#addRoomTypeModal');
 
       setTimeout(() => {
         const elementsToModify = [
@@ -349,26 +303,22 @@
         });
       }, 100);
 
-      const editModal = document.getElementById('editPropertyModal');
+      const editModal = document.getElementById('editRoomTypeModal');
       if (editModal) {
         editModal.addEventListener('show.bs.modal', function (event) {
           const trigger = event.relatedTarget;
-          const form = document.getElementById('editPropertyForm');
-          const propertyId = trigger.getAttribute('data-property-id');
+          const form = document.getElementById('editRoomTypeForm');
+          const roomTypeId = trigger.getAttribute('data-room-type-id');
 
-          form.action = `{{ url('/admin/properties') }}/${propertyId}`;
-          document.getElementById('editPropertyName').value = trigger.getAttribute('data-property-name') || '';
-          document.getElementById('editPropertyTenant').value = trigger.getAttribute('data-property-tenant') || '';
-          document.getElementById('editPropertyType').value = trigger.getAttribute('data-property-type') || '';
-          document.getElementById('editPropertyDescription').value = trigger.getAttribute('data-property-description') || '';
-          document.getElementById('editPropertyAddress').value = trigger.getAttribute('data-property-address') || '';
-          document.getElementById('editPropertyCity').value = trigger.getAttribute('data-property-city') || '';
-          document.getElementById('editPropertyCountry').value = trigger.getAttribute('data-property-country') || '';
-          document.getElementById('editPropertyStatus').value = trigger.getAttribute('data-property-status') || 'active';
+          form.action = `{{ url('/admin/room-types') }}/${roomTypeId}`;
+          document.getElementById('editRoomTypeName').value = trigger.getAttribute('data-room-type-name') || '';
+          document.getElementById('editRoomTypeTenant').value = trigger.getAttribute('data-room-type-tenant') || '';
+          document.getElementById('editRoomTypeCapacity').value = trigger.getAttribute('data-room-type-capacity') || '';
+          document.getElementById('editRoomTypeDescription').value = trigger.getAttribute('data-room-type-description') || '';
+          document.getElementById('editRoomTypeStatus').value = trigger.getAttribute('data-room-type-status') || 'active';
 
           if (window.$ && $.fn.select2) {
-            $('#editPropertyTenant').trigger('change');
-            $('#editPropertyType').trigger('change');
+            $('#editRoomTypeTenant').trigger('change');
           }
         });
       }

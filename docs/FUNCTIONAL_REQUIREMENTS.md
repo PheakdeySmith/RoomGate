@@ -29,7 +29,7 @@ Notes:
 - **Authentication**: login, identity verification, MFA.
 - **Authorization levels**: access control by role/permission.
 - **Data processing**: data entry, validation, storage, retrieval.
-- **UI/UX**: interface behavior, interactions, and usability.
+- **UI/UX**: interface behavior, interactions, and usability.r
 - **Reporting**: report generation, formats, filters, exports.
 - **System integration**: third-party APIs or external services.
 - **Transaction handling**: financial operations and record-keeping.

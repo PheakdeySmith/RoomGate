@@ -21,5 +21,14 @@
     "menu.settings": "????????",
     "menu.tenants": "អ្នកប្រើប្រាស់",
     "menu.tenants_list": "តារាងអ្នកប្រើប្រាស់",
-    "menu.plans": "គម្រោង"
+    "menu.plans": "គម្រោង",
+    "menu.properties": "គេហដ្ឋាន",
+    "menu.properties_list": "ទិន្នន័យតារាង",
+    "menu.room_types": "ប្រភេទបន្ទប់",
+    "menu.rooms": "បន្ទប់",
+    "menu.amenities": "គ្រឿងបរិក្ខា",
+    "menu.leasing": "ការជួល",
+    "menu.contracts": "កុងត្រាជួល",
+    "menu.invoices": "វិក្កយបត្រ",
+    "menu.notifications": "ការជូនដំណឹង"
 }
