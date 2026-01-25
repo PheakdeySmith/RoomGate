@@ -181,6 +181,16 @@
               </div>
             </div>
           </div>
+          <div class="col-md-6">
+            <div class="row">
+              <label class="col-sm-3 col-form-label text-sm-end" for="iot_device_ip">IoT Device IP</label>
+              <div class="col-sm-9">
+                <input type="text" id="iot_device_ip" name="iot_device_ip" class="form-control"
+                  value="{{ old('iot_device_ip', $settings->iot_device_ip) }}" placeholder="192.168.1.50" />
+                <div class="form-text">Default ESP32 IP for IoT Control.</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

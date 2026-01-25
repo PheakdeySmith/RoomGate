@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use App\Models\OtpCode;
+use App\Mail\OtpCodeMail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 
 class RegisteredUserController extends Controller
@@ -31,14 +32,21 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->string('password')),
         ]);
 
-        event(new Registered($user));
+        $code = OtpCode::issue(
+            $user->email,
+            OtpCode::TYPE_EMAIL_VERIFY,
+            $user->id,
+            now()->addMinutes(10)
+        );
 
-        Auth::login($user);
+        $verifyUrl = route('verification.otp.confirm', ['email' => $user->email, 'code' => $code]);
+        Mail::to($user->email)->send(new OtpCodeMail($code, OtpCode::TYPE_EMAIL_VERIFY, $verifyUrl));
 
         if ($request->expectsJson()) {
             return response()->noContent();
         }
 
-        return redirect()->intended('/core/crm-dashboard');
+        return redirect()->route('verification.otp', ['email' => $user->email])
+            ->with('status', 'We sent a verification code to your email.');
     }
 }

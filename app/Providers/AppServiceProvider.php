@@ -11,6 +11,10 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\View;
 use App\Models\BusinessSetting;
+use Illuminate\Support\Facades\URL;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Google\Provider as GoogleProvider;
+use SocialiteProviders\Telegram\Provider as TelegramProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +31,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (!app()->runningInConsole()) {
+            $forwardedProto = request()->header('X-Forwarded-Proto');
+            if ($forwardedProto === 'https') {
+                URL::forceScheme('https');
+            }
+        }
+
+        Event::listen(SocialiteWasCalled::class, function (SocialiteWasCalled $event): void {
+            $event->extendSocialite('google', GoogleProvider::class);
+            $event->extendSocialite('telegram', TelegramProvider::class);
+        });
+
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });

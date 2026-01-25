@@ -15,10 +15,11 @@ class SecurityHeaders
         $csp = [
             "default-src 'self'",
             "img-src 'self' data: blob:",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://telegram.org",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com data:",
             "connect-src 'self'",
+            "frame-src 'self' https://oauth.telegram.org https://telegram.org",
             "frame-ancestors 'self'",
         ];
 

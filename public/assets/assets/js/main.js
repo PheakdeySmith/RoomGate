@@ -411,7 +411,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (window.templateCustomizer.settings.semiDark) {
-      document.querySelector('#layout-menu').setAttribute('data-bs-theme', 'dark');
+      const layoutMenu = document.querySelector('#layout-menu');
+      if (layoutMenu) {
+        layoutMenu.setAttribute('data-bs-theme', 'dark');
+      }
     }
   }
 
@@ -457,6 +460,9 @@ function isMacOS() {
 
 // Load search data
 function loadSearchData() {
+  if (!document.getElementById('layout-menu')) {
+    return;
+  }
   const searchJson = $('#layout-menu').hasClass('menu-horizontal') ? 'search-horizontal.json' : 'search-vertical.json';
 
   fetch(assetsPath + 'json/' + searchJson)

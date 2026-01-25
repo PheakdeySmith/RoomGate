@@ -9,7 +9,10 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\InAppNotification;
+use App\Models\AuthIdentity;
+use App\Models\Tenant;
 
 class User extends Authenticatable
 {
@@ -55,5 +58,17 @@ class User extends Authenticatable
     public function inAppNotifications(): HasMany
     {
         return $this->hasMany(InAppNotification::class, 'user_id');
+    }
+
+    public function authIdentities(): HasMany
+    {
+        return $this->hasMany(AuthIdentity::class, 'user_id');
+    }
+
+    public function tenants(): BelongsToMany
+    {
+        return $this->belongsToMany(Tenant::class, 'tenant_users')
+            ->withPivot(['role', 'status'])
+            ->withTimestamps();
     }
 }

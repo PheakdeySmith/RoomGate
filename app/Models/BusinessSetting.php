@@ -25,6 +25,7 @@ class BusinessSetting extends Model
         'instagram_url',
         'linkedin_url',
         'telegram_url',
+        'iot_device_ip',
         'logo_light_path',
         'logo_dark_path',
         'logo_small_path',

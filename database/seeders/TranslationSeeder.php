@@ -18,6 +18,7 @@ class TranslationSeeder extends Seeder
             'menu.translations' => ['en' => 'Translations', 'km' => 'ការបកប្រែ'],
             'menu.settings' => ['en' => 'Settings', 'km' => '????????'],
             'menu.notifications' => ['en' => 'Notifications', 'km' => 'ការជូនដំណឹង'],
+            'menu.iot_control' => ['en' => 'IoT Control', 'km' => 'គ្រប់គ្រង IoT'],
             'menu.tenant_dashboard' => ['en' => 'Tenant Dashboard', 'km' => 'ផ្ទាំងអ្នកជួល'],
             'actions.filter' => ['en' => 'Filter', 'km' => 'តម្រង'],
             'actions.reset' => ['en' => 'Reset', 'km' => 'កំណត់ឡើងវិញ'],

@@ -22,7 +22,7 @@
       $darkLogo = $appSettings->logo_dark_path ? asset($appSettings->logo_dark_path) : $lightLogo;
       $brandLogo = $loginLogo ?: $lightLogo ?: $darkLogo;
     @endphp
-    <title>Login | {{ $appName }}</title>
+    <title>Login with Telegram | {{ $appName }}</title>
 
     <meta name="description" content="{{ $appSettings->description ?? ($appName . ' login') }}" />
 
@@ -92,106 +92,37 @@
                   <span class="app-brand-text demo text-heading fw-bold">{{ $brandName }}</span>
                 </a>
               </div>
-              <h4 class="mb-1">Welcome back</h4>
-              <p class="mb-6">Sign in to continue to {{ $appName }}</p>
 
-              @if (session('status'))
-                <div class="alert alert-success mb-4" role="alert">
-                  {{ session('status') }}
-                </div>
-              @endif
+              <h4 class="mb-1">Login with Telegram</h4>
+              <p class="mb-6">Click to continue with Telegram.</p>
 
-              @if ($errors->any())
-                <div class="alert alert-danger mb-4" role="alert">
-                  <ul class="mb-0 ps-3">
-                    @foreach ($errors->all() as $error)
-                      <li>{{ $error }}</li>
-                    @endforeach
-                  </ul>
-                </div>
-              @endif
-
-              <form id="formAuthentication" class="mb-4" action="{{ route('login.store') }}" method="POST">
-                @csrf
-                <div class="mb-6 form-control-validation">
-                  <label for="email" class="form-label">Email</label>
-                  <input
-                    type="email"
-                    class="form-control"
-                    id="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    placeholder="Enter your email"
-                    autofocus />
-                </div>
-                <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password">Password</label>
-                  <div class="input-group input-group-merge">
-                    <input
-                      type="password"
-                      id="password"
-                      class="form-control"
-                      name="password"
-                      placeholder="Enter your password"
-                      aria-describedby="password" />
-                    <span class="input-group-text cursor-pointer"><i class="icon-base ti tabler-eye-off"></i></span>
-                  </div>
-                </div>
-                <div class="my-8">
-                  <div class="d-flex justify-content-between">
-                    <div class="form-check mb-0 ms-2">
-                      <input class="form-check-input" type="checkbox" id="remember-me" name="remember" />
-                      <label class="form-check-label" for="remember-me"> Remember me </label>
-                    </div>
-                    <a href="{{ route('password.request') }}">
-                      <p class="mb-0">Forgot password?</p>
-                    </a>
-                  </div>
-                </div>
-                <div class="mb-6">
-                  <button class="btn btn-primary d-grid w-100" type="submit">Login</button>
-                </div>
-              </form>
-
-              <p class="text-center">
-                <span>New here?</span>
-                <a href="{{ route('register') }}">
-                  <span>Create an account</span>
-                </a>
-              </p>
-
-              <div class="divider my-6">
-                <div class="divider-text">or</div>
+              <div class="d-grid gap-3 mb-6">
+                <button id="tgBtn" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                  <i class="icon-base ti tabler-brand-telegram"></i>
+                  <span>Continue with Telegram</span>
+                </button>
               </div>
 
-              <div class="d-flex justify-content-center gap-2">
-                <a href="{{ route('oauth.redirect', 'google') }}" class="btn btn-icon rounded-circle btn-text-google-plus">
-                  <i class="icon-base ti tabler-brand-google-filled icon-20px"></i>
-                </a>
-                <a href="{{ route('oauth.redirect', 'telegram') }}" class="btn btn-icon rounded-circle btn-text-info">
-                  <i class="icon-base ti tabler-brand-telegram icon-20px"></i>
-                </a>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="{{ asset('template/assets/vendor/libs/jquery/jquery.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/popper/popper.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/js/bootstrap.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/node-waves/node-waves.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/hammer/hammer.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/i18n/i18n.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/js/menu.js') }}"></script>
+    <script>
+      (function () {
+        const botId = @json($botId);
+        const redirectUrl = @json($redirectUrl);
+        const btn = document.getElementById('tgBtn');
+        if (!btn || !botId || !redirectUrl) return;
 
-    <script src="{{ asset('template/assets/vendor/libs/@form-validation/popular.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/@form-validation/bootstrap5.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/@form-validation/auto-focus.js') }}"></script>
-
-    <script src="{{ asset('template/assets/js/main.js') }}"></script>
-    <script src="{{ asset('template/assets/js/pages-auth.js') }}"></script>
+        btn.addEventListener('click', () => {
+          const origin = encodeURIComponent(window.location.origin);
+          const returnTo = encodeURIComponent(redirectUrl);
+          const url = `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${origin}&request_access=write&return_to=${returnTo}`;
+          window.open(url, '_blank', 'width=500,height=650');
+        });
+      })();
+    </script>
   </body>
 </html>

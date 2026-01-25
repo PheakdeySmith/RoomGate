@@ -40,6 +40,7 @@ class AdminSettingsController extends Controller
             'instagram_url' => ['nullable', 'url', 'max:255'],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
             'telegram_url' => ['nullable', 'url', 'max:255'],
+            'iot_device_ip' => ['nullable', 'ip'],
             'logo_light' => ['nullable', 'image', 'max:2048'],
             'logo_dark' => ['nullable', 'image', 'max:2048'],
             'logo_small' => ['nullable', 'image', 'max:2048'],

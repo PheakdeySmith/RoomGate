@@ -20,8 +20,10 @@ class PlanSeeder extends Seeder
                 'is_active' => true,
                 'limits' => [
                     'properties_max' => '1',
-                    'units_max' => '25',
-                    'staff_max' => '2',
+                    'rooms_max' => '5',
+                    'tenant_users_max' => '5',
+                    'units_max' => '5',
+                    'staff_max' => '0',
                     'analytics' => 'false',
                 ],
             ],
@@ -34,6 +36,8 @@ class PlanSeeder extends Seeder
                 'is_active' => true,
                 'limits' => [
                     'properties_max' => '10',
+                    'rooms_max' => '250',
+                    'tenant_users_max' => '50',
                     'units_max' => '250',
                     'staff_max' => '20',
                     'analytics' => 'true',
@@ -48,6 +52,8 @@ class PlanSeeder extends Seeder
                 'is_active' => true,
                 'limits' => [
                     'properties_max' => 'unlimited',
+                    'rooms_max' => 'unlimited',
+                    'tenant_users_max' => 'unlimited',
                     'units_max' => 'unlimited',
                     'staff_max' => 'unlimited',
                     'analytics' => 'true',

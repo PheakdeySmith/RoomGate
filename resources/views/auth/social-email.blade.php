@@ -22,9 +22,9 @@
       $darkLogo = $appSettings->logo_dark_path ? asset($appSettings->logo_dark_path) : $lightLogo;
       $brandLogo = $loginLogo ?: $lightLogo ?: $darkLogo;
     @endphp
-    <title>Register | {{ $appName }}</title>
+    <title>Complete sign in | {{ $appName }}</title>
 
-    <meta name="description" content="{{ $appSettings->description ?? ($appName . ' registration') }}" />
+    <meta name="description" content="{{ $appSettings->description ?? ($appName . ' login') }}" />
 
     <link rel="icon" type="image/x-icon" href="{{ $favicon }}" />
 
@@ -92,8 +92,8 @@
                   <span class="app-brand-text demo text-heading fw-bold">{{ $brandName }}</span>
                 </a>
               </div>
-              <h4 class="mb-1">Create your account</h4>
-              <p class="mb-6">Start managing your rooms in minutes</p>
+              <h4 class="mb-1">Complete your sign in</h4>
+              <p class="mb-6">Enter an email address to finish linking your {{ ucfirst($provider) }} account.</p>
 
               @if ($errors->any())
                 <div class="alert alert-danger mb-4" role="alert">
@@ -105,19 +105,8 @@
                 </div>
               @endif
 
-              <form id="formAuthentication" class="mb-6" action="{{ route('register.store') }}" method="POST">
+              <form class="mb-4" action="{{ route('oauth.email.store', $provider) }}" method="POST">
                 @csrf
-                <div class="mb-6 form-control-validation">
-                  <label for="name" class="form-label">Full name</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="name"
-                    name="name"
-                    value="{{ old('name') }}"
-                    placeholder="Enter your name"
-                    autofocus />
-                </div>
                 <div class="mb-6 form-control-validation">
                   <label for="email" class="form-label">Email</label>
                   <input
@@ -126,56 +115,19 @@
                     id="email"
                     name="email"
                     value="{{ old('email') }}"
-                    placeholder="Enter your email" />
+                    placeholder="Enter your email"
+                    autofocus />
                 </div>
-                <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password">Password</label>
-                  <div class="input-group input-group-merge">
-                    <input
-                      type="password"
-                      id="password"
-                      class="form-control"
-                      name="password"
-                      placeholder="Create a password"
-                      aria-describedby="password" />
-                    <span class="input-group-text cursor-pointer"><i class="icon-base ti tabler-eye-off"></i></span>
-                  </div>
+                <div class="mb-6">
+                  <button class="btn btn-primary d-grid w-100" type="submit">Continue</button>
                 </div>
-                <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password_confirmation">Confirm password</label>
-                  <div class="input-group input-group-merge">
-                    <input
-                      type="password"
-                      id="password_confirmation"
-                      class="form-control"
-                      name="password_confirmation"
-                      placeholder="Confirm your password"
-                      aria-describedby="password_confirmation" />
-                    <span class="input-group-text cursor-pointer"><i class="icon-base ti tabler-eye-off"></i></span>
-                  </div>
-                </div>
-                <button class="btn btn-primary d-grid w-100">Sign up</button>
               </form>
 
-              <p class="text-center">
-                <span>Already have an account?</span>
+              <p class="text-center mb-0">
                 <a href="{{ route('login') }}">
-                  <span>Sign in instead</span>
+                  <span>Back to login</span>
                 </a>
               </p>
-
-              <div class="divider my-6">
-                <div class="divider-text">or</div>
-              </div>
-
-              <div class="d-flex justify-content-center gap-2">
-                <a href="{{ route('oauth.redirect', 'google') }}" class="btn btn-icon rounded-circle btn-text-google-plus">
-                  <i class="icon-base ti tabler-brand-google-filled icon-20px"></i>
-                </a>
-                <a href="{{ route('oauth.redirect', 'telegram') }}" class="btn btn-icon rounded-circle btn-text-info">
-                  <i class="icon-base ti tabler-brand-telegram icon-20px"></i>
-                </a>
-              </div>
             </div>
           </div>
         </div>

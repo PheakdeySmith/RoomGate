@@ -23,11 +23,24 @@ class AuthenticatedSessionController extends Controller
             return response()->noContent();
         }
 
-        if ($request->user() && $request->user()->hasAnyRole(['platform_admin', 'admin'])) {
+        $user = $request->user();
+        if ($user && !$user->email_verified_at) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('verification.otp', ['email' => $user->email])
+                ->withErrors(['email' => 'Please verify your email before logging in.']);
+        }
+        if ($user && $user->hasAnyRole(['platform_admin', 'admin'])) {
             return redirect()->route('admin.dashboard');
         }
+        if ($user && $user->tenants()->exists()) {
+            return redirect()->intended('/core/crm-dashboard');
+        }
 
-        return redirect()->intended('/core/crm-dashboard');
+        return redirect()->route('core.onboarding');
     }
 
     /**

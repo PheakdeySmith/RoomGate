@@ -151,6 +151,12 @@
                 <div data-i18n="menu.settings">Settings</div>
             </a>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.iot.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.iot.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-wifi"></i>
+                <div data-i18n="menu.iot_control">IoT Control</div>
+            </a>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.properties.*', 'admin.room-types.*', 'admin.rooms.*', 'admin.amenities.*') ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-building-community"></i>

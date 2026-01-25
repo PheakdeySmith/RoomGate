@@ -204,5 +204,6 @@
     "menu.leasing": "Leasing",
     "menu.contracts": "Contracts",
     "menu.invoices": "Invoices",
-    "menu.notifications": "Notifications"
+    "menu.notifications": "Notifications",
+    "menu.iot_control": "IoT Control"
 }
