@@ -145,6 +145,12 @@
                 <div data-i18n="menu.notifications">Notifications</div>
             </a>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.outbound-messages.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.outbound-messages.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-mailbox"></i>
+                <div data-i18n="menu.outbound_messages">Outbound Messages</div>
+            </a>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
             <a href="{{ route('admin.settings') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-settings"></i>

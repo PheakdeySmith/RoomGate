@@ -73,26 +73,36 @@
                     <div class="row g-6">
                       <div class="col-12 form-control-validation">
                         <p class="mb-2">Account Type <span class="text-danger">*</span></p>
-                        <div class="row gy-3 align-items-stretch">
-                          <div class="col-md-6 col-xl-4 d-flex">
-                            <div class="form-check custom-option custom-option-icon h-100 w-100">
-                              <label class="form-check-label custom-option-content h-100 w-100" for="accountTypePersonal">
+                        <div class="row g-6">
+                          <div class="col-md mb-md-0">
+                            <div class="form-check custom-option custom-option-icon">
+                              <label class="form-check-label custom-option-content" for="accountTypePersonal">
                                 <span class="custom-option-body">
-                                  <i class="icon-base ti tabler-user icon-lg mb-2"></i>
+                                  <svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20.5 5C15.667 5 11.75 8.917 11.75 13.75C11.75 18.583 15.667 22.5 20.5 22.5C25.333 22.5 29.25 18.583 29.25 13.75C29.25 8.917 25.333 5 20.5 5Z" fill="currentColor" fill-opacity="0.2"/>
+                                    <path d="M20.5 6.75C24.367 6.75 27.5 9.883 27.5 13.75C27.5 17.617 24.367 20.75 20.5 20.75C16.633 20.75 13.5 17.617 13.5 13.75C13.5 9.883 16.633 6.75 20.5 6.75Z" fill="currentColor"/>
+                                    <path d="M7 34.75C7 29.804 13.268 26.25 20.5 26.25C27.732 26.25 34 29.804 34 34.75H32.25C32.25 30.91 27.012 28 20.5 28C13.988 28 8.75 30.91 8.75 34.75H7Z" fill="currentColor"/>
+                                  </svg>
                                   <span class="custom-option-title">Personal</span>
-                                  <small>Manage your own rooms and tenants.</small>
+                                  <small>Manage your own rooms and tenants.<br />Personal workspace.</small>
                                 </span>
                                 <input class="form-check-input" type="radio" name="extra[account_type]" id="accountTypePersonal" value="personal" checked />
                               </label>
                             </div>
                           </div>
-                          <div class="col-md-6 col-xl-4 d-flex">
-                            <div class="form-check custom-option custom-option-icon h-100 w-100">
-                              <label class="form-check-label custom-option-content h-100 w-100" for="accountTypeOrg">
+                          <div class="col-md mb-md-0">
+                            <div class="form-check custom-option custom-option-icon">
+                              <label class="form-check-label custom-option-content" for="accountTypeOrg">
                                 <span class="custom-option-body">
-                                  <i class="icon-base ti tabler-building icon-lg mb-2"></i>
+                                  <svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.5 33.75V6.25C6.5 5.91848 6.6317 5.60054 6.86612 5.36612C7.10054 5.1317 7.41848 5 7.75 5H22.75C23.0815 5 23.3995 5.1317 23.6339 5.36612C23.8683 5.60054 24 5.91848 24 6.25V33.75" fill="currentColor" fill-opacity="0.2"/>
+                                    <path d="M24 33.75V16.25C24 15.9185 24.1317 15.6005 24.3661 15.3661C24.6005 15.1317 24.9185 15 25.25 15H32.25C32.5815 15 32.8995 15.1317 33.1339 15.3661C33.3683 15.6005 33.5 15.9185 33.5 16.25V33.75" fill="currentColor" fill-opacity="0.2"/>
+                                    <path d="M5 34.75H36V32.75H5V34.75Z" fill="currentColor"/>
+                                    <path d="M22.75 5H7.75C7.41848 5 7.10054 5.1317 6.86612 5.36612C6.6317 5.60054 6.5 5.91848 6.5 6.25V33.75H8.5V7H22V33.75H24V6.25C24 5.91848 23.8683 5.60054 23.6339 5.36612C23.3995 5.1317 23.0815 5 22.75 5Z" fill="currentColor"/>
+                                    <path d="M32.25 15H25.25C24.9185 15 24.6005 15.1317 24.3661 15.3661C24.1317 15.6005 24 15.9185 24 16.25V33.75H26V17H31.5V33.75H33.5V16.25C33.5 15.9185 33.3683 15.6005 33.1339 15.3661C32.8995 15.1317 32.5815 15 32.25 15Z" fill="currentColor"/>
+                                  </svg>
                                   <span class="custom-option-title">Organization</span>
-                                  <small>For teams managing properties together.</small>
+                                  <small>For teams managing properties<br />together.</small>
                                 </span>
                                 <input class="form-check-input" type="radio" name="extra[account_type]" id="accountTypeOrg" value="organization" />
                               </label>

@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('rent:generate-invoices')->dailyAt('01:00');
 Schedule::command('rent:send-overdue-reminders')->dailyAt('02:00');
+Schedule::command('notifications:send-queued')->everyFiveMinutes();

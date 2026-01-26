@@ -55,8 +55,10 @@
                   $price = number_format($plan->price_cents / 100, 2);
                   $isCurrent = $subscription && $subscription->plan_id === $plan->id;
                   $image = $images[$index] ?? $images[0];
+                  $duration = $plan->interval === 'yearly' ? '/year' : '/month';
+                  $priceClass = $plan->interval === 'yearly' ? 'price-yearly d-none' : 'price-monthly';
                 @endphp
-                <div class="col-xl mb-md-0">
+                <div class="col-xl mb-md-0 {{ $priceClass }}">
                   <div class="card {{ $isCurrent ? 'border-primary' : 'border' }} rounded shadow-none">
                     <div class="card-body pt-12 p-5">
                       <div class="mt-3 mb-5 text-center">
@@ -68,7 +70,7 @@
                         <div class="d-flex justify-content-center">
                           <sup class="h6 text-body pricing-currency mt-2 mb-0 me-1">$</sup>
                           <h1 class="mb-0 text-primary">{{ $price }}</h1>
-                          <sub class="h6 text-body pricing-duration mt-auto mb-1">/month</sub>
+                          <sub class="h6 text-body pricing-duration mt-auto mb-1">{{ $duration }}</sub>
                         </div>
                       </div>
 

@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\PlanGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -232,8 +233,13 @@ class AdminTenantController extends Controller
         });
     }
 
-    public function storeMember(Request $request, Tenant $tenant, AuditLogger $auditLogger): RedirectResponse
+    public function storeMember(Request $request, Tenant $tenant, AuditLogger $auditLogger, PlanGate $planGate): RedirectResponse
     {
+        $currentCount = $tenant->users()->count();
+        if (! $planGate->canCreate($tenant, 'tenant_users_max', $currentCount)) {
+            return back()->withErrors(['plan' => 'This tenant has reached the user limit for their plan.']);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],

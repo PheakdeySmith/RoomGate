@@ -18,6 +18,7 @@ use Modules\Admin\App\Http\Controllers\AdminAmenityController;
 use Modules\Admin\App\Http\Controllers\AdminContractController;
 use Modules\Admin\App\Http\Controllers\AdminInvoiceController;
 use Modules\Admin\App\Http\Controllers\AdminNotificationController;
+use Modules\Admin\App\Http\Controllers\AdminOutboundMessageController;
 use Modules\Admin\App\Http\Controllers\AdminIoTController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
@@ -100,6 +101,7 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifications/mark-read', [AdminNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
         Route::post('/notifications/{notification}/read', [AdminNotificationController::class, 'markRead'])->name('notifications.mark-read');
+        Route::get('/outbound-messages', [AdminOutboundMessageController::class, 'index'])->name('outbound-messages.index');
         Route::get('/iot-control', [AdminIoTController::class, 'index'])->name('iot.index');
         Route::get('/iot-control/status', [AdminIoTController::class, 'status'])->name('iot.status');
         Route::post('/iot-control/led', [AdminIoTController::class, 'led'])->name('iot.led');

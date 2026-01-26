@@ -53,4 +53,18 @@ class PlanGate
 
         return $limits[$limitKey] ?? null;
     }
+
+    public function canCreate(Tenant $tenant, string $limitKey, int $currentCount): bool
+    {
+        $limit = $this->tenantLimit($tenant, $limitKey);
+        if ($limit === null || $limit === '' || $limit === 'unlimited') {
+            return true;
+        }
+
+        if (!is_numeric($limit)) {
+            return false;
+        }
+
+        return $currentCount < (int) $limit;
+    }
 }

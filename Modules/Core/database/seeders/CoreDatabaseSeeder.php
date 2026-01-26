@@ -15,6 +15,7 @@ class CoreDatabaseSeeder extends Seeder
             PlanSeeder::class,
             PropertyTypeSeeder::class,
             PropertyRoomSeeder::class,
+            UtilitySeeder::class,
         ]);
     }
 }

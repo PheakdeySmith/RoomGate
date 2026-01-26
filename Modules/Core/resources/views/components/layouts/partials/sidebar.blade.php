@@ -89,6 +89,73 @@
                         </ul>
                     </li>
 
+                    <li class="menu-header small text-uppercase">
+                        <span class="menu-header-text" data-i18n="menu.property_management">Property Management</span>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.properties.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.properties.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-building-community"></i>
+                            <div data-i18n="menu.properties">Properties</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.room-types.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.room-types.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-layout-grid"></i>
+                            <div data-i18n="menu.room_types">Room Types</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.rooms.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.rooms.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-door"></i>
+                            <div data-i18n="menu.rooms">Rooms</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.amenities.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.amenities.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-bulb"></i>
+                            <div data-i18n="menu.amenities">Amenities</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.contracts.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.contracts.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-file-text"></i>
+                            <div data-i18n="menu.contracts">Contracts</div>
+                        </a>
+                    </li>
+                    <li class="menu-header small text-uppercase">
+                        <span class="menu-header-text" data-i18n="menu.utilities">Utilities</span>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.utility-providers.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.utility-providers.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-building-broadcast-tower"></i>
+                            <div data-i18n="menu.utility_providers">Providers</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.utility-meters.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.utility-meters.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-meter-electric"></i>
+                            <div data-i18n="menu.utility_meters">Meters</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.utility-readings.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.utility-readings.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-gauge"></i>
+                            <div data-i18n="menu.utility_readings">Readings</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.utility-rates.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.utility-rates.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-cash"></i>
+                            <div data-i18n="menu.utility_rates">Rates</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.utility-bills.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.utility-bills.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-file-invoice"></i>
+                            <div data-i18n="menu.utility_bills">Bills</div>
+                        </a>
+                    </li>
+
                     <!-- Layouts -->
                     <li class="menu-item">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
