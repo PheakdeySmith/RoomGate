@@ -42,9 +42,24 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::patch('/tenants/{tenant}', [AdminTenantController::class, 'update'])->name('tenants.update');
         Route::delete('/tenants/{tenant}', [AdminTenantController::class, 'destroy'])->name('tenants.destroy');
         Route::get('/tenants/{tenant}', [AdminTenantController::class, 'show'])->name('tenants.show');
+        Route::get('/tenants/{tenant}/account', [AdminTenantController::class, 'account'])->name('tenants.account');
+        Route::get('/tenants/{tenant}/security', [AdminTenantController::class, 'security'])->name('tenants.security');
+        Route::get('/tenants/{tenant}/billing', [AdminTenantController::class, 'billing'])->name('tenants.billing');
+        Route::get('/tenants/{tenant}/notifications', [AdminTenantController::class, 'notifications'])->name('tenants.notifications');
+        Route::get('/tenants/{tenant}/connections', [AdminTenantController::class, 'connections'])->name('tenants.connections');
+        Route::get('/tenants/{tenant}/members/data', [AdminTenantController::class, 'membersData'])->name('tenants.members.data');
+        Route::get('/tenants/{tenant}/invoices/data', [AdminTenantController::class, 'invoicesData'])->name('tenants.invoices.data');
+        Route::get('/tenants/{tenant}/activity/data', [AdminTenantController::class, 'activityData'])->name('tenants.activity.data');
+        Route::get('/tenants/{tenant}/members/export', [AdminTenantController::class, 'exportMembers'])->name('tenants.members.export');
+        Route::get('/tenants/{tenant}/invoices/export', [AdminTenantController::class, 'exportInvoices'])->name('tenants.invoices.export');
+        Route::get('/tenants/{tenant}/activity/export', [AdminTenantController::class, 'exportActivity'])->name('tenants.activity.export');
+        Route::patch('/tenants/{tenant}/status', [AdminTenantController::class, 'updateStatus'])->name('tenants.status.update');
+        Route::post('/tenants/{tenant}/owner/reset-password', [AdminTenantController::class, 'resetOwnerPassword'])->name('tenants.owner.reset-password');
         Route::post('/tenants/{tenant}/members', [AdminTenantController::class, 'storeMember'])->name('tenants.members.store');
         Route::patch('/tenants/{tenant}/members/{user}', [AdminTenantController::class, 'updateMember'])->name('tenants.members.update');
         Route::delete('/tenants/{tenant}/members/{user}', [AdminTenantController::class, 'destroyMember'])->name('tenants.members.destroy');
+        Route::post('/tenants/{tenant}/members/{user}/toggle-status', [AdminTenantController::class, 'toggleMemberStatus'])->name('tenants.members.toggle-status');
+        Route::post('/tenants/{tenant}/members/{user}/reset-password', [AdminTenantController::class, 'resetMemberPassword'])->name('tenants.members.reset-password');
         Route::get('/users/{user}/account', [AdminUserViewController::class, 'account'])->name('users.account');
         Route::get('/users/{user}/security', [AdminUserViewController::class, 'security'])->name('users.security');
         Route::get('/users/{user}/billing', [AdminUserViewController::class, 'billing'])->name('users.billing');
@@ -97,6 +112,8 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::delete('/contracts/{contract}', [AdminContractController::class, 'destroy'])->name('contracts.destroy');
         Route::post('/contracts/{contract}/generate-invoice', [AdminContractController::class, 'generateInvoice'])->name('contracts.generate-invoice');
         Route::get('/invoices', [AdminInvoiceController::class, 'index'])->name('invoices.index');
+        Route::patch('/invoices/{invoice}/status', [AdminInvoiceController::class, 'updateStatus'])->name('invoices.update-status');
+        Route::get('/invoices/{invoice}/print', [AdminInvoiceController::class, 'print'])->name('invoices.print');
 
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifications/mark-read', [AdminNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');

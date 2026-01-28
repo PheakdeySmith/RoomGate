@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Concerns\BelongsToTenantOrGlobal;
 
 class UtilityType extends Model
 {
+    use BelongsToTenantOrGlobal;
     protected $fillable = [
         'tenant_id',
         'code',

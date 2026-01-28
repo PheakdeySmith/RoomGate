@@ -52,7 +52,7 @@ class CoreController extends Controller
 
     public function userViewNotifications()
     {
-        return view('core::dashboard.app-user-view-notifications');
+        return redirect()->route('core.notifications.index');
     }
 
     public function userViewSecurity()

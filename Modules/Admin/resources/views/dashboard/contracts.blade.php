@@ -66,7 +66,6 @@
                     data-contract-start="{{ optional($contract->start_date)->format('Y-m-d') }}"
                     data-contract-end="{{ optional($contract->end_date)->format('Y-m-d') }}"
                     data-contract-rent="{{ number_format(($contract->monthly_rent_cents ?? 0) / 100, 2, '.', '') }}"
-                    data-contract-deposit="{{ number_format(($contract->deposit_cents ?? 0) / 100, 2, '.', '') }}"
                     data-contract-cycle="{{ $contract->billing_cycle }}"
                     data-contract-due-day="{{ $contract->payment_due_day }}"
                     data-contract-status="{{ $contract->status }}"
@@ -139,10 +138,6 @@
           <div class="col-md-4">
             <label class="form-label" for="contractRent">Monthly Rent (USD)</label>
             <input type="number" id="contractRent" name="monthly_rent" class="form-control" step="0.01" min="0" required />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" for="contractDeposit">Deposit (USD)</label>
-            <input type="number" id="contractDeposit" name="deposit" class="form-control" step="0.01" min="0" />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="contractDueDay">Payment Due Day</label>
@@ -235,10 +230,6 @@
           <div class="col-md-4">
             <label class="form-label" for="editContractRent">Monthly Rent (USD)</label>
             <input type="number" id="editContractRent" name="monthly_rent" class="form-control" step="0.01" min="0" required />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" for="editContractDeposit">Deposit (USD)</label>
-            <input type="number" id="editContractDeposit" name="deposit" class="form-control" step="0.01" min="0" />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="editContractDueDay">Payment Due Day</label>
@@ -517,7 +508,6 @@
           document.getElementById('editContractStart').value = trigger.getAttribute('data-contract-start') || '';
           document.getElementById('editContractEnd').value = trigger.getAttribute('data-contract-end') || '';
           document.getElementById('editContractRent').value = trigger.getAttribute('data-contract-rent') || '0.00';
-          document.getElementById('editContractDeposit').value = trigger.getAttribute('data-contract-deposit') || '0.00';
           document.getElementById('editContractCycle').value = trigger.getAttribute('data-contract-cycle') || 'monthly';
           document.getElementById('editContractDueDay').value = trigger.getAttribute('data-contract-due-day') || '1';
           document.getElementById('editContractStatus').value = trigger.getAttribute('data-contract-status') || 'active';

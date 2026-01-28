@@ -5,8 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use App\Services\NotificationService;
-use App\Services\InAppNotificationService;
+use App\Events\RentInvoiceCreated;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,7 @@ class GenerateRentInvoices extends Command
 
     protected $description = 'Generate rent invoices for active contracts that are due.';
 
-    public function handle(NotificationService $notifications, InAppNotificationService $inApp): int
+    public function handle(): int
     {
         $issueDate = $this->option('date')
             ? Carbon::createFromFormat('Y-m-d', $this->option('date'))->startOfDay()
@@ -84,7 +83,7 @@ class GenerateRentInvoices extends Command
                 return $invoice;
             });
 
-            $this->queueInvoiceNotification($notifications, $invoice, $inApp);
+            event(new RentInvoiceCreated($invoice));
             $created++;
         }
 
@@ -116,48 +115,5 @@ class GenerateRentInvoices extends Command
             'daily' => $issueDate->copy()->addDay(),
             default => $issueDate->copy()->addMonthNoOverflow(),
         };
-    }
-
-    private function queueInvoiceNotification(NotificationService $notifications, Invoice $invoice, InAppNotificationService $inApp): void
-    {
-        $contract = $invoice->contract;
-        $tenant = $invoice->tenant;
-        $occupant = $contract?->occupant;
-        if (!$occupant || !$occupant->email) {
-            return;
-        }
-
-        $notifications->queue(
-            'rent_invoice_created',
-            $tenant,
-            $occupant,
-            [
-                'recipient_name' => $occupant->name,
-                'invoice_number' => $invoice->invoice_number,
-                'amount_due' => number_format($invoice->total_cents / 100, 2),
-                'due_date' => optional($invoice->due_date)->format('Y-m-d'),
-                'property_name' => $contract?->room?->property?->name ?? 'Property',
-                'room_number' => $contract?->room?->room_number ?? '—',
-            ],
-            [
-                'dedupe_key' => 'rent-invoice-created-'.$invoice->id,
-                'metadata' => [
-                    'invoice_id' => $invoice->id,
-                    'contract_id' => $contract?->id,
-                ],
-            ]
-        );
-
-        $inApp->create(
-            $occupant,
-            'New rent invoice created',
-            'Invoice '.$invoice->invoice_number.' is ready.',
-            [
-                'tenant_id' => $tenant?->id,
-                'type' => 'info',
-                'icon' => 'tabler-receipt-2',
-                'link_url' => route('admin.invoices.index'),
-            ]
-        );
     }
 }

@@ -122,6 +122,12 @@
                             <div data-i18n="menu.contracts">Contracts</div>
                         </a>
                     </li>
+                    <li class="menu-item {{ request()->routeIs('core.tenant-members.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.tenant-members.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-users"></i>
+                            <div data-i18n="menu.tenant_members">Tenant Members</div>
+                        </a>
+                    </li>
                     <li class="menu-header small text-uppercase">
                         <span class="menu-header-text" data-i18n="menu.utilities">Utilities</span>
                     </li>
@@ -311,21 +317,6 @@
                             <li class="menu-item {{ request()->routeIs('Core.invoices.add') ? 'active' : '' }}">
                                 <a href="{{ route('Core.invoices.add') }}" class="menu-link">
                                     <div data-i18n="Add">Add</div>
-                                </a>
-                            </li>
-                            <li class="menu-item {{ request()->routeIs('Core.invoices.edit') ? 'active' : '' }}">
-                                <a href="{{ route('Core.invoices.edit') }}" class="menu-link">
-                                    <div data-i18n="Edit">Edit</div>
-                                </a>
-                            </li>
-                            <li class="menu-item {{ request()->routeIs('Core.invoices.preview') ? 'active' : '' }}">
-                                <a href="{{ route('Core.invoices.preview') }}" class="menu-link">
-                                    <div data-i18n="Preview">Preview</div>
-                                </a>
-                            </li>
-                            <li class="menu-item {{ request()->routeIs('Core.invoices.print') ? 'active' : '' }}">
-                                <a href="{{ route('Core.invoices.print') }}" class="menu-link">
-                                    <div data-i18n="Print">Print</div>
                                 </a>
                             </li>
                         </ul>

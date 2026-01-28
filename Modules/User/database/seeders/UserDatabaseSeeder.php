@@ -11,9 +11,14 @@ class UserDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
+        $seeders = [
             RolePermissionSeeder::class,
-            DemoUsersSeeder::class,
-        ]);
+        ];
+
+        if (!app()->environment('production')) {
+            $seeders[] = DemoUsersSeeder::class;
+        }
+
+        $this->call($seeders);
     }
 }

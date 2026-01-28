@@ -151,6 +151,7 @@
   <script src="{{ asset('assets/assets') }}/vendor/libs/select2/select2.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const roomTypesBaseUrl = @json(route('core.room-types.index'));
       if (window.$ && $.fn.select2) {
         $('.select2').each(function () {
           const placeholder = $(this).find('option[value=""]').first().text() || 'Select';
@@ -251,35 +252,11 @@
 
       initTable('.datatables-room-types', 'Search Room Type', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Room Type</span>', '#addRoomTypeModal');
 
-      setTimeout(() => {
-        const elementsToModify = [
-          { selector: '.dt-buttons .btn', classToRemove: 'btn-secondary' },
-          { selector: '.dt-buttons.btn-group .btn-group', classToRemove: 'btn-group' },
-          { selector: '.dt-buttons.btn-group', classToRemove: 'btn-group', classToAdd: 'd-flex' },
-          { selector: '.dt-search .form-control', classToRemove: 'form-control-sm' },
-          { selector: '.dt-length .form-select', classToRemove: 'form-select-sm' },
-          { selector: '.dt-length', classToAdd: 'mb-md-6 mb-0' },
-          { selector: '.dt-layout-start', classToAdd: 'ps-3 mt-0' },
-          {
-            selector: '.dt-layout-end',
-            classToRemove: 'justify-content-between',
-            classToAdd: 'justify-content-md-between justify-content-center d-flex flex-wrap gap-4 mt-0 mb-md-0 mb-6'
-          },
-          { selector: '.dt-layout-table', classToRemove: 'row mt-2' },
-          { selector: '.dt-layout-full', classToRemove: 'col-md col-12', classToAdd: 'table-responsive' }
-        ];
-
-        elementsToModify.forEach(({ selector, classToRemove, classToAdd }) => {
-          document.querySelectorAll(selector).forEach(element => {
-            if (classToRemove) {
-              classToRemove.split(' ').forEach(className => element.classList.remove(className));
-            }
-            if (classToAdd) {
-              classToAdd.split(' ').forEach(className => element.classList.add(className));
-            }
-          });
-        });
-      }, 100);
+        if (window.RoomGateDataTables && RoomGateDataTables.applyLayoutClasses) {
+          setTimeout(() => {
+            RoomGateDataTables.applyLayoutClasses();
+          }, 100);
+        }
 
       const editModal = document.getElementById('editRoomTypeModal');
       if (editModal) {
@@ -288,7 +265,7 @@
           const form = document.getElementById('editRoomTypeForm');
           const roomTypeId = trigger.getAttribute('data-room-type-id');
 
-          form.action = `{{ url('/core/room-types') }}/${roomTypeId}`;
+          form.action = `${roomTypesBaseUrl}/${roomTypeId}`;
           document.getElementById('editRoomTypeName').value = trigger.getAttribute('data-room-type-name') || '';
           document.getElementById('editRoomTypeCapacity').value = trigger.getAttribute('data-room-type-capacity') || '';
           document.getElementById('editRoomTypeDescription').value = trigger.getAttribute('data-room-type-description') || '';

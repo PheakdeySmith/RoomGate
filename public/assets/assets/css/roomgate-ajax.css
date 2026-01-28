@@ -18,3 +18,23 @@ html.dark .rg-ajax-overlay,
 :root[data-theme=dark] .rg-ajax-overlay {
   background: rgba(0, 0, 0, 0.45);
 }
+
+.dataTables_wrapper {
+  position: relative;
+}
+
+div.dataTables_processing,
+div.dt-processing {
+  display: none !important;
+}
+
+.rg-dt-processing .sk-wave {
+  width: 55px;
+  height: 32px;
+  margin: 0 auto;
+}
+
+div.dataTables_processing,
+div.dt-processing {
+  pointer-events: none;
+}

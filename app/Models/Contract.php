@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\BelongsToTenant;
 
 class Contract extends Model
 {
     use SoftDeletes;
+    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -18,7 +20,6 @@ class Contract extends Model
         'start_date',
         'end_date',
         'monthly_rent_cents',
-        'deposit_cents',
         'currency_code',
         'billing_cycle',
         'payment_due_day',

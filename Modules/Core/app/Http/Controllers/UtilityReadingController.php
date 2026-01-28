@@ -7,14 +7,16 @@ use App\Models\UtilityMeterReading;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class UtilityReadingController extends Controller
 {
-    public function index()
+    public function index(CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [UtilityMeterReading::class, $tenant->id]);
 
         $readings = UtilityMeterReading::query()
             ->with(['meter.property', 'meter.room', 'meter.utilityType'])
@@ -31,9 +33,10 @@ class UtilityReadingController extends Controller
         return view('core::dashboard.utilities.readings', compact('readings', 'meters'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [UtilityMeterReading::class, $tenant->id]);
 
         $validated = $request->validate([
             'meter_id' => [
@@ -70,12 +73,10 @@ class UtilityReadingController extends Controller
         return back()->with('status', 'Meter reading added.');
     }
 
-    public function update(Request $request, UtilityMeterReading $reading, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, UtilityMeterReading $reading, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($reading->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $reading);
 
         $validated = $request->validate([
             'meter_id' => [
@@ -114,12 +115,10 @@ class UtilityReadingController extends Controller
         return back()->with('status', 'Meter reading updated.');
     }
 
-    public function destroy(UtilityMeterReading $reading, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, UtilityMeterReading $reading, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($reading->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $reading);
 
         $before = $reading->toArray();
         $reading->delete();

@@ -47,8 +47,17 @@
                         </div>
                         <i class="icon-base ti tabler-building-community icon-lg text-primary"></i>
                     </div>
+                    @php
+                        $adminTenant = auth()->user()?->tenants()->orderBy('name')->first();
+                    @endphp
                     <div class="mt-4">
-                        <a href="{{ url('/core/crm-dashboard') }}" class="btn btn-outline-secondary btn-sm">Open tenant dashboard</a>
+                        @if ($adminTenant)
+                            <a href="{{ route('Core.crm', ['tenant' => $adminTenant->slug]) }}" class="btn btn-outline-secondary btn-sm">
+                                Open tenant dashboard
+                            </a>
+                        @else
+                            <span class="text-body-secondary">No tenant assigned.</span>
+                        @endif
                     </div>
                 </div>
             </div>

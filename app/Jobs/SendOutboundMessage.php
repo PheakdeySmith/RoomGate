@@ -19,6 +19,7 @@ class SendOutboundMessage implements ShouldQueue
     use SerializesModels;
 
     public int $tries = 5;
+    public array $backoff = [60, 300, 900];
 
     public function __construct(public int $messageId)
     {
@@ -45,6 +46,15 @@ class SendOutboundMessage implements ShouldQueue
             Mail::html($message->body, function ($mail) use ($message) {
                 $mail->to($message->to_address)
                     ->subject($message->subject ?? 'Notification');
+
+                $symfonyMessage = $mail->getSymfonyMessage();
+                if ($symfonyMessage) {
+                    $headers = $symfonyMessage->getHeaders();
+                    $headers->addTextHeader('X-RoomGate-Outbound-Id', (string) $message->id);
+                    if ($message->dedupe_key) {
+                        $headers->addTextHeader('X-RoomGate-Dedupe-Key', (string) $message->dedupe_key);
+                    }
+                }
             });
 
             $message->update([
@@ -52,9 +62,11 @@ class SendOutboundMessage implements ShouldQueue
                 'sent_at' => now(),
             ]);
         } catch (Exception $exception) {
+            $failed = $message->attempt_count >= $this->tries;
             $message->update([
-                'status' => $message->attempt_count >= $this->tries ? 'failed' : 'queued',
+                'status' => $failed ? 'failed' : 'queued',
                 'last_error' => $exception->getMessage(),
+                'failed_at' => $failed ? now() : $message->failed_at,
             ]);
 
             throw $exception;

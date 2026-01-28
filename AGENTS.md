@@ -11,6 +11,7 @@ Follow these rules when making changes in this repo.
 - Use Vuexy template patterns. Match the existing DataTables layout/JS patterns.
 - Use Notyf for success/warn/error toasts and SweetAlert2 for confirmations.
 - Keep markup consistent with existing admin templates (cards, table classes, modal styles).
+- Keep UI consistent with existing RoomGate styling and layouts; reuse existing components/patterns instead of introducing new designs unless explicitly requested.
 
 ### DataTables
 - Always include the responsive control column and `className: 'control'`.

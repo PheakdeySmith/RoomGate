@@ -4,6 +4,8 @@
         $lightLogo = $appSettings->logo_light_path ? asset($appSettings->logo_light_path) : null;
         $darkLogo = $appSettings->logo_dark_path ? asset($appSettings->logo_dark_path) : $lightLogo;
         $smallLogo = $appSettings->logo_small_path ? asset($appSettings->logo_small_path) : ($lightLogo ?? $darkLogo);
+        $adminTenant = auth()->user()?->tenants()->orderBy('name')->first();
+        $tenantDashboardUrl = $adminTenant ? route('Core.crm', ['tenant' => $adminTenant->slug]) : null;
     @endphp
     <div class="app-brand demo">
         <a href="{{ route('admin.dashboard') }}" class="app-brand-link">
@@ -81,6 +83,22 @@
                 <div data-i18n="menu.permissions">Permissions</div>
             </a>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.audit-logs') ? 'active' : '' }}">
+            <a href="{{ route('admin.audit-logs') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-history"></i>
+                <div data-i18n="menu.audit_logs">Audit Logs</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.translations') ? 'active' : '' }}">
+            <a href="{{ route('admin.translations') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-language"></i>
+                <div data-i18n="menu.translations">Translations</div>
+            </a>
+        </li>
+
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Management</span>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.tenants.*') ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-users"></i>
@@ -94,17 +112,51 @@
                 </li>
             </ul>
         </li>
-        <li class="menu-item {{ request()->routeIs('admin.audit-logs') ? 'active' : '' }}">
-            <a href="{{ route('admin.audit-logs') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-history"></i>
-                <div data-i18n="menu.audit_logs">Audit Logs</div>
+        <li class="menu-item {{ request()->routeIs('admin.properties.*', 'admin.room-types.*', 'admin.rooms.*', 'admin.amenities.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-building-community"></i>
+                <div data-i18n="menu.properties">Properties</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.properties.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.properties.index') }}" class="menu-link">
+                        <div data-i18n="menu.properties_list">List</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.room-types.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.room-types.index') }}" class="menu-link">
+                        <div data-i18n="menu.room_types">Room Types</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.rooms.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.rooms.index') }}" class="menu-link">
+                        <div data-i18n="menu.rooms">Rooms</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.amenities.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.amenities.index') }}" class="menu-link">
+                        <div data-i18n="menu.amenities">Amenities</div>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="menu-item {{ request()->routeIs('admin.translations') ? 'active' : '' }}">
-            <a href="{{ route('admin.translations') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-language"></i>
-                <div data-i18n="menu.translations">Translations</div>
+        <li class="menu-item {{ request()->routeIs('admin.contracts.*', 'admin.invoices.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-file-invoice"></i>
+                <div data-i18n="menu.leasing">Leasing</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.contracts.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.contracts.index') }}" class="menu-link">
+                        <div data-i18n="menu.contracts">Contracts</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.invoices.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.invoices.index') }}" class="menu-link">
+                        <div data-i18n="menu.invoices">Invoices</div>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="menu-header small text-uppercase">
@@ -163,58 +215,15 @@
                 <div data-i18n="menu.iot_control">IoT Control</div>
             </a>
         </li>
-        <li class="menu-item {{ request()->routeIs('admin.properties.*', 'admin.room-types.*', 'admin.rooms.*', 'admin.amenities.*') ? 'active open' : '' }}">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ti tabler-building-community"></i>
-                <div data-i18n="menu.properties">Properties</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item {{ request()->routeIs('admin.properties.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.properties.index') }}" class="menu-link">
-                        <div data-i18n="menu.properties_list">List</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ request()->routeIs('admin.room-types.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.room-types.index') }}" class="menu-link">
-                        <div data-i18n="menu.room_types">Room Types</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ request()->routeIs('admin.rooms.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.rooms.index') }}" class="menu-link">
-                        <div data-i18n="menu.rooms">Rooms</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ request()->routeIs('admin.amenities.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.amenities.index') }}" class="menu-link">
-                        <div data-i18n="menu.amenities">Amenities</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <li class="menu-item {{ request()->routeIs('admin.contracts.*', 'admin.invoices.*') ? 'active open' : '' }}">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ti tabler-file-invoice"></i>
-                <div data-i18n="menu.leasing">Leasing</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item {{ request()->routeIs('admin.contracts.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.contracts.index') }}" class="menu-link">
-                        <div data-i18n="menu.contracts">Contracts</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ request()->routeIs('admin.invoices.index') ? 'active' : '' }}">
-                    <a href="{{ route('admin.invoices.index') }}" class="menu-link">
-                        <div data-i18n="menu.invoices">Invoices</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Tenant Area</span>
         </li>
         <li class="menu-item">
-            <a href="{{ url('/core/crm-dashboard') }}" class="menu-link">
+            @if ($tenantDashboardUrl)
+                <a href="{{ $tenantDashboardUrl }}" class="menu-link">
+            @else
+                <a href="javascript:void(0);" class="menu-link disabled" aria-disabled="true">
+            @endif
                 <i class="menu-icon icon-base ti tabler-building-community"></i>
                 <div data-i18n="menu.tenant_dashboard">Tenant Dashboard</div>
             </a>

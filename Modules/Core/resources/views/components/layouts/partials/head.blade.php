@@ -47,6 +47,10 @@
     <link rel="stylesheet"
         href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
     <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/fonts/flag-icons.css" />
+    <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/notyf/notyf.css" />
+    <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/animate-css/animate.css" />
+    <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/sweetalert2/sweetalert2.css" />
+    <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/spinkit/spinkit.css" />
     <link rel="stylesheet" href="{{ asset('assets/assets') }}/css/cat.css" />
     <link rel="stylesheet" href="{{ asset('assets/assets') }}/css/roomgate-ajax.css" />
     <style>

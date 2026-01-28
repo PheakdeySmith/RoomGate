@@ -13,6 +13,7 @@
 <script src="{{ asset('assets/assets') }}/vendor/libs/notyf/notyf.js"></script>
 <script src="{{ asset('assets/assets') }}/vendor/libs/sweetalert2/sweetalert2.js"></script>
 <script src="{{ asset('assets/assets') }}/js/cat.js"></script>
+<script src="{{ asset('assets/assets') }}/js/roomgate-datatables.js"></script>
 
 <script src="{{ asset('assets/assets') }}/js/main.js"></script>
 

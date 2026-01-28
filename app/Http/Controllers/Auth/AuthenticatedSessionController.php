@@ -36,8 +36,11 @@ class AuthenticatedSessionController extends Controller
         if ($user && $user->hasAnyRole(['platform_admin', 'admin'])) {
             return redirect()->route('admin.dashboard');
         }
-        if ($user && $user->tenants()->exists()) {
-            return redirect()->intended('/core/crm-dashboard');
+        if ($user) {
+            $tenant = $user->tenants()->orderBy('name')->first();
+            if ($tenant) {
+                return redirect()->route('Core.crm', ['tenant' => $tenant->slug]);
+            }
         }
 
         return redirect()->route('core.onboarding');

@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/select2/select2.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/@form-validation/form-validation.css" />
+  <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/flatpickr/flatpickr.css" />
 @endpush
 
 @section('content')
@@ -63,7 +64,6 @@
                     data-contract-start="{{ optional($contract->start_date)->format('Y-m-d') }}"
                     data-contract-end="{{ optional($contract->end_date)->format('Y-m-d') }}"
                     data-contract-rent="{{ number_format(($contract->monthly_rent_cents ?? 0) / 100, 2, '.', '') }}"
-                    data-contract-deposit="{{ number_format(($contract->deposit_cents ?? 0) / 100, 2, '.', '') }}"
                     data-contract-cycle="{{ $contract->billing_cycle }}"
                     data-contract-due-day="{{ $contract->payment_due_day }}"
                     data-contract-status="{{ $contract->status }}"
@@ -115,22 +115,35 @@
                 <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
               @endforeach
             </select>
+            <div class="form-check mt-2">
+              <input type="hidden" name="create_new_occupant" value="0" />
+              <input class="form-check-input" type="checkbox" id="createNewOccupant" name="create_new_occupant" value="1">
+              <label class="form-check-label" for="createNewOccupant">Create new occupant for this contract</label>
+            </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4 occupant-create-fields d-none">
+            <label class="form-label" for="occupantName">Occupant Name</label>
+            <input type="text" id="occupantName" name="occupant_name" class="form-control" />
+          </div>
+          <div class="col-md-4 occupant-create-fields d-none">
+            <label class="form-label" for="occupantEmail">Occupant Email</label>
+            <input type="email" id="occupantEmail" name="occupant_email" class="form-control" />
+          </div>
+          <div class="col-md-4 occupant-create-fields d-none">
+            <label class="form-label" for="occupantPassword">Occupant Password</label>
+            <input type="password" id="occupantPassword" name="occupant_password" class="form-control" />
+          </div>
+          <div class="col-md-6">
             <label class="form-label" for="contractStart">Start Date</label>
             <input type="text" id="contractStart" name="start_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
           </div>
-          <div class="col-md-3">
+          <div class="col-md-6">
             <label class="form-label" for="contractEnd">End Date</label>
             <input type="text" id="contractEnd" name="end_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="contractRent">Monthly Rent (USD)</label>
             <input type="number" id="contractRent" name="monthly_rent" class="form-control" step="0.01" min="0" required />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" for="contractDeposit">Deposit (USD)</label>
-            <input type="number" id="contractDeposit" name="deposit" class="form-control" step="0.01" min="0" />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="contractDueDay">Payment Due Day</label>
@@ -159,7 +172,7 @@
             <label class="form-label" for="contractNotes">Notes</label>
             <textarea id="contractNotes" name="notes" class="form-control" rows="2" placeholder="Optional notes"></textarea>
           </div>
-          <div class="col-12">
+          <div class="col-md-6">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="contractAutoRenew" name="auto_renew" value="1">
               <label class="form-check-label" for="contractAutoRenew">Auto renew</label>
@@ -203,21 +216,17 @@
               @endforeach
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-6">
             <label class="form-label" for="editContractStart">Start Date</label>
             <input type="text" id="editContractStart" name="start_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
           </div>
-          <div class="col-md-3">
+          <div class="col-md-6">
             <label class="form-label" for="editContractEnd">End Date</label>
             <input type="text" id="editContractEnd" name="end_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="editContractRent">Monthly Rent (USD)</label>
             <input type="number" id="editContractRent" name="monthly_rent" class="form-control" step="0.01" min="0" required />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" for="editContractDeposit">Deposit (USD)</label>
-            <input type="number" id="editContractDeposit" name="deposit" class="form-control" step="0.01" min="0" />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="editContractDueDay">Payment Due Day</label>
@@ -246,7 +255,7 @@
             <label class="form-label" for="editContractNotes">Notes</label>
             <textarea id="editContractNotes" name="notes" class="form-control" rows="2"></textarea>
           </div>
-          <div class="col-12">
+          <div class="col-md-6">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="editContractAutoRenew" name="auto_renew" value="1">
               <label class="form-check-label" for="editContractAutoRenew">Auto renew</label>
@@ -269,9 +278,21 @@
   <script src="{{ asset('assets/assets') }}/vendor/libs/flatpickr/flatpickr.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const contractsBaseUrl = @json(route('core.contracts.index'));
       if (window.flatpickr) {
         document.querySelectorAll('.flatpickr').forEach((el) => {
-          flatpickr(el, { dateFormat: 'Y-m-d' });
+          if (el._flatpickr) {
+            el._flatpickr.destroy();
+          }
+          const modal = el.closest('.modal');
+          const config = {
+            dateFormat: 'Y-m-d',
+            disableMobile: true
+          };
+          if (modal) {
+            config.appendTo = modal;
+          }
+          flatpickr(el, config);
         });
       }
 
@@ -286,6 +307,37 @@
             dropdownParent: modal.length ? modal : $(document.body)
           });
         });
+      }
+
+      const toggleCreateOccupant = () => {
+        const checkbox = document.getElementById('createNewOccupant');
+        if (!checkbox) {
+          return;
+        }
+        const fields = document.querySelectorAll('.occupant-create-fields');
+        const select = document.getElementById('contractOccupant');
+        const required = checkbox.checked;
+        fields.forEach((field) => {
+          field.classList.toggle('d-none', !required);
+        });
+        if (select) {
+          select.disabled = required;
+          if (window.$ && $.fn.select2) {
+            $(select).prop('disabled', required).trigger('change.select2');
+          }
+        }
+        ['occupantName', 'occupantEmail', 'occupantPassword'].forEach((id) => {
+          const input = document.getElementById(id);
+          if (input) {
+            input.required = required;
+          }
+        });
+      };
+
+      const createOccupantCheckbox = document.getElementById('createNewOccupant');
+      if (createOccupantCheckbox) {
+        createOccupantCheckbox.addEventListener('change', toggleCreateOccupant);
+        toggleCreateOccupant();
       }
 
       const initTable = (selector, searchPlaceholder, addText, addTarget) => {
@@ -375,35 +427,11 @@
 
       initTable('.datatables-contracts', 'Search Contract', '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Contract</span>', '#addContractModal');
 
-      setTimeout(() => {
-        const elementsToModify = [
-          { selector: '.dt-buttons .btn', classToRemove: 'btn-secondary' },
-          { selector: '.dt-buttons.btn-group .btn-group', classToRemove: 'btn-group' },
-          { selector: '.dt-buttons.btn-group', classToRemove: 'btn-group', classToAdd: 'd-flex' },
-          { selector: '.dt-search .form-control', classToRemove: 'form-control-sm' },
-          { selector: '.dt-length .form-select', classToRemove: 'form-select-sm' },
-          { selector: '.dt-length', classToAdd: 'mb-md-6 mb-0' },
-          { selector: '.dt-layout-start', classToAdd: 'ps-3 mt-0' },
-          {
-            selector: '.dt-layout-end',
-            classToRemove: 'justify-content-between',
-            classToAdd: 'justify-content-md-between justify-content-center d-flex flex-wrap gap-4 mt-0 mb-md-0 mb-6'
-          },
-          { selector: '.dt-layout-table', classToRemove: 'row mt-2' },
-          { selector: '.dt-layout-full', classToRemove: 'col-md col-12', classToAdd: 'table-responsive' }
-        ];
-
-        elementsToModify.forEach(({ selector, classToRemove, classToAdd }) => {
-          document.querySelectorAll(selector).forEach(element => {
-            if (classToRemove) {
-              classToRemove.split(' ').forEach(className => element.classList.remove(className));
-            }
-            if (classToAdd) {
-              classToAdd.split(' ').forEach(className => element.classList.add(className));
-            }
-          });
-        });
-      }, 100);
+        if (window.RoomGateDataTables && RoomGateDataTables.applyLayoutClasses) {
+          setTimeout(() => {
+            RoomGateDataTables.applyLayoutClasses();
+          }, 100);
+        }
 
       const editModal = document.getElementById('editContractModal');
       if (editModal) {
@@ -412,7 +440,7 @@
           const form = document.getElementById('editContractForm');
           const contractId = trigger.getAttribute('data-contract-id');
 
-          form.action = `{{ url('/core/contracts') }}/${contractId}`;
+          form.action = `${contractsBaseUrl}/${contractId}`;
           const roomSelect = document.getElementById('editContractRoom');
           if (roomSelect) {
             roomSelect.value = trigger.getAttribute('data-contract-room') || '';
@@ -421,7 +449,6 @@
           document.getElementById('editContractStart').value = trigger.getAttribute('data-contract-start') || '';
           document.getElementById('editContractEnd').value = trigger.getAttribute('data-contract-end') || '';
           document.getElementById('editContractRent').value = trigger.getAttribute('data-contract-rent') || '0.00';
-          document.getElementById('editContractDeposit').value = trigger.getAttribute('data-contract-deposit') || '0.00';
           document.getElementById('editContractCycle').value = trigger.getAttribute('data-contract-cycle') || 'monthly';
           document.getElementById('editContractDueDay').value = trigger.getAttribute('data-contract-due-day') || '1';
           document.getElementById('editContractStatus').value = trigger.getAttribute('data-contract-status') || 'active';

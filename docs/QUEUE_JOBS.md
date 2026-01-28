@@ -28,6 +28,10 @@ This document lists background jobs and queues for the RoomGate schema.
 - **Weekly**: cleanup old logs (optional).  
   Tables: `audit_logs`
 
+## Retry & Backoff
+- `SendOutboundMessage` uses 5 tries with backoff: 60s, 300s, 900s.
+- `notifications:send-queued` dispatches queued messages every 5 minutes (see `routes/console.php`).
+
 ## Caching (Redis)
 - **Plan limits**: cache by plan id for gating.  
   Tables: `plans`, `plan_limits`

@@ -123,7 +123,12 @@ class SocialAuthController extends Controller
 
         Auth::login($user, true);
 
-        return redirect()->intended('/core/crm-dashboard');
+        $tenant = $user->tenants()->orderBy('name')->first();
+        if ($tenant) {
+            return redirect()->route('Core.crm', ['tenant' => $tenant->slug]);
+        }
+
+        return redirect()->route('core.onboarding');
     }
 
     private function resolveUser(
@@ -322,8 +327,9 @@ class SocialAuthController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        if ($user->tenants()->exists()) {
-            return redirect()->intended('/core/crm-dashboard');
+        $tenant = $user->tenants()->orderBy('name')->first();
+        if ($tenant) {
+            return redirect()->route('Core.crm', ['tenant' => $tenant->slug]);
         }
 
         return redirect()->route('core.onboarding');

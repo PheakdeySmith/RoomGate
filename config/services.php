@@ -48,4 +48,22 @@ return [
         'redirect' => env('TELEGRAM_REDIRECT_URI'),
     ],
 
+    'subscriptions' => [
+        'grace_days' => env('SUBSCRIPTION_GRACE_DAYS', 7),
+    ],
+
+    'sentry' => [
+        'dsn' => env('SENTRY_DSN'),
+        'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 0.0),
+        'profiles_sample_rate' => env('SENTRY_PROFILES_SAMPLE_RATE', 0.0),
+    ],
+
+    'bugsnag' => [
+        'api_key' => env('BUGSNAG_API_KEY'),
+    ],
+
+    'webhooks' => [
+        'outbound_messages_secret' => env('OUTBOUND_WEBHOOK_SECRET'),
+    ],
+
 ];

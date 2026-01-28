@@ -34,6 +34,9 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(\Modules\Core\App\Services\CurrentTenant::class, function () {
+            return new \Modules\Core\App\Services\CurrentTenant();
+        });
         $this->app->register(provider: EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
     }

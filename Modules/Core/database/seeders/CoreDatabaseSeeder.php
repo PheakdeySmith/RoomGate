@@ -11,11 +11,16 @@ class CoreDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
+        $seeders = [
             PlanSeeder::class,
             PropertyTypeSeeder::class,
-            PropertyRoomSeeder::class,
             UtilitySeeder::class,
-        ]);
+        ];
+
+        if (!app()->environment('production')) {
+            $seeders[] = PropertyRoomSeeder::class;
+        }
+
+        $this->call($seeders);
     }
 }

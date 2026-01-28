@@ -189,6 +189,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
             if (isTenantList) {
               return `
                 <div class="d-flex align-items-center">
+                  <a href="${getUserViewLink(full['id'])}" class="btn btn-text-secondary rounded-pill waves-effect btn-icon">
+                    <i class="icon-base ti tabler-eye icon-22px"></i>
+                  </a>
                   <a href="javascript:;" class="btn btn-text-secondary rounded-pill waves-effect btn-icon tenant-edit"
                     data-bs-toggle="offcanvas"
                     data-bs-target="#offcanvasEditTenant"

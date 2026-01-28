@@ -9,15 +9,17 @@ use App\Services\AuditLogger;
 use App\Services\PlanGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class AmenityController extends Controller
 {
-    public function index(PlanGate $planGate)
+    public function index(PlanGate $planGate, CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [Amenity::class, $tenant->id]);
 
         $amenities = Amenity::query()
             ->with(['rooms', 'roomTypes'])
@@ -41,9 +43,10 @@ class AmenityController extends Controller
         return view('core::dashboard.amenities', compact('amenities', 'rooms', 'roomTypes', 'amenityLimit', 'canCreateAmenity'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger, PlanGate $planGate): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, PlanGate $planGate, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [Amenity::class, $tenant->id]);
         $currentCount = Amenity::query()->where('tenant_id', $tenant->id)->count();
         if (!$planGate->canCreate($tenant, 'amenities_max', $currentCount)) {
             return back()->withErrors(['plan' => 'Your plan limit does not allow more amenities.']);
@@ -104,12 +107,10 @@ class AmenityController extends Controller
         return back()->with('status', 'Amenity created.');
     }
 
-    public function update(Request $request, Amenity $amenity, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, Amenity $amenity, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($amenity->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $amenity);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -160,12 +161,10 @@ class AmenityController extends Controller
         return back()->with('status', 'Amenity updated.');
     }
 
-    public function destroy(Amenity $amenity, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, Amenity $amenity, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($amenity->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $amenity);
 
         $before = $amenity->toArray();
         $amenity->delete();

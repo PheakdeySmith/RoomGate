@@ -10,14 +10,16 @@ use App\Models\UtilityType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class UtilityMeterController extends Controller
 {
-    public function index()
+    public function index(CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [UtilityMeter::class, $tenant->id]);
 
         $meters = UtilityMeter::query()
             ->with(['property', 'room', 'utilityType', 'provider'])
@@ -53,9 +55,10 @@ class UtilityMeterController extends Controller
         return view('core::dashboard.utilities.meters', compact('meters', 'properties', 'rooms', 'providers', 'utilityTypes'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [UtilityMeter::class, $tenant->id]);
 
         $validated = $request->validate([
             'property_id' => [
@@ -92,7 +95,7 @@ class UtilityMeterController extends Controller
         }
 
         $type = UtilityType::query()->findOrFail($validated['utility_type_id']);
-        $unit = $validated['unit_of_measure'] ?: $type->unit_of_measure;
+        $unit = ($validated['unit_of_measure'] ?? null) ?: $type->unit_of_measure;
 
         $meter = UtilityMeter::create([
             'tenant_id' => $tenant->id,
@@ -111,12 +114,10 @@ class UtilityMeterController extends Controller
         return back()->with('status', 'Utility meter created.');
     }
 
-    public function update(Request $request, UtilityMeter $meter, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, UtilityMeter $meter, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($meter->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $meter);
 
         $validated = $request->validate([
             'property_id' => [
@@ -152,7 +153,7 @@ class UtilityMeterController extends Controller
         }
 
         $type = UtilityType::query()->findOrFail($validated['utility_type_id']);
-        $unit = $validated['unit_of_measure'] ?: $type->unit_of_measure;
+        $unit = ($validated['unit_of_measure'] ?? null) ?: $type->unit_of_measure;
 
         $before = $meter->toArray();
         $meter->update([
@@ -171,12 +172,10 @@ class UtilityMeterController extends Controller
         return back()->with('status', 'Utility meter updated.');
     }
 
-    public function destroy(UtilityMeter $meter, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, UtilityMeter $meter, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($meter->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $meter);
 
         $before = $meter->toArray();
         $meter->delete();

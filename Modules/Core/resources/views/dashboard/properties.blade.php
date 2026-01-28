@@ -207,6 +207,7 @@
   <script src="{{ asset('assets/assets') }}/vendor/libs/select2/select2.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const propertiesBaseUrl = @json(route('core.properties.index'));
       if (window.$ && $.fn.select2) {
         $('.select2').each(function () {
           const placeholder = $(this).find('option[value=""]').first().text() || 'Select';
@@ -241,77 +242,132 @@
                 'aria-disabled': 'true'
               }
             };
-        new DataTable(table, {
-          order: [[1, 'asc']],
-          columnDefs: [
-            {
-              targets: 0,
-              className: 'control',
-              orderable: false,
-              searchable: false,
-              render: function () {
-                return '';
-              }
-            }
-          ],
-          layout: {
-            topStart: {
-              rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
-              features: [
+        const options = window.RoomGateDataTables
+          ? RoomGateDataTables.buildOptions({
+              order: [[1, 'asc']],
+              columnDefs: [
                 {
-                  pageLength: {
-                    menu: [10, 25, 50, 100],
-                    text: '_MENU_'
+                  targets: 0,
+                  className: 'control',
+                  orderable: false,
+                  searchable: false,
+                  render: function () {
+                    return '';
                   }
                 }
-              ]
-            },
-            topEnd: {
-              features: [
-                {
-                  search: {
-                    placeholder: searchPlaceholder,
-                    text: '_INPUT_'
-                  }
-                },
-                {
-                  buttons: [
+              ],
+              layout: {
+                topStart: {
+                  rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
+                  features: [
                     {
-                      extend: 'collection',
-                      className: 'btn btn-label-secondary dropdown-toggle me-4',
-                      text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">Export</span></span>',
-                      buttons: ['print', 'csv', 'excel', 'pdf', 'copy']
-                    },
-                    addButton
+                      pageLength: {
+                        menu: [10, 25, 50, 100],
+                        text: '_MENU_'
+                      }
+                    }
                   ]
+                },
+                topEnd: {
+                  features: [
+                    {
+                      search: {
+                        placeholder: searchPlaceholder,
+                        text: '_INPUT_'
+                      }
+                    },
+                    {
+                      buttons: [
+                        {
+                          extend: 'collection',
+                          className: 'btn btn-label-secondary dropdown-toggle me-4',
+                          text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">Export</span></span>',
+                          buttons: ['print', 'csv', 'excel', 'pdf', 'copy']
+                        },
+                        addButton
+                      ]
+                    }
+                  ]
+                },
+                bottomStart: {
+                  rowClass: 'row mx-3 justify-content-between',
+                  features: ['info']
+                },
+                bottomEnd: 'paging'
+              }
+            })
+          : {
+              order: [[1, 'asc']],
+              columnDefs: [
+                {
+                  targets: 0,
+                  className: 'control',
+                  orderable: false,
+                  searchable: false,
+                  render: function () {
+                    return '';
+                  }
                 }
-              ]
-            },
-            bottomStart: {
-              rowClass: 'row mx-3 justify-content-between',
-              features: ['info']
-            },
-            bottomEnd: 'paging'
-          },
-          language: {
-            paginate: {
-              next: '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
-              previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>',
-              first: '<i class="icon-base ti tabler-chevrons-left scaleX-n1-rtl icon-18px"></i>',
-              last: '<i class="icon-base ti tabler-chevrons-right scaleX-n1-rtl icon-18px"></i>'
-            }
-          },
-          responsive: {
-            details: {
-              display: DataTable.Responsive.display.modal({
-                header: function () {
-                  return 'Details';
+              ],
+              layout: {
+                topStart: {
+                  rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
+                  features: [
+                    {
+                      pageLength: {
+                        menu: [10, 25, 50, 100],
+                        text: '_MENU_'
+                      }
+                    }
+                  ]
+                },
+                topEnd: {
+                  features: [
+                    {
+                      search: {
+                        placeholder: searchPlaceholder,
+                        text: '_INPUT_'
+                      }
+                    },
+                    {
+                      buttons: [
+                        {
+                          extend: 'collection',
+                          className: 'btn btn-label-secondary dropdown-toggle me-4',
+                          text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">Export</span></span>',
+                          buttons: ['print', 'csv', 'excel', 'pdf', 'copy']
+                        },
+                        addButton
+                      ]
+                    }
+                  ]
+                },
+                bottomStart: {
+                  rowClass: 'row mx-3 justify-content-between',
+                  features: ['info']
+                },
+                bottomEnd: 'paging'
+              },
+              language: {
+                paginate: {
+                  next: '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
+                  previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>',
+                  first: '<i class="icon-base ti tabler-chevrons-left scaleX-n1-rtl icon-18px"></i>',
+                  last: '<i class="icon-base ti tabler-chevrons-right scaleX-n1-rtl icon-18px"></i>'
                 }
-              }),
-              type: 'column'
-            }
-          }
-        });
+              },
+              responsive: {
+                details: {
+                  display: DataTable.Responsive.display.modal({
+                    header: function () {
+                      return 'Details';
+                    }
+                  }),
+                  type: 'column'
+                }
+              }
+            };
+        new DataTable(table, options);
       };
 
       const canCreateProperty = @json($canCreateProperty ?? true);
@@ -327,35 +383,11 @@
         canCreateProperty ? '#addPropertyModal' : null
       );
 
-      setTimeout(() => {
-        const elementsToModify = [
-          { selector: '.dt-buttons .btn', classToRemove: 'btn-secondary' },
-          { selector: '.dt-buttons.btn-group .btn-group', classToRemove: 'btn-group' },
-          { selector: '.dt-buttons.btn-group', classToRemove: 'btn-group', classToAdd: 'd-flex' },
-          { selector: '.dt-search .form-control', classToRemove: 'form-control-sm' },
-          { selector: '.dt-length .form-select', classToRemove: 'form-select-sm' },
-          { selector: '.dt-length', classToAdd: 'mb-md-6 mb-0' },
-          { selector: '.dt-layout-start', classToAdd: 'ps-3 mt-0' },
-          {
-            selector: '.dt-layout-end',
-            classToRemove: 'justify-content-between',
-            classToAdd: 'justify-content-md-between justify-content-center d-flex flex-wrap gap-4 mt-0 mb-md-0 mb-6'
-          },
-          { selector: '.dt-layout-table', classToRemove: 'row mt-2' },
-          { selector: '.dt-layout-full', classToRemove: 'col-md col-12', classToAdd: 'table-responsive' }
-        ];
-
-        elementsToModify.forEach(({ selector, classToRemove, classToAdd }) => {
-          document.querySelectorAll(selector).forEach(element => {
-            if (classToRemove) {
-              classToRemove.split(' ').forEach(className => element.classList.remove(className));
-            }
-            if (classToAdd) {
-              classToAdd.split(' ').forEach(className => element.classList.add(className));
-            }
-          });
-        });
-      }, 100);
+      if (window.RoomGateDataTables && RoomGateDataTables.applyLayoutClasses) {
+        setTimeout(() => {
+          RoomGateDataTables.applyLayoutClasses();
+        }, 100);
+      }
 
       const editModal = document.getElementById('editPropertyModal');
       if (editModal) {
@@ -364,7 +396,7 @@
           const form = document.getElementById('editPropertyForm');
           const propertyId = trigger.getAttribute('data-property-id');
 
-          form.action = `{{ url('/core/properties') }}/${propertyId}`;
+          form.action = `${propertiesBaseUrl}/${propertyId}`;
           document.getElementById('editPropertyName').value = trigger.getAttribute('data-property-name') || '';
           document.getElementById('editPropertyType').value = trigger.getAttribute('data-property-type') || '';
           document.getElementById('editPropertyDescription').value = trigger.getAttribute('data-property-description') || '';

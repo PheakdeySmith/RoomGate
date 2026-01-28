@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class AuditLogger
 {
@@ -25,13 +27,15 @@ class AuditLogger
         string $modelId,
         ?array $before = null,
         ?array $after = null,
-        ?Request $request = null
+        ?Request $request = null,
+        ?int $tenantId = null
     ): void {
         $request = $request ?? request();
         $before = $this->sanitizePayload($before);
         $after = $this->sanitizePayload($after);
+        $tenantId = $tenantId ?? $this->resolveTenantId($modelType, $modelId, $before, $after);
 
-        AuditLog::create([
+        $payload = [
             'action' => $action,
             'model_type' => $modelType,
             'model_id' => $modelId,
@@ -42,7 +46,13 @@ class AuditLogger
             'user_agent' => $request?->userAgent(),
             'url' => $request?->fullUrl(),
             'method' => $request?->method(),
-        ]);
+        ];
+
+        if ($this->auditLogsHaveTenantColumn()) {
+            $payload['tenant_id'] = $tenantId;
+        }
+
+        AuditLog::create($payload);
     }
 
     private function sanitizePayload(?array $payload): ?array
@@ -68,5 +78,30 @@ class AuditLogger
         }
 
         return $payload;
+    }
+
+    private function resolveTenantId(string $modelType, string $modelId, ?array $before, ?array $after): ?int
+    {
+        $tenantId = data_get($after, 'tenant_id') ?? data_get($before, 'tenant_id');
+        if ($tenantId) {
+            return (int) $tenantId;
+        }
+
+        if ($modelType === Tenant::class && is_numeric($modelId)) {
+            return (int) $modelId;
+        }
+
+        return null;
+    }
+
+    private function auditLogsHaveTenantColumn(): bool
+    {
+        static $hasColumn = null;
+
+        if ($hasColumn === null) {
+            $hasColumn = Schema::hasColumn('audit_logs', 'tenant_id');
+        }
+
+        return $hasColumn;
     }
 }

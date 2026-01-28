@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\BelongsToTenant;
 
 class Subscription extends Model
 {
     use SoftDeletes;
+    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -28,6 +30,7 @@ class Subscription extends Model
         'auto_renew' => 'boolean',
         'current_period_start' => 'datetime',
         'current_period_end' => 'datetime',
+        'grace_period_ends_at' => 'datetime',
         'trial_ends_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];

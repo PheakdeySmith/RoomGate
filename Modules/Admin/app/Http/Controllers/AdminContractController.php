@@ -46,7 +46,6 @@ class AdminContractController extends Controller
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'monthly_rent' => ['required', 'numeric', 'min:0'],
-            'deposit' => ['nullable', 'numeric', 'min:0'],
             'billing_cycle' => ['required', 'in:monthly,weekly,daily,custom'],
             'payment_due_day' => ['required', 'integer', 'min:1', 'max:31'],
             'status' => ['required', 'in:active,pending,terminated,expired,cancelled'],
@@ -55,12 +54,10 @@ class AdminContractController extends Controller
         ]);
 
         $rentCents = (int) round(((float) $validated['monthly_rent']) * 100);
-        $depositCents = (int) round(((float) ($validated['deposit'] ?? 0)) * 100);
-        unset($validated['monthly_rent'], $validated['deposit']);
+        unset($validated['monthly_rent']);
 
-        $contract = DB::transaction(function () use ($validated, $rentCents, $depositCents) {
+        $contract = DB::transaction(function () use ($validated, $rentCents) {
             $validated['monthly_rent_cents'] = $rentCents;
-            $validated['deposit_cents'] = $depositCents;
             $validated['currency_code'] = 'USD';
             $validated['next_invoice_date'] = $validated['start_date'];
 
@@ -86,7 +83,6 @@ class AdminContractController extends Controller
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'monthly_rent' => ['required', 'numeric', 'min:0'],
-            'deposit' => ['nullable', 'numeric', 'min:0'],
             'billing_cycle' => ['required', 'in:monthly,weekly,daily,custom'],
             'payment_due_day' => ['required', 'integer', 'min:1', 'max:31'],
             'status' => ['required', 'in:active,pending,terminated,expired,cancelled'],
@@ -96,12 +92,10 @@ class AdminContractController extends Controller
 
         $before = $contract->toArray();
         $rentCents = (int) round(((float) $validated['monthly_rent']) * 100);
-        $depositCents = (int) round(((float) ($validated['deposit'] ?? 0)) * 100);
-        unset($validated['monthly_rent'], $validated['deposit']);
+        unset($validated['monthly_rent']);
 
-        DB::transaction(function () use ($contract, $validated, $rentCents, $depositCents) {
+        DB::transaction(function () use ($contract, $validated, $rentCents) {
             $validated['monthly_rent_cents'] = $rentCents;
-            $validated['deposit_cents'] = $depositCents;
             $validated['currency_code'] = 'USD';
 
             $contract->update($validated);

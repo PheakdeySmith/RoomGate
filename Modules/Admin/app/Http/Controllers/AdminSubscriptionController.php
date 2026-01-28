@@ -7,7 +7,9 @@ use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPayment;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\InAppNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -123,7 +125,7 @@ class AdminSubscriptionController extends Controller
         return view('admin::dashboard.subscription-payments', compact('payments', 'invoices', 'tenants'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, InAppNotificationService $inApp): RedirectResponse
     {
         $validated = $request->validate([
             'tenant_id' => ['required', 'exists:tenants,id'],
@@ -144,11 +146,12 @@ class AdminSubscriptionController extends Controller
         });
 
         $auditLogger->log('created', Subscription::class, (string) $subscription->id, null, $subscription->toArray(), $request);
+        $this->notifyPlatformAdmins($inApp, 'Subscription created', 'Subscription created for tenant ID '.$subscription->tenant_id.'.');
 
         return back()->with('status', 'Subscription created.');
     }
 
-    public function update(Request $request, Subscription $subscription, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, Subscription $subscription, AuditLogger $auditLogger, InAppNotificationService $inApp): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', 'in:active,trialing,past_due,cancelled,expired'],
@@ -170,16 +173,24 @@ class AdminSubscriptionController extends Controller
         });
 
         $auditLogger->log('updated', Subscription::class, (string) $subscription->id, $before, $subscription->toArray(), $request);
+        if (($before['status'] ?? null) !== $subscription->status) {
+            $this->notifyPlatformAdmins(
+                $inApp,
+                'Subscription status changed',
+                'Tenant ID '.$subscription->tenant_id.' is now '.ucfirst($subscription->status).'.'
+            );
+        }
 
         return back()->with('status', 'Subscription updated.');
     }
 
-    public function destroy(Subscription $subscription, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(Subscription $subscription, AuditLogger $auditLogger, InAppNotificationService $inApp): RedirectResponse
     {
         $before = $subscription->toArray();
         $subscription->delete();
 
         $auditLogger->log('deleted', Subscription::class, (string) $subscription->id, $before, null, $request);
+        $this->notifyPlatformAdmins($inApp, 'Subscription deleted', 'Subscription for tenant ID '.$subscription->tenant_id.' was deleted.');
 
         return back()->with('status', 'Subscription deleted.');
     }
@@ -244,7 +255,7 @@ class AdminSubscriptionController extends Controller
         return back()->with('status', 'Subscription invoice updated.');
     }
 
-    public function storePayment(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function storePayment(Request $request, AuditLogger $auditLogger, InAppNotificationService $inApp): RedirectResponse
     {
         $validated = $request->validate([
             'tenant_id' => ['required', 'exists:tenants,id'],
@@ -262,11 +273,18 @@ class AdminSubscriptionController extends Controller
         });
 
         $auditLogger->log('created', SubscriptionPayment::class, (string) $payment->id, null, $payment->toArray(), $request);
+        if ($payment->status === 'failed') {
+            $this->notifyPlatformAdmins(
+                $inApp,
+                'Subscription payment failed',
+                'Payment failed for tenant ID '.$payment->tenant_id.'.'
+            );
+        }
 
         return back()->with('status', 'Subscription payment created.');
     }
 
-    public function updatePayment(Request $request, SubscriptionPayment $subscriptionPayment, AuditLogger $auditLogger): RedirectResponse
+    public function updatePayment(Request $request, SubscriptionPayment $subscriptionPayment, AuditLogger $auditLogger, InAppNotificationService $inApp): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', 'in:pending,paid,failed,cancelled'],
@@ -277,7 +295,30 @@ class AdminSubscriptionController extends Controller
         $subscriptionPayment->update($validated);
 
         $auditLogger->log('updated', SubscriptionPayment::class, (string) $subscriptionPayment->id, $before, $subscriptionPayment->toArray(), $request);
+        if (($before['status'] ?? null) !== $subscriptionPayment->status && $subscriptionPayment->status === 'failed') {
+            $this->notifyPlatformAdmins(
+                $inApp,
+                'Subscription payment failed',
+                'Payment failed for tenant ID '.$subscriptionPayment->tenant_id.'.'
+            );
+        }
 
         return back()->with('status', 'Subscription payment updated.');
+    }
+
+    private function notifyPlatformAdmins(InAppNotificationService $inApp, string $title, string $body): void
+    {
+        if (!method_exists(User::class, 'role')) {
+            return;
+        }
+
+        $admins = User::role(['platform_admin', 'admin'])->get();
+        foreach ($admins as $admin) {
+            $inApp->create($admin, $title, $body, [
+                'type' => 'warning',
+                'icon' => 'tabler-bell',
+                'link_url' => route('admin.subscriptions.index'),
+            ]);
+        }
     }
 }

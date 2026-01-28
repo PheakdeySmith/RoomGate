@@ -11,11 +11,20 @@ Route::get('/', function () {
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->intended('/core/crm-dashboard');
+        $tenant = $user?->tenants()->orderBy('name')->first();
+        if ($tenant) {
+            return redirect()->route('Core.crm', ['tenant' => $tenant->slug]);
+        }
+
+        return redirect()->route('core.onboarding');
     }
 
     return view('welcome');
 });
+
+Route::get('/up', function () {
+    return response()->json(['status' => 'ok']);
+})->name('health');
 
 Route::get('/private-files/{path}', [PrivateFileController::class, 'show'])
     ->where('path', '.*')

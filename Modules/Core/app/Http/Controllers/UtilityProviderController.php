@@ -7,14 +7,16 @@ use App\Models\UtilityType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class UtilityProviderController extends Controller
 {
-    public function index()
+    public function index(CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [UtilityProvider::class, $tenant->id]);
 
         $providers = UtilityProvider::query()
             ->with('utilityType')
@@ -34,9 +36,10 @@ class UtilityProviderController extends Controller
         return view('core::dashboard.utilities.providers', compact('providers', 'utilityTypes'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [UtilityProvider::class, $tenant->id]);
 
         $validated = $request->validate([
             'utility_type_id' => [
@@ -64,12 +67,10 @@ class UtilityProviderController extends Controller
         return back()->with('status', 'Utility provider created.');
     }
 
-    public function update(Request $request, UtilityProvider $provider, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, UtilityProvider $provider, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($provider->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $provider);
 
         $validated = $request->validate([
             'utility_type_id' => [
@@ -96,12 +97,10 @@ class UtilityProviderController extends Controller
         return back()->with('status', 'Utility provider updated.');
     }
 
-    public function destroy(UtilityProvider $provider, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, UtilityProvider $provider, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($provider->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $provider);
 
         $before = $provider->toArray();
         $provider->delete();

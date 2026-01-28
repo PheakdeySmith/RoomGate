@@ -6,14 +6,16 @@ use App\Models\RoomType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Core\App\Services\CurrentTenant;
 
 class RoomTypeController extends Controller
 {
-    public function index()
+    public function index(CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [RoomType::class, $tenant->id]);
 
         $roomTypes = RoomType::query()
             ->where('tenant_id', $tenant->id)
@@ -23,9 +25,10 @@ class RoomTypeController extends Controller
         return view('core::dashboard.room-types', compact('roomTypes'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [RoomType::class, $tenant->id]);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -43,12 +46,10 @@ class RoomTypeController extends Controller
         return back()->with('status', 'Room type created.');
     }
 
-    public function update(Request $request, RoomType $roomType, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, RoomType $roomType, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($roomType->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $roomType);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -68,12 +69,10 @@ class RoomTypeController extends Controller
         return back()->with('status', 'Room type updated.');
     }
 
-    public function destroy(RoomType $roomType, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, RoomType $roomType, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($roomType->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $roomType);
 
         $before = $roomType->toArray();
         $roomType->delete();

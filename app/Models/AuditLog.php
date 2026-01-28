@@ -11,6 +11,7 @@ class AuditLog extends Model
         'action',
         'model_type',
         'model_id',
+        'tenant_id',
         'before_json',
         'after_json',
         'user_id',

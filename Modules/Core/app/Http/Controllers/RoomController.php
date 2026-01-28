@@ -10,15 +10,17 @@ use App\Services\AuditLogger;
 use App\Services\PlanGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class RoomController extends Controller
 {
-    public function index(PlanGate $planGate)
+    public function index(PlanGate $planGate, CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [Room::class, $tenant->id]);
 
         $rooms = Room::query()
             ->with(['property', 'roomType'])
@@ -42,12 +44,10 @@ class RoomController extends Controller
         return view('core::dashboard.rooms', compact('rooms', 'properties', 'roomTypes', 'roomLimit', 'canCreateRoom'));
     }
 
-    public function show(Room $room)
+    public function show(string $tenant, Room $room, CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($room->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('view', $room);
 
         $room->load(['property', 'roomType']);
         $activeContract = Contract::query()
@@ -61,9 +61,10 @@ class RoomController extends Controller
         return view('core::dashboard.room-detail', compact('room', 'activeContract'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger, PlanGate $planGate): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, PlanGate $planGate, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [Room::class, $tenant->id]);
         $currentCount = Room::query()->where('tenant_id', $tenant->id)->count();
         if (!$planGate->canCreate($tenant, 'rooms_max', $currentCount)) {
             return back()->withErrors(['plan' => 'Your plan limit does not allow more rooms.']);
@@ -105,12 +106,10 @@ class RoomController extends Controller
         return back()->with('status', 'Room created.');
     }
 
-    public function update(Request $request, Room $room, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, Room $room, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($room->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $room);
 
         $validated = $request->validate([
             'room_number' => ['required', 'string', 'max:255'],
@@ -146,12 +145,10 @@ class RoomController extends Controller
         return back()->with('status', 'Room updated.');
     }
 
-    public function destroy(Room $room, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, Room $room, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($room->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $room);
 
         $before = $room->toArray();
         $room->delete();

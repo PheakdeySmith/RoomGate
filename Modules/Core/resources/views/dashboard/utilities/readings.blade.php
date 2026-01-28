@@ -155,6 +155,7 @@
   <script src="{{ asset('assets/assets') }}/vendor/libs/flatpickr/flatpickr.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const readingsBaseUrl = @json(route('core.utility-readings.index'));
       if (window.flatpickr) {
         document.querySelectorAll('.flatpickr').forEach((el) => {
           flatpickr(el, { dateFormat: 'Y-m-d' });
@@ -256,35 +257,11 @@
         });
       }
 
-      setTimeout(() => {
-        const elementsToModify = [
-          { selector: '.dt-buttons .btn', classToRemove: 'btn-secondary' },
-          { selector: '.dt-buttons.btn-group .btn-group', classToRemove: 'btn-group' },
-          { selector: '.dt-buttons.btn-group', classToRemove: 'btn-group', classToAdd: 'd-flex' },
-          { selector: '.dt-search .form-control', classToRemove: 'form-control-sm' },
-          { selector: '.dt-length .form-select', classToRemove: 'form-select-sm' },
-          { selector: '.dt-length', classToAdd: 'mb-md-6 mb-0' },
-          { selector: '.dt-layout-start', classToAdd: 'ps-3 mt-0' },
-          {
-            selector: '.dt-layout-end',
-            classToRemove: 'justify-content-between',
-            classToAdd: 'justify-content-md-between justify-content-center d-flex flex-wrap gap-4 mt-0 mb-md-0 mb-6'
-          },
-          { selector: '.dt-layout-table', classToRemove: 'row mt-2' },
-          { selector: '.dt-layout-full', classToRemove: 'col-md col-12', classToAdd: 'table-responsive' }
-        ];
-
-        elementsToModify.forEach(({ selector, classToRemove, classToAdd }) => {
-          document.querySelectorAll(selector).forEach(element => {
-            if (classToRemove) {
-              classToRemove.split(' ').forEach(className => element.classList.remove(className));
-            }
-            if (classToAdd) {
-              classToAdd.split(' ').forEach(className => element.classList.add(className));
-            }
-          });
-        });
-      }, 100);
+        if (window.RoomGateDataTables && RoomGateDataTables.applyLayoutClasses) {
+          setTimeout(() => {
+            RoomGateDataTables.applyLayoutClasses();
+          }, 100);
+        }
 
       const editModal = document.getElementById('editReadingModal');
       if (editModal) {
@@ -293,7 +270,7 @@
           const form = document.getElementById('editReadingForm');
           const readingId = trigger.getAttribute('data-reading-id');
 
-          form.action = `{{ url('/core/utility-readings') }}/${readingId}`;
+          form.action = `${readingsBaseUrl}/${readingId}`;
           document.getElementById('editReadingMeter').value = trigger.getAttribute('data-reading-meter') || '';
           document.getElementById('editReadingValue').value = trigger.getAttribute('data-reading-value') || '';
           document.getElementById('editReadingAt').value = trigger.getAttribute('data-reading-at') || '';

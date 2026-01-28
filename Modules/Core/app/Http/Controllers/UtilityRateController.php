@@ -8,14 +8,16 @@ use App\Models\UtilityType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class UtilityRateController extends Controller
 {
-    public function index()
+    public function index(CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [UtilityRate::class, $tenant->id]);
 
         $rates = UtilityRate::query()
             ->with(['property', 'utilityType'])
@@ -40,9 +42,10 @@ class UtilityRateController extends Controller
         return view('core::dashboard.utilities.rates', compact('rates', 'properties', 'utilityTypes'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [UtilityRate::class, $tenant->id]);
 
         $validated = $request->validate([
             'property_id' => [
@@ -78,12 +81,10 @@ class UtilityRateController extends Controller
         return back()->with('status', 'Utility rate created.');
     }
 
-    public function update(Request $request, UtilityRate $rate, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, UtilityRate $rate, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($rate->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $rate);
 
         $validated = $request->validate([
             'property_id' => [
@@ -117,12 +118,10 @@ class UtilityRateController extends Controller
         return back()->with('status', 'Utility rate updated.');
     }
 
-    public function destroy(UtilityRate $rate, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, UtilityRate $rate, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($rate->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $rate);
 
         $before = $rate->toArray();
         $rate->delete();

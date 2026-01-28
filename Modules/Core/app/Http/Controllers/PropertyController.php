@@ -12,15 +12,17 @@ use App\Services\PlanGate;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class PropertyController extends Controller
 {
-    public function index(PlanGate $planGate)
+    public function index(PlanGate $planGate, CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [Property::class, $tenant->id]);
 
         $properties = Property::query()
             ->with(['propertyType'])
@@ -42,12 +44,10 @@ class PropertyController extends Controller
         return view('core::dashboard.properties', compact('properties', 'propertyTypes', 'propertyLimit', 'canCreateProperty'));
     }
 
-    public function show(Property $property)
+    public function show(string $tenant, Property $property, CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($property->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('view', $property);
 
         $property->load(['tenant.users', 'propertyType', 'rooms.roomType']);
 
@@ -115,9 +115,10 @@ class PropertyController extends Controller
         ));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger, PlanGate $planGate): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, PlanGate $planGate, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [Property::class, $tenant->id]);
         $currentCount = Property::query()->where('tenant_id', $tenant->id)->count();
         if (!$planGate->canCreate($tenant, 'properties_max', $currentCount)) {
             return back()->withErrors(['plan' => 'Your plan limit does not allow more properties.']);
@@ -147,12 +148,10 @@ class PropertyController extends Controller
         return back()->with('status', 'Property created.');
     }
 
-    public function update(Request $request, Property $property, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, Property $property, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($property->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $property);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -180,12 +179,10 @@ class PropertyController extends Controller
         return back()->with('status', 'Property updated.');
     }
 
-    public function destroy(Property $property, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, Property $property, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($property->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $property);
 
         $before = $property->toArray();
         $property->delete();

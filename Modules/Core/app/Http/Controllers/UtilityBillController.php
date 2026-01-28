@@ -11,15 +11,17 @@ use App\Models\UtilityType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Modules\Core\App\Services\CurrentTenant;
 
 class UtilityBillController extends Controller
 {
-    public function index()
+    public function index(CurrentTenant $currentTenant)
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [UtilityBill::class, $tenant->id]);
 
         $bills = UtilityBill::query()
             ->with(['contract.occupant', 'room', 'property', 'utilityType', 'meter', 'provider'])
@@ -62,9 +64,10 @@ class UtilityBillController extends Controller
         return view('core::dashboard.utilities.bills', compact('bills', 'contracts', 'meters', 'providers', 'utilityTypes', 'readings'));
     }
 
-    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('create', [UtilityBill::class, $tenant->id]);
 
         $validated = $request->validate([
             'contract_id' => [
@@ -199,12 +202,10 @@ class UtilityBillController extends Controller
         return back()->with('status', 'Utility bill created.');
     }
 
-    public function update(Request $request, UtilityBill $bill, AuditLogger $auditLogger): RedirectResponse
+    public function update(Request $request, string $tenant, UtilityBill $bill, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($bill->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('update', $bill);
 
         $validated = $request->validate([
             'contract_id' => [
@@ -337,12 +338,10 @@ class UtilityBillController extends Controller
         return back()->with('status', 'Utility bill updated.');
     }
 
-    public function destroy(UtilityBill $bill, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(string $tenant, UtilityBill $bill, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
     {
-        $tenant = auth()->user()->tenants()->firstOrFail();
-        if ($bill->tenant_id !== $tenant->id) {
-            abort(404);
-        }
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('delete', $bill);
 
         $before = $bill->toArray();
         $bill->delete();

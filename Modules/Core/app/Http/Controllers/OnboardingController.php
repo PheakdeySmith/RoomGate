@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Property;
 use App\Models\PropertyType;
+use App\Models\Role;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,7 @@ class OnboardingController extends Controller
     {
         $user = $request->user();
         if ($user?->tenants()->exists()) {
-            return redirect()->route('Core.crm');
+            return $this->redirectToTenantDashboard($user);
         }
 
         return view('core::onboarding.wizard');
@@ -35,7 +37,7 @@ class OnboardingController extends Controller
     {
         $user = $request->user();
         if ($user?->tenants()->exists()) {
-            return redirect()->route('Core.crm');
+            return $this->redirectToTenantDashboard($user);
         }
 
         $validated = $request->validate([
@@ -80,6 +82,11 @@ class OnboardingController extends Controller
             ]);
 
             if (method_exists($user, 'assignRole')) {
+                $guardName = config('auth.defaults.guard', 'web');
+                Role::firstOrCreate([
+                    'name' => 'owner',
+                    'guard_name' => $guardName,
+                ]);
                 $user->assignRole('owner');
             }
 
@@ -192,6 +199,16 @@ class OnboardingController extends Controller
             $auditLogger->log('created', Subscription::class, (string) $subscription->id, null, $subscription->toArray(), $request);
         }
 
-        return redirect()->route('Core.crm')->with('status', 'Plan selected.');
+        return $this->redirectToTenantDashboard($user)->with('status', 'Plan selected.');
+    }
+
+    private function redirectToTenantDashboard(?User $user): RedirectResponse
+    {
+        $tenant = $user?->tenants()->orderBy('name')->first();
+        if ($tenant) {
+            return redirect()->route('Core.crm', ['tenant' => $tenant->slug]);
+        }
+
+        return redirect()->route('core.onboarding');
     }
 }
