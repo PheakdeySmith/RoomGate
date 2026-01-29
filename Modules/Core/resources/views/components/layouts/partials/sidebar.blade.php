@@ -128,6 +128,30 @@
                             <div data-i18n="menu.tenant_members">Tenant Members</div>
                         </a>
                     </li>
+                    <li class="menu-item {{ request()->routeIs('core.maintenance.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.maintenance.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-tool"></i>
+                            <div data-i18n="menu.maintenance">Maintenance</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.billing.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.billing.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-credit-card"></i>
+                            <div data-i18n="menu.billing">Billing & Plans</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.templates.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.templates.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-template"></i>
+                            <div data-i18n="menu.message_templates">Message Templates</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('core.audit-logs.*') ? 'active' : '' }}">
+                        <a href="{{ route('core.audit-logs.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-history"></i>
+                            <div data-i18n="menu.audit_logs">Audit Logs</div>
+                        </a>
+                    </li>
                     <li class="menu-header small text-uppercase">
                         <span class="menu-header-text" data-i18n="menu.utilities">Utilities</span>
                     </li>

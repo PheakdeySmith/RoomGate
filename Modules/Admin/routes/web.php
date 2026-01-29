@@ -20,6 +20,8 @@ use Modules\Admin\App\Http\Controllers\AdminInvoiceController;
 use Modules\Admin\App\Http\Controllers\AdminNotificationController;
 use Modules\Admin\App\Http\Controllers\AdminOutboundMessageController;
 use Modules\Admin\App\Http\Controllers\AdminIoTController;
+use Modules\Admin\App\Http\Controllers\AdminMessageTemplateController;
+use Modules\Admin\App\Http\Controllers\AdminMaintenanceController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
     ->prefix('admin')
@@ -28,6 +30,7 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs');
         Route::post('/audit-logs/{auditLog}/restore', [AdminAuditLogController::class, 'restore'])->name('audit-logs.restore');
+        Route::get('/audit-logs/export', [AdminAuditLogController::class, 'export'])->name('audit-logs.export');
         Route::get('/roles', [AdminRoleController::class, 'index'])->name('roles');
         Route::post('/roles', [AdminRoleController::class, 'store'])->name('roles.store');
         Route::patch('/roles/{role}', [AdminRoleController::class, 'update'])->name('roles.update');
@@ -119,6 +122,12 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
         Route::post('/notifications/mark-read', [AdminNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
         Route::post('/notifications/{notification}/read', [AdminNotificationController::class, 'markRead'])->name('notifications.mark-read');
         Route::get('/outbound-messages', [AdminOutboundMessageController::class, 'index'])->name('outbound-messages.index');
+        Route::get('/maintenance', [AdminMaintenanceController::class, 'index'])->name('maintenance.index');
+        Route::get('/message-templates', [AdminMessageTemplateController::class, 'index'])->name('message-templates.index');
+        Route::post('/message-templates', [AdminMessageTemplateController::class, 'store'])->name('message-templates.store');
+        Route::patch('/message-templates/{template}', [AdminMessageTemplateController::class, 'update'])->name('message-templates.update');
+        Route::delete('/message-templates/{template}', [AdminMessageTemplateController::class, 'destroy'])->name('message-templates.destroy');
+        Route::post('/message-templates/{template}/test', [AdminMessageTemplateController::class, 'test'])->name('message-templates.test');
         Route::get('/iot-control', [AdminIoTController::class, 'index'])->name('iot.index');
         Route::get('/iot-control/status', [AdminIoTController::class, 'status'])->name('iot.status');
         Route::post('/iot-control/led', [AdminIoTController::class, 'led'])->name('iot.led');

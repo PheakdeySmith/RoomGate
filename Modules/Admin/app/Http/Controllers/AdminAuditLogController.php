@@ -20,36 +20,7 @@ class AdminAuditLogController extends Controller
 
     public function index(Request $request)
     {
-        $query = AuditLog::query()->with('user')->orderByDesc('created_at');
-
-        if ($request->filled('action')) {
-            $query->where('action', $request->string('action'));
-        }
-
-        if ($request->filled('model_type')) {
-            $query->where('model_type', $request->string('model_type'));
-        }
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->integer('user_id'));
-        }
-
-        if ($request->filled('from')) {
-            $query->whereDate('created_at', '>=', $request->date('from'));
-        }
-
-        if ($request->filled('to')) {
-            $query->whereDate('created_at', '<=', $request->date('to'));
-        }
-
-        if ($request->filled('q')) {
-            $search = '%'.$request->string('q').'%';
-            $query->where(function ($sub) use ($search) {
-                $sub->where('model_type', 'like', $search)
-                    ->orWhere('model_id', 'like', $search)
-                    ->orWhere('action', 'like', $search);
-            });
-        }
+        $query = $this->applyFilters($request, AuditLog::query()->with('user')->orderByDesc('created_at'));
 
         $logs = $query->get();
         $users = User::orderBy('name')->get(['id', 'name', 'email']);
@@ -90,6 +61,72 @@ class AdminAuditLogController extends Controller
         }
 
         return view('admin::dashboard.audit-logs', compact('logs', 'users', 'models'));
+    }
+
+    public function export(Request $request)
+    {
+        $query = $this->applyFilters($request, AuditLog::query()->with('user')->orderByDesc('created_at'));
+        $logs = $query->get();
+
+        $filename = 'audit_logs_'.now()->format('Ymd_His').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ];
+
+        $callback = function () use ($logs) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['created_at', 'action', 'model_type', 'model_id', 'user', 'ip', 'url', 'method']);
+            foreach ($logs as $log) {
+                fputcsv($handle, [
+                    optional($log->created_at)->format('Y-m-d H:i:s'),
+                    $log->action,
+                    $log->model_type,
+                    $log->model_id,
+                    $log->user?->email ?? 'System',
+                    $log->ip_address,
+                    $log->url,
+                    $log->method,
+                ]);
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    private function applyFilters(Request $request, $query)
+    {
+        if ($request->filled('action')) {
+            $query->where('action', $request->string('action'));
+        }
+
+        if ($request->filled('model_type')) {
+            $query->where('model_type', $request->string('model_type'));
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->integer('user_id'));
+        }
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->date('from'));
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->date('to'));
+        }
+
+        if ($request->filled('q')) {
+            $search = '%'.$request->string('q').'%';
+            $query->where(function ($sub) use ($search) {
+                $sub->where('model_type', 'like', $search)
+                    ->orWhere('model_id', 'like', $search)
+                    ->orWhere('action', 'like', $search);
+            });
+        }
+
+        return $query;
     }
 
     public function restore(AuditLog $auditLog)

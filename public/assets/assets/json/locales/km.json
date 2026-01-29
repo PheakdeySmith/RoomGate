@@ -31,5 +31,6 @@
     "menu.contracts": "កុងត្រាជួល",
     "menu.invoices": "វិក្កយបត្រ",
     "menu.notifications": "ការជូនដំណឹង",
-    "menu.iot_control": "គ្រប់គ្រង IoT"
+    "menu.iot_control": "គ្រប់គ្រង IoT",
+    "menu.tenant_members": "សមាជិក"
 }

@@ -16,6 +16,11 @@ use Modules\Core\App\Http\Controllers\UtilityMeterController;
 use Modules\Core\App\Http\Controllers\UtilityProviderController;
 use Modules\Core\App\Http\Controllers\UtilityRateController;
 use Modules\Core\App\Http\Controllers\UtilityReadingController;
+use Modules\Core\App\Http\Controllers\BillingController;
+use Modules\Core\App\Http\Controllers\MaintenanceController;
+use Modules\Core\App\Http\Controllers\MaintenanceAttachmentController;
+use Modules\Core\App\Http\Controllers\TemplateController;
+use Modules\Core\App\Http\Controllers\AuditLogController;
 
 Route::middleware('auth')->group(function () {
     Route::get('onboarding', [OnboardingController::class, 'show'])->name('core.onboarding');
@@ -43,6 +48,7 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::post('core/notifications/{notification}/read', [CoreNotificationController::class, 'markRead'])->name('core.notifications.mark-read');
         Route::get('core/invoices', [CoreInvoiceController::class, 'index'])->name('Core.invoices.index');
         Route::get('core/invoices/data', [CoreInvoiceController::class, 'data'])->name('core.invoices.data');
+        Route::get('core/invoices/export', [CoreInvoiceController::class, 'export'])->name('core.invoices.export');
         Route::get('core/invoices/add', [CoreInvoiceController::class, 'create'])->name('Core.invoices.add');
         Route::post('core/invoices', [CoreInvoiceController::class, 'store'])->name('core.invoices.store');
         Route::get('core/invoices/{invoice}/edit', [CoreInvoiceController::class, 'edit'])->name('Core.invoices.edit');
@@ -110,5 +116,30 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::post('core/utility-bills', [UtilityBillController::class, 'store'])->name('core.utility-bills.store');
         Route::patch('core/utility-bills/{bill}', [UtilityBillController::class, 'update'])->name('core.utility-bills.update');
         Route::delete('core/utility-bills/{bill}', [UtilityBillController::class, 'destroy'])->name('core.utility-bills.destroy');
+
+        Route::get('core/billing', [BillingController::class, 'index'])->name('core.billing.index');
+        Route::post('core/billing/change-plan', [BillingController::class, 'changePlan'])->name('core.billing.change-plan');
+        Route::post('core/billing/cancel', [BillingController::class, 'cancel'])->name('core.billing.cancel');
+        Route::post('core/billing/payments', [BillingController::class, 'storePayment'])->name('core.billing.payments.store');
+        Route::get('core/billing/invoices/export', [BillingController::class, 'exportInvoices'])->name('core.billing.invoices.export');
+        Route::get('core/billing/payments/export', [BillingController::class, 'exportPayments'])->name('core.billing.payments.export');
+
+        Route::get('core/maintenance', [MaintenanceController::class, 'index'])->name('core.maintenance.index');
+        Route::get('core/maintenance/{maintenanceRequest}', [MaintenanceController::class, 'show'])->name('core.maintenance.show');
+        Route::post('core/maintenance', [MaintenanceController::class, 'store'])->name('core.maintenance.store');
+        Route::patch('core/maintenance/{maintenanceRequest}', [MaintenanceController::class, 'update'])->name('core.maintenance.update');
+        Route::post('core/maintenance/{maintenanceRequest}/status', [MaintenanceController::class, 'updateStatus'])->name('core.maintenance.status');
+        Route::post('core/maintenance/{maintenanceRequest}/comments', [MaintenanceController::class, 'comment'])->name('core.maintenance.comments.store');
+        Route::post('core/maintenance/{maintenanceRequest}/attachments', [MaintenanceController::class, 'attachment'])->name('core.maintenance.attachments.store');
+        Route::get('core/maintenance/attachments/{attachment}', [MaintenanceAttachmentController::class, 'show'])->name('core.maintenance.attachments.show');
+        Route::post('core/maintenance/{maintenanceRequest}/work-orders', [MaintenanceController::class, 'storeWorkOrder'])->name('core.maintenance.work-orders.store');
+
+        Route::get('core/message-templates', [TemplateController::class, 'index'])->name('core.templates.index');
+        Route::post('core/message-templates', [TemplateController::class, 'store'])->name('core.templates.store');
+        Route::patch('core/message-templates/{template}', [TemplateController::class, 'update'])->name('core.templates.update');
+        Route::delete('core/message-templates/{template}', [TemplateController::class, 'destroy'])->name('core.templates.destroy');
+        Route::post('core/message-templates/{template}/test', [TemplateController::class, 'test'])->name('core.templates.test');
+        Route::get('core/audit-logs', [AuditLogController::class, 'index'])->name('core.audit-logs.index');
+        Route::get('core/audit-logs/export', [AuditLogController::class, 'export'])->name('core.audit-logs.export');
         Route::resource('core', CoreController::class)->names('Core');
     });

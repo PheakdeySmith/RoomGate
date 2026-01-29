@@ -30,6 +30,7 @@ class SendContractCreatedNotifications
         foreach ($admins as $admin) {
             $this->inApp->create($admin, $title, $body, [
                 'tenant_id' => $tenant->id,
+                'dedupe_key' => 'contract-created-'.$contract->id,
                 'type' => 'info',
                 'icon' => 'tabler-file-text',
                 'link_url' => route('core.contracts.index'),
@@ -39,6 +40,7 @@ class SendContractCreatedNotifications
         if ($occupant) {
             $this->inApp->create($occupant, 'Your contract is active', $body, [
                 'tenant_id' => $tenant->id,
+                'dedupe_key' => 'contract-created-'.$contract->id,
                 'type' => 'success',
                 'icon' => 'tabler-file-text',
             ]);

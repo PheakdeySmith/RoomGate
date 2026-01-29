@@ -28,6 +28,7 @@ class SendContractStatusChangedNotifications
         foreach ($admins as $admin) {
             $this->inApp->create($admin, $title, $body, [
                 'tenant_id' => $tenant->id,
+                'dedupe_key' => 'contract-status-'.$contract->id.'-'.(string) $contract->status,
                 'type' => 'warning',
                 'icon' => 'tabler-alert-triangle',
                 'link_url' => route('core.contracts.index'),
@@ -37,6 +38,7 @@ class SendContractStatusChangedNotifications
         if ($occupant) {
             $this->inApp->create($occupant, $title, $body, [
                 'tenant_id' => $tenant->id,
+                'dedupe_key' => 'contract-status-'.$contract->id.'-'.(string) $contract->status,
                 'type' => 'warning',
                 'icon' => 'tabler-alert-triangle',
             ]);

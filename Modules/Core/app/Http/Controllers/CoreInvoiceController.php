@@ -379,6 +379,54 @@ class CoreInvoiceController extends Controller
         ]);
     }
 
+    public function export(Request $request, CurrentTenant $currentTenant)
+    {
+        $tenant = $currentTenant->getOrFail();
+        $this->authorize('viewAny', [Invoice::class, $tenant->id]);
+
+        $query = Invoice::query()
+            ->where('tenant_id', $tenant->id)
+            ->with(['contract.room.property', 'contract.occupant'])
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('issue_date', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('issue_date', '<=', $request->date('to'));
+        }
+
+        $invoices = $query->get();
+        $filename = 'invoices_'.$tenant->slug.'_'.now()->format('Ymd_His').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ];
+
+        $callback = function () use ($invoices) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['invoice_number', 'status', 'total', 'paid', 'due_date', 'occupant', 'room', 'property']);
+            foreach ($invoices as $invoice) {
+                fputcsv($handle, [
+                    $invoice->invoice_number,
+                    $invoice->status,
+                    number_format(($invoice->total_cents ?? 0) / 100, 2),
+                    number_format(($invoice->paid_cents ?? 0) / 100, 2),
+                    optional($invoice->due_date)->format('Y-m-d'),
+                    $invoice->contract?->occupant?->name ?? '',
+                    $invoice->contract?->room?->room_number ?? '',
+                    $invoice->contract?->room?->property?->name ?? '',
+                ]);
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     private function requireInvoiceManager(CurrentTenant $currentTenant)
     {
         $tenant = $currentTenant->getOrFail();

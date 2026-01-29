@@ -10,6 +10,14 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\InAppNotificationService;
+use App\Events\SubscriptionCreated;
+use App\Events\SubscriptionCancelled;
+use App\Events\SubscriptionExpired;
+use App\Events\SubscriptionRenewalSucceeded;
+use App\Events\SubscriptionRenewalFailed;
+use App\Events\SubscriptionPaymentReceived;
+use App\Events\SubscriptionPaymentFailed;
+use App\Events\SubscriptionPaymentRefunded;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -147,6 +155,7 @@ class AdminSubscriptionController extends Controller
 
         $auditLogger->log('created', Subscription::class, (string) $subscription->id, null, $subscription->toArray(), $request);
         $this->notifyPlatformAdmins($inApp, 'Subscription created', 'Subscription created for tenant ID '.$subscription->tenant_id.'.');
+        event(new SubscriptionCreated($subscription));
 
         return back()->with('status', 'Subscription created.');
     }
@@ -179,6 +188,18 @@ class AdminSubscriptionController extends Controller
                 'Subscription status changed',
                 'Tenant ID '.$subscription->tenant_id.' is now '.ucfirst($subscription->status).'.'
             );
+            if ($subscription->status === 'cancelled') {
+                event(new SubscriptionCancelled($subscription));
+            }
+            if ($subscription->status === 'expired') {
+                event(new SubscriptionExpired($subscription));
+            }
+            if ($subscription->status === 'active' && ($before['status'] ?? null) === 'past_due') {
+                event(new SubscriptionRenewalSucceeded($subscription));
+            }
+            if ($subscription->status === 'past_due' && ($before['status'] ?? null) !== 'past_due') {
+                event(new SubscriptionRenewalFailed($subscription));
+            }
         }
 
         return back()->with('status', 'Subscription updated.');
@@ -273,12 +294,27 @@ class AdminSubscriptionController extends Controller
         });
 
         $auditLogger->log('created', SubscriptionPayment::class, (string) $payment->id, null, $payment->toArray(), $request);
+        if ($payment->status === 'paid' && $payment->subscription_invoice_id) {
+            SubscriptionInvoice::query()
+                ->where('id', $payment->subscription_invoice_id)
+                ->update([
+                    'status' => 'paid',
+                    'paid_at' => $payment->paid_at ?? now(),
+                ]);
+        }
         if ($payment->status === 'failed') {
             $this->notifyPlatformAdmins(
                 $inApp,
                 'Subscription payment failed',
                 'Payment failed for tenant ID '.$payment->tenant_id.'.'
             );
+            event(new SubscriptionPaymentFailed($payment));
+        }
+        if ($payment->status === 'paid') {
+            event(new SubscriptionPaymentReceived($payment));
+        }
+        if ($payment->status === 'cancelled') {
+            event(new SubscriptionPaymentRefunded($payment));
         }
 
         return back()->with('status', 'Subscription payment created.');
@@ -295,12 +331,29 @@ class AdminSubscriptionController extends Controller
         $subscriptionPayment->update($validated);
 
         $auditLogger->log('updated', SubscriptionPayment::class, (string) $subscriptionPayment->id, $before, $subscriptionPayment->toArray(), $request);
-        if (($before['status'] ?? null) !== $subscriptionPayment->status && $subscriptionPayment->status === 'failed') {
-            $this->notifyPlatformAdmins(
-                $inApp,
-                'Subscription payment failed',
-                'Payment failed for tenant ID '.$subscriptionPayment->tenant_id.'.'
-            );
+        if (($before['status'] ?? null) !== $subscriptionPayment->status) {
+            if ($subscriptionPayment->status === 'failed') {
+                $this->notifyPlatformAdmins(
+                    $inApp,
+                    'Subscription payment failed',
+                    'Payment failed for tenant ID '.$subscriptionPayment->tenant_id.'.'
+                );
+                event(new SubscriptionPaymentFailed($subscriptionPayment));
+            }
+            if ($subscriptionPayment->status === 'paid') {
+                if ($subscriptionPayment->subscription_invoice_id) {
+                    SubscriptionInvoice::query()
+                        ->where('id', $subscriptionPayment->subscription_invoice_id)
+                        ->update([
+                            'status' => 'paid',
+                            'paid_at' => $subscriptionPayment->paid_at ?? now(),
+                        ]);
+                }
+                event(new SubscriptionPaymentReceived($subscriptionPayment));
+            }
+            if ($subscriptionPayment->status === 'cancelled') {
+                event(new SubscriptionPaymentRefunded($subscriptionPayment));
+            }
         }
 
         return back()->with('status', 'Subscription payment updated.');

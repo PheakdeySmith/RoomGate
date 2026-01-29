@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\PlanGate;
+use App\Events\TenantMemberAccepted;
+use App\Events\TenantMemberDisabled;
+use App\Events\TenantMemberInvited;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -142,7 +145,7 @@ class TenantMemberController extends Controller
             'status' => ['required', 'in:active,invited,disabled'],
         ]);
 
-        return DB::transaction(function () use ($validated, $tenant, $request, $auditLogger) {
+        $member = DB::transaction(function () use ($validated, $tenant, $request, $auditLogger) {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -163,8 +166,14 @@ class TenantMemberController extends Controller
                 'status' => $validated['status'],
             ], $request, $tenant->id);
 
-            return back()->with('status', 'Member added.');
+            return $user;
         });
+
+        if ($validated['status'] === 'invited') {
+            event(new TenantMemberInvited($tenant, $member, $validated['role']));
+        }
+
+        return back()->with('status', 'Member added.');
     }
 
     public function update(Request $request, User $user, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
@@ -191,7 +200,10 @@ class TenantMemberController extends Controller
             'status' => ['required', 'in:active,invited,disabled'],
         ]);
 
-        return DB::transaction(function () use ($validated, $tenant, $user, $request, $auditLogger, $pivot) {
+        $beforeStatus = $pivot->status;
+        $beforeRole = $pivot->role;
+
+        DB::transaction(function () use ($validated, $tenant, $user, $request, $auditLogger, $pivot) {
             $before = [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -221,9 +233,16 @@ class TenantMemberController extends Controller
                 'role' => $validated['role'],
                 'status' => $validated['status'],
             ], $request, $tenant->id);
-
-            return back()->with('status', 'Member updated.');
         });
+
+        if ($beforeStatus === 'invited' && $validated['status'] === 'active') {
+            event(new TenantMemberAccepted($tenant, $user, $validated['role']));
+        }
+        if ($validated['status'] === 'disabled' && $beforeStatus !== 'disabled') {
+            event(new TenantMemberDisabled($tenant, $user, $validated['role']));
+        }
+
+        return back()->with('status', 'Member updated.');
     }
 
     public function destroy(Request $request, User $user, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
@@ -281,7 +300,7 @@ class TenantMemberController extends Controller
 
         $newStatus = $pivot->status === 'disabled' ? 'active' : 'disabled';
 
-        return DB::transaction(function () use ($tenant, $user, $request, $auditLogger, $pivot, $newStatus) {
+        DB::transaction(function () use ($tenant, $user, $request, $auditLogger, $pivot, $newStatus) {
             DB::table('tenant_users')
                 ->where('tenant_id', $tenant->id)
                 ->where('user_id', $user->id)
@@ -301,9 +320,16 @@ class TenantMemberController extends Controller
                 'role' => $pivot->role,
                 'status' => $newStatus,
             ], $request, $tenant->id);
-
-            return back()->with('status', 'Member status updated.');
         });
+
+        if ($newStatus === 'disabled') {
+            event(new TenantMemberDisabled($tenant, $user, $pivot->role));
+        }
+        if ($pivot->status === 'invited' && $newStatus === 'active') {
+            event(new TenantMemberAccepted($tenant, $user, $pivot->role));
+        }
+
+        return back()->with('status', 'Member status updated.');
     }
 
     public function resetPassword(Request $request, User $user, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse

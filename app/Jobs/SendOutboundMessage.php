@@ -40,7 +40,12 @@ class SendOutboundMessage implements ShouldQueue
 
         try {
             if ($message->channel !== 'email') {
-                throw new Exception('Unsupported channel: '.$message->channel);
+                $message->update([
+                    'status' => 'failed',
+                    'last_error' => 'Unsupported channel: '.$message->channel,
+                    'failed_at' => now(),
+                ]);
+                return;
             }
 
             Mail::html($message->body, function ($mail) use ($message) {

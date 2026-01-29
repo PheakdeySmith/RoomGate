@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
+use App\Events\SubscriptionExpired;
+use App\Events\SubscriptionRenewalFailed;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +40,7 @@ class ProcessSubscriptionRenewals extends Command
             if ($subscription->status === 'past_due' && $subscription->grace_period_ends_at) {
                 if ($subscription->grace_period_ends_at->lt($today)) {
                     $subscription->update(['status' => 'expired']);
+                    event(new SubscriptionExpired($subscription));
                     $expired++;
                 }
                 continue;
@@ -45,6 +48,7 @@ class ProcessSubscriptionRenewals extends Command
 
             if (!$subscription->auto_renew) {
                 $subscription->update(['status' => 'expired']);
+                event(new SubscriptionExpired($subscription));
                 $expired++;
                 continue;
             }
@@ -52,6 +56,7 @@ class ProcessSubscriptionRenewals extends Command
             $plan = $subscription->plan ?: Plan::query()->find($subscription->plan_id);
             if (!$plan) {
                 $subscription->update(['status' => 'expired']);
+                event(new SubscriptionExpired($subscription));
                 $expired++;
                 continue;
             }
@@ -89,6 +94,8 @@ class ProcessSubscriptionRenewals extends Command
                 $renewed++;
                 $graced++;
             });
+
+            event(new SubscriptionRenewalFailed($subscription));
         }
 
         $this->info("Renewed: {$renewed}, grace started: {$graced}, expired: {$expired}");

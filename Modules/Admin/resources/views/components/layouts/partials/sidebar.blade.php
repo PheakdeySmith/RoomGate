@@ -140,6 +140,12 @@
                 </li>
             </ul>
         </li>
+        <li class="menu-item {{ request()->routeIs('admin.maintenance.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.maintenance.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-tool"></i>
+                <div data-i18n="menu.maintenance">Maintenance</div>
+            </a>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.contracts.*', 'admin.invoices.*') ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-file-invoice"></i>
@@ -195,6 +201,12 @@
             <a href="{{ route('admin.notifications.index') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-bell"></i>
                 <div data-i18n="menu.notifications">Notifications</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.message-templates.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.message-templates.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-template"></i>
+                <div data-i18n="menu.message_templates">Message Templates</div>
             </a>
         </li>
         <li class="menu-item {{ request()->routeIs('admin.outbound-messages.*') ? 'active' : '' }}">

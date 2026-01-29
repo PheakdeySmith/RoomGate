@@ -12,6 +12,7 @@
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
         "nwidart/laravel-modules": "^12.0",
+        "sentry/sentry-laravel": "^4.20",
         "socialiteproviders/google": "^4.1",
         "socialiteproviders/manager": "^4.8",
         "socialiteproviders/telegram": "^4.1",

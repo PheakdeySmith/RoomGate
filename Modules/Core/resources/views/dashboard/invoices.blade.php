@@ -9,6 +9,11 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-end mb-3">
+    <a href="{{ route('core.invoices.export', ['tenant' => request()->route('tenant')] + request()->query()) }}" class="btn btn-label-secondary">
+      Export CSV
+    </a>
+  </div>
   <div class="card">
     <div class="card-datatable table-responsive">
       <table class="datatables-invoices table border-top">

@@ -37,7 +37,7 @@ class SendRentInvoiceOverdueNotifications
                     'room_number' => $contract?->room?->room_number ?? '-',
                 ],
                 [
-                    'dedupe_key' => 'rent-invoice-overdue-'.$invoice->id.'-'.now()->format('Ymd'),
+                    'dedupe_key' => 'rent-invoice-overdue-'.$invoice->id.'-user-'.$occupant->id.'-'.now()->format('Ymd'),
                     'metadata' => [
                         'invoice_id' => $invoice->id,
                         'contract_id' => $contract?->id,
@@ -51,11 +51,43 @@ class SendRentInvoiceOverdueNotifications
                 'Invoice '.$invoice->invoice_number.' is overdue.',
                 [
                     'tenant_id' => $tenant?->id,
+                    'dedupe_key' => 'rent-invoice-overdue-'.$invoice->id.'-user-'.$occupant->id.'-'.now()->format('Ymd'),
                     'type' => 'warning',
                     'icon' => 'tabler-alert-triangle',
                     'link_url' => $tenant ? route('Core.invoices.index', ['tenant' => $tenant->slug]) : null,
                 ]
             );
+        }
+
+        if ($tenant) {
+            $admins = $tenant->users()->wherePivotIn('role', ['owner', 'admin'])->get();
+            foreach ($admins as $admin) {
+                if (! $admin->email) {
+                    continue;
+                }
+
+                $this->notifications->queue(
+                    'rent_invoice_overdue_admin',
+                    $tenant,
+                    $admin,
+                    [
+                        'recipient_name' => $admin->name,
+                        'invoice_number' => $invoice->invoice_number,
+                        'amount_due' => number_format((($invoice->total_cents ?? 0) - ($invoice->paid_cents ?? 0)) / 100, 2),
+                        'due_date' => optional($invoice->due_date)->format('Y-m-d'),
+                        'property_name' => $contract?->room?->property?->name ?? 'Property',
+                        'room_number' => $contract?->room?->room_number ?? '-',
+                        'occupant_name' => $occupant?->name ?? 'Tenant',
+                    ],
+                    [
+                        'dedupe_key' => 'rent-invoice-overdue-'.$invoice->id.'-user-'.$admin->id.'-'.now()->format('Ymd'),
+                        'metadata' => [
+                            'invoice_id' => $invoice->id,
+                            'contract_id' => $contract?->id,
+                        ],
+                    ]
+                );
+            }
         }
     }
 }

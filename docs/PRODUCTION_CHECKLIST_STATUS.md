@@ -1,4 +1,4 @@
-# Production Checklist Status (as of 2026-01-28)
+# Production Checklist Status (as of 2026-01-29)
 
 This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 
@@ -22,7 +22,7 @@ This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 - Uploads backups configured: **Partial** (scripts + docs).
 - Queue workers configured with retries: **Done** (retry/backoff documented; `SendOutboundMessage` backoff set).
 - Scheduled tasks: **Done** (scheduler entries exist; documented).
-- Global exception handler safe errors: **Missing** (not verified).
+- Global exception handler safe errors: **Done** (`bootstrap/app.php`).
 - Webhook payloads stored w/ idempotency: **Done** (`webhook_events` + service + route).
 - Multi-table writes wrapped in DB transactions: **Partial** (several controllers use `DB::transaction`).
 
@@ -46,9 +46,9 @@ This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 - Payment state machine documented: **Missing**.
 
 ## Observability
-- Error monitoring configured: **Partial** (docs + env placeholders).
-- Central log aggregation: **Partial** (docs).
-- Audit log filters/exports: **Partial** (admin view exists).
+- Error monitoring configured: **Done** (Sentry SDK installed + config published).
+- Central log aggregation: **Partial** (docs updated; not verified).
+- Audit log filters/exports: **Done** (filters + CSV export).
 
 ## UX & QA
 - Consistent Notyf + SweetAlert2 usage: **Partial** (admin + core layouts now include).
@@ -57,7 +57,7 @@ This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 
 ## Operations & Compliance
 - CI/CD pipeline with tests + migrations: **Done** (`docs/DEPLOYMENT.md`).
-- Staging mirrors production: **Missing** (not documented).
+- Staging mirrors production: **Partial** (`docs/STAGING.md`, not verified).
 - Rollback plan: **Done** (`docs/DEPLOYMENT.md`).
 - Data retention policy: **Done** (`docs/PRIVACY_RETENTION.md`).
 - Uptime/health checks: **Done** (`/up` + `docs/DEPLOYMENT.md`).

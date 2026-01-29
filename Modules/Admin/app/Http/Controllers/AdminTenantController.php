@@ -21,6 +21,10 @@ use App\Models\Role;
 use App\Services\AuditLogger;
 use App\Services\InAppNotificationService;
 use App\Services\PlanGate;
+use App\Events\TenantMemberAccepted;
+use App\Events\TenantMemberDisabled;
+use App\Events\TenantMemberInvited;
+use App\Events\SubscriptionCreated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -647,6 +651,10 @@ class AdminTenantController extends Controller
 
             $auditLogger->log('created', Tenant::class, (string) $tenant->id, null, $tenant->toArray(), $request);
             $this->notifyPlatformAdmins($inApp, 'New tenant created', $tenant->name.' was created.');
+            $subscription = $tenant->subscriptions()->orderByDesc('current_period_end')->first();
+            if ($subscription) {
+                event(new SubscriptionCreated($subscription));
+            }
 
             return back()->with('status', 'Tenant created.');
         });
@@ -768,7 +776,7 @@ class AdminTenantController extends Controller
             'status' => ['required', 'in:active,invited,disabled'],
         ]);
 
-        return DB::transaction(function () use ($validated, $tenant, $request, $auditLogger) {
+        $member = DB::transaction(function () use ($validated, $tenant, $request, $auditLogger) {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -789,8 +797,14 @@ class AdminTenantController extends Controller
                 'status' => $validated['status'],
             ], $request);
 
-            return back()->with('status', 'Tenant member added.');
+            return $user;
         });
+
+        if ($validated['status'] === 'invited') {
+            event(new TenantMemberInvited($tenant, $member, $validated['role']));
+        }
+
+        return back()->with('status', 'Tenant member added.');
     }
 
     public function updateMember(Request $request, Tenant $tenant, User $user, AuditLogger $auditLogger): RedirectResponse
@@ -813,7 +827,10 @@ class AdminTenantController extends Controller
             'status' => ['required', 'in:active,invited,disabled'],
         ]);
 
-        return DB::transaction(function () use ($validated, $tenant, $user, $request, $auditLogger, $pivot) {
+        $beforeStatus = $pivot->status;
+        $beforeRole = $pivot->role;
+
+        DB::transaction(function () use ($validated, $tenant, $user, $request, $auditLogger, $pivot) {
             $before = [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -853,9 +870,16 @@ class AdminTenantController extends Controller
                 'role' => $validated['role'],
                 'status' => $validated['status'],
             ], $request);
-
-            return back()->with('status', 'Tenant member updated.');
         });
+
+        if ($beforeStatus === 'invited' && $validated['status'] === 'active') {
+            event(new TenantMemberAccepted($tenant, $user, $validated['role']));
+        }
+        if ($validated['status'] === 'disabled' && $beforeStatus !== 'disabled') {
+            event(new TenantMemberDisabled($tenant, $user, $validated['role']));
+        }
+
+        return back()->with('status', 'Tenant member updated.');
     }
 
     public function destroyMember(Request $request, Tenant $tenant, User $user, AuditLogger $auditLogger): RedirectResponse
@@ -965,7 +989,7 @@ class AdminTenantController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($tenant, $user, $request, $auditLogger, $pivot, $newStatus) {
+        DB::transaction(function () use ($tenant, $user, $request, $auditLogger, $pivot, $newStatus) {
             DB::table('tenant_users')
                 ->where('tenant_id', $tenant->id)
                 ->where('user_id', $user->id)
@@ -985,9 +1009,16 @@ class AdminTenantController extends Controller
                 'role' => $pivot->role,
                 'status' => $newStatus,
             ], $request);
-
-            return back()->with('status', 'Member status updated.');
         });
+
+        if ($newStatus === 'disabled') {
+            event(new TenantMemberDisabled($tenant, $user, $pivot->role));
+        }
+        if ($pivot->status === 'invited' && $newStatus === 'active') {
+            event(new TenantMemberAccepted($tenant, $user, $pivot->role));
+        }
+
+        return back()->with('status', 'Member status updated.');
     }
 
     public function resetMemberPassword(Request $request, Tenant $tenant, User $user, AuditLogger $auditLogger): RedirectResponse

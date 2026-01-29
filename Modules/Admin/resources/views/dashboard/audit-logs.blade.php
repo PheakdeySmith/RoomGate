@@ -72,6 +72,9 @@
         <div class="col-12">
           <button class="btn btn-primary me-2" type="submit" data-i18n="actions.filter">Filter</button>
           <a href="{{ route('admin.audit-logs') }}" class="btn btn-label-secondary" data-i18n="actions.reset">Reset</a>
+          <a href="{{ route('admin.audit-logs.export', request()->query()) }}" class="btn btn-label-info">
+            Export CSV
+          </a>
         </div>
       </form>
     </div>

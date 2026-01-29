@@ -19,6 +19,7 @@ class InAppNotification extends Model
         'body',
         'icon',
         'link_url',
+        'dedupe_key',
         'read_at',
     ];
 

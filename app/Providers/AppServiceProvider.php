@@ -14,6 +14,7 @@ use App\Models\UtilityMeter;
 use App\Models\UtilityMeterReading;
 use App\Models\UtilityProvider;
 use App\Models\UtilityRate;
+use App\Models\MaintenanceRequest;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
@@ -30,13 +31,39 @@ use Modules\Core\App\Services\CurrentTenant;
 use App\Policies\TenantOwnedPolicy;
 use App\Services\AuditLogger;
 use App\Events\RentInvoiceCreated;
+use App\Events\RentInvoiceDueSoon;
 use App\Events\RentInvoiceOverdue;
 use App\Events\ContractCreated;
 use App\Events\ContractStatusChanged;
+use App\Events\SubscriptionCreated;
+use App\Events\SubscriptionTrialEndingSoon;
+use App\Events\SubscriptionRenewalFailed;
+use App\Events\SubscriptionRenewalSucceeded;
+use App\Events\SubscriptionCancelled;
+use App\Events\SubscriptionExpired;
+use App\Events\SubscriptionPaymentReceived;
+use App\Events\SubscriptionPaymentFailed;
+use App\Events\SubscriptionPaymentRefunded;
+use App\Events\TenantMemberInvited;
+use App\Events\TenantMemberAccepted;
+use App\Events\TenantMemberDisabled;
 use App\Listeners\SendRentInvoiceCreatedNotifications;
+use App\Listeners\SendRentInvoiceDueSoonNotifications;
 use App\Listeners\SendRentInvoiceOverdueNotifications;
 use App\Listeners\SendContractCreatedNotifications;
 use App\Listeners\SendContractStatusChangedNotifications;
+use App\Listeners\SendSubscriptionCreatedNotifications;
+use App\Listeners\SendSubscriptionTrialEndingNotifications;
+use App\Listeners\SendSubscriptionRenewalFailedNotifications;
+use App\Listeners\SendSubscriptionRenewalSucceededNotifications;
+use App\Listeners\SendSubscriptionCancelledNotifications;
+use App\Listeners\SendSubscriptionExpiredNotifications;
+use App\Listeners\SendSubscriptionPaymentReceivedNotifications;
+use App\Listeners\SendSubscriptionPaymentFailedNotifications;
+use App\Listeners\SendSubscriptionPaymentRefundedNotifications;
+use App\Listeners\SendTenantMemberInvitedNotifications;
+use App\Listeners\SendTenantMemberAcceptedNotifications;
+use App\Listeners\SendTenantMemberDisabledNotifications;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -72,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(UtilityRate::class, TenantOwnedPolicy::class);
         Gate::policy(UtilityBill::class, TenantOwnedPolicy::class);
         Gate::policy(UtilityMeterReading::class, TenantOwnedPolicy::class);
+        Gate::policy(MaintenanceRequest::class, TenantOwnedPolicy::class);
 
         if (!app()->runningInConsole()) {
             $forwardedProto = request()->header('X-Forwarded-Proto');
@@ -86,9 +114,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(RentInvoiceCreated::class, SendRentInvoiceCreatedNotifications::class);
+        Event::listen(RentInvoiceDueSoon::class, SendRentInvoiceDueSoonNotifications::class);
         Event::listen(RentInvoiceOverdue::class, SendRentInvoiceOverdueNotifications::class);
         Event::listen(ContractCreated::class, SendContractCreatedNotifications::class);
         Event::listen(ContractStatusChanged::class, SendContractStatusChangedNotifications::class);
+        Event::listen(SubscriptionCreated::class, SendSubscriptionCreatedNotifications::class);
+        Event::listen(SubscriptionTrialEndingSoon::class, SendSubscriptionTrialEndingNotifications::class);
+        Event::listen(SubscriptionRenewalFailed::class, SendSubscriptionRenewalFailedNotifications::class);
+        Event::listen(SubscriptionRenewalSucceeded::class, SendSubscriptionRenewalSucceededNotifications::class);
+        Event::listen(SubscriptionCancelled::class, SendSubscriptionCancelledNotifications::class);
+        Event::listen(SubscriptionExpired::class, SendSubscriptionExpiredNotifications::class);
+        Event::listen(SubscriptionPaymentReceived::class, SendSubscriptionPaymentReceivedNotifications::class);
+        Event::listen(SubscriptionPaymentFailed::class, SendSubscriptionPaymentFailedNotifications::class);
+        Event::listen(SubscriptionPaymentRefunded::class, SendSubscriptionPaymentRefundedNotifications::class);
+        Event::listen(TenantMemberInvited::class, SendTenantMemberInvitedNotifications::class);
+        Event::listen(TenantMemberAccepted::class, SendTenantMemberAcceptedNotifications::class);
+        Event::listen(TenantMemberDisabled::class, SendTenantMemberDisabledNotifications::class);
 
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";

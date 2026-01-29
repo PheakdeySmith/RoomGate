@@ -18,6 +18,7 @@
 - Log aggregation: centralize app + queue logs.
 - Health checks: expose `/up` and verify with uptime monitor.
 - Monitoring setup: `docs/MONITORING.md`.
+ - Staging baseline: `docs/STAGING.md`.
 
 ## Webhooks & Idempotency
 - Store incoming webhook payloads with `idempotency_key`.

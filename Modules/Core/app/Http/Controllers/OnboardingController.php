@@ -11,6 +11,7 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Events\SubscriptionCreated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +139,7 @@ class OnboardingController extends Controller
             $auditLogger->log('created', Tenant::class, (string) $tenant->id, null, $tenant->toArray(), $request);
             $auditLogger->log('created', Property::class, (string) $property->id, null, $property->toArray(), $request);
             $auditLogger->log('created', Subscription::class, (string) $subscription->id, null, $subscription->toArray(), $request);
+            event(new SubscriptionCreated($subscription));
 
             return redirect()->route('core.onboarding.plan');
         });

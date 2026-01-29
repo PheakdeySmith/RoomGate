@@ -37,7 +37,7 @@ class SendRentInvoiceCreatedNotifications
                     'room_number' => $contract?->room?->room_number ?? '-',
                 ],
                 [
-                    'dedupe_key' => 'rent-invoice-created-'.$invoice->id,
+                    'dedupe_key' => 'rent-invoice-created-'.$invoice->id.'-user-'.$occupant->id,
                     'metadata' => [
                         'invoice_id' => $invoice->id,
                         'contract_id' => $contract?->id,
@@ -51,6 +51,7 @@ class SendRentInvoiceCreatedNotifications
                 'Invoice '.$invoice->invoice_number.' is ready.',
                 [
                     'tenant_id' => $tenant?->id,
+                    'dedupe_key' => 'rent-invoice-created-'.$invoice->id,
                     'type' => 'info',
                     'icon' => 'tabler-receipt-2',
                     'link_url' => $tenant ? route('Core.invoices.index', ['tenant' => $tenant->slug]) : null,
@@ -61,12 +62,37 @@ class SendRentInvoiceCreatedNotifications
         if ($tenant) {
             $admins = $tenant->users()->wherePivotIn('role', ['owner', 'admin'])->get();
             foreach ($admins as $admin) {
+                if ($admin->email) {
+                    $this->notifications->queue(
+                        'rent_invoice_created_admin',
+                        $tenant,
+                        $admin,
+                        [
+                            'recipient_name' => $admin->name,
+                            'invoice_number' => $invoice->invoice_number,
+                            'amount_due' => number_format(($invoice->total_cents ?? 0) / 100, 2),
+                            'due_date' => optional($invoice->due_date)->format('Y-m-d'),
+                            'property_name' => $contract?->room?->property?->name ?? 'Property',
+                            'room_number' => $contract?->room?->room_number ?? '-',
+                            'occupant_name' => $occupant?->name ?? 'Tenant',
+                        ],
+                        [
+                            'dedupe_key' => 'rent-invoice-created-'.$invoice->id.'-user-'.$admin->id,
+                            'metadata' => [
+                                'invoice_id' => $invoice->id,
+                                'contract_id' => $contract?->id,
+                            ],
+                        ]
+                    );
+                }
+
                 $this->inApp->create(
                     $admin,
                     'New invoice generated',
                     'Invoice '.$invoice->invoice_number.' was generated.',
                     [
                         'tenant_id' => $tenant->id,
+                        'dedupe_key' => 'rent-invoice-created-'.$invoice->id,
                         'type' => 'info',
                         'icon' => 'tabler-receipt-2',
                         'link_url' => route('core.contracts.index', ['tenant' => $tenant->slug]),

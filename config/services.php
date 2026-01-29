@@ -52,6 +52,11 @@ return [
         'grace_days' => env('SUBSCRIPTION_GRACE_DAYS', 7),
     ],
 
+    'notifications' => [
+        'invoice_due_soon_days' => env('RENT_INVOICE_DUE_SOON_DAYS', 3),
+        'trial_ending_days' => env('SUBSCRIPTION_TRIAL_ENDING_DAYS', 3),
+    ],
+
     'sentry' => [
         'dsn' => env('SENTRY_DSN'),
         'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 0.0),
