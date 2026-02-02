@@ -55,13 +55,13 @@
                   <span class="fw-normal">Date Issued:</span>
                 </dt>
                 <dd class="col-sm-7">
-                  <input type="text" class="form-control dob-picker" name="billing_period_start" placeholder="YYYY-MM-DD" required />
+                  <input type="text" class="form-control dob-picker" name="billing_period_start" placeholder="Month DD, YYYY" required />
                 </dd>
                 <dt class="col-sm-5 d-md-flex align-items-center justify-content-end">
                   <span class="fw-normal">Due Date:</span>
                 </dt>
                 <dd class="col-sm-7 mb-0">
-                  <input type="text" class="form-control dob-picker" name="due_date" placeholder="YYYY-MM-DD" required />
+                  <input type="text" class="form-control dob-picker" name="due_date" placeholder="Month DD, YYYY" required />
                 </dd>
               </dl>
             </div>
@@ -106,11 +106,11 @@
                   </tr>
                   <tr>
                     <td class="pe-4">Period End:</td>
-                    <td><input type="text" class="form-control dob-picker" name="billing_period_end" placeholder="YYYY-MM-DD" required /></td>
+                    <td><input type="text" class="form-control dob-picker" name="billing_period_end" placeholder="Month DD, YYYY" required /></td>
                   </tr>
                   <tr>
                     <td class="pe-4">Paid At:</td>
-                    <td><input type="text" class="form-control dob-picker" name="paid_at" placeholder="YYYY-MM-DD" /></td>
+                    <td><input type="text" class="form-control dob-picker" name="paid_at" placeholder="Month DD, YYYY" /></td>
                   </tr>
                 </tbody>
               </table>
@@ -232,7 +232,14 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       if (window.flatpickr) {
-        flatpickr('.dob-picker', { dateFormat: 'Y-m-d' });
+        flatpickr('.dob-picker', {
+          altInput: true,
+          altFormat: 'F j, Y',
+          dateFormat: 'Y-m-d',
+          disableMobile: true,
+          static: true,
+          altInputClass: 'form-control'
+        });
       }
       if (window.$ && $.fn.select2) {
         $('.select2').each(function () {

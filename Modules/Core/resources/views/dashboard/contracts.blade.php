@@ -135,11 +135,11 @@
           </div>
           <div class="col-md-6">
             <label class="form-label" for="contractStart">Start Date</label>
-            <input type="text" id="contractStart" name="start_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="contractStart" name="start_date" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-6">
             <label class="form-label" for="contractEnd">End Date</label>
-            <input type="text" id="contractEnd" name="end_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="contractEnd" name="end_date" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="contractRent">Monthly Rent (USD)</label>
@@ -218,11 +218,11 @@
           </div>
           <div class="col-md-6">
             <label class="form-label" for="editContractStart">Start Date</label>
-            <input type="text" id="editContractStart" name="start_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="editContractStart" name="start_date" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-6">
             <label class="form-label" for="editContractEnd">End Date</label>
-            <input type="text" id="editContractEnd" name="end_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="editContractEnd" name="end_date" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-4">
             <label class="form-label" for="editContractRent">Monthly Rent (USD)</label>
@@ -286,8 +286,13 @@
           }
           const modal = el.closest('.modal');
           const config = {
+            altInput: true,
+            altFormat: 'F j, Y',
             dateFormat: 'Y-m-d',
-            disableMobile: true
+            disableMobile: true,
+            static: !modal,
+            altInputClass: 'form-control',
+            appendTo: modal || document.body
           };
           if (modal) {
             config.appendTo = modal;

@@ -14,7 +14,6 @@ use App\Models\Property;
 use App\Models\Room;
 use App\Models\Contract;
 use App\Models\Invoice;
-use App\Models\UtilityProvider;
 use App\Models\UtilityMeter;
 use App\Models\User;
 use App\Models\Role;
@@ -105,12 +104,6 @@ class AdminTenantController extends Controller
     public function connections(Tenant $tenant, PlanGate $planGate)
     {
         $context = $this->tenantContext($tenant, $planGate);
-
-        $context['utilityProviders'] = UtilityProvider::query()
-            ->where('tenant_id', $tenant->id)
-            ->orderBy('name')
-            ->limit(50)
-            ->get();
 
         $context['utilityMeters'] = UtilityMeter::query()
             ->where('tenant_id', $tenant->id)
@@ -387,7 +380,6 @@ class AdminTenantController extends Controller
                 'room' => Room::class,
                 'contract' => Contract::class,
                 'invoice' => Invoice::class,
-                'utility_provider' => UtilityProvider::class,
                 'utility_meter' => UtilityMeter::class,
             ];
             if (isset($modelMap[$modelFilter])) {
@@ -496,7 +488,6 @@ class AdminTenantController extends Controller
                 'room' => Room::class,
                 'contract' => Contract::class,
                 'invoice' => Invoice::class,
-                'utility_provider' => UtilityProvider::class,
                 'utility_meter' => UtilityMeter::class,
             ];
             if (isset($modelMap[$modelFilter])) {

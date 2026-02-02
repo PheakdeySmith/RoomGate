@@ -182,7 +182,6 @@
                 <option value="room">Room</option>
                 <option value="contract">Contract</option>
                 <option value="invoice">Invoice</option>
-                <option value="utility_provider">Utility Provider</option>
                 <option value="utility_meter">Utility Meter</option>
               </select>
             </div>

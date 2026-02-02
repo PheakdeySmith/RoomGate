@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/select2/select2.css" />
+  <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/flatpickr/flatpickr.css" />
 @endpush
 
 @section('content')
@@ -57,7 +58,6 @@
                      data-bill-contract="{{ $bill->contract_id }}"
                      data-bill-type="{{ $bill->utility_type_id }}"
                      data-bill-meter="{{ $bill->meter_id }}"
-                     data-bill-provider="{{ $bill->provider_id }}"
                      data-bill-start="{{ optional($bill->billing_period_start)->format('Y-m-d') }}"
                      data-bill-end="{{ optional($bill->billing_period_end)->format('Y-m-d') }}"
                      data-bill-start-reading="{{ $bill->start_reading_id }}"
@@ -128,30 +128,21 @@
               @endforeach
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="billProvider">Provider</label>
-            <select id="billProvider" name="provider_id" class="select2 form-select">
-              <option value="">Select provider</option>
-              @foreach ($providers as $provider)
-                <option value="{{ $provider->id }}">{{ $provider->name }}</option>
-              @endforeach
-            </select>
-          </div>
           <div class="col-md-3">
             <label class="form-label" for="billStart">Period Start</label>
-            <input type="text" id="billStart" name="billing_period_start" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="billStart" name="billing_period_start" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="billEnd">Period End</label>
-            <input type="text" id="billEnd" name="billing_period_end" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="billEnd" name="billing_period_end" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="billIssued">Issued At</label>
-            <input type="text" id="billIssued" name="issued_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="billIssued" name="issued_at" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="billDue">Due Date</label>
-            <input type="text" id="billDue" name="due_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="billDue" name="due_date" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-md-6">
             <label class="form-label" for="billStartReading">Start Reading</label>
@@ -195,7 +186,7 @@
           </div>
           <div class="col-md-4">
             <label class="form-label" for="billPaidAt">Paid At</label>
-            <input type="text" id="billPaidAt" name="paid_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="billPaidAt" name="paid_at" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-12">
             <label class="form-label" for="billNotes">Notes</label>
@@ -250,30 +241,21 @@
               @endforeach
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editBillProvider">Provider</label>
-            <select id="editBillProvider" name="provider_id" class="select2 form-select">
-              <option value="">Select provider</option>
-              @foreach ($providers as $provider)
-                <option value="{{ $provider->id }}">{{ $provider->name }}</option>
-              @endforeach
-            </select>
-          </div>
           <div class="col-md-3">
             <label class="form-label" for="editBillStart">Period Start</label>
-            <input type="text" id="editBillStart" name="billing_period_start" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="editBillStart" name="billing_period_start" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="editBillEnd">Period End</label>
-            <input type="text" id="editBillEnd" name="billing_period_end" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="editBillEnd" name="billing_period_end" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="editBillIssued">Issued At</label>
-            <input type="text" id="editBillIssued" name="issued_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editBillIssued" name="issued_at" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-md-3">
             <label class="form-label" for="editBillDue">Due Date</label>
-            <input type="text" id="editBillDue" name="due_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editBillDue" name="due_date" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-md-6">
             <label class="form-label" for="editBillStartReading">Start Reading</label>
@@ -317,7 +299,7 @@
           </div>
           <div class="col-md-4">
             <label class="form-label" for="editBillPaidAt">Paid At</label>
-            <input type="text" id="editBillPaidAt" name="paid_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editBillPaidAt" name="paid_at" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-12">
             <label class="form-label" for="editBillNotes">Notes</label>
@@ -341,11 +323,27 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const billsBaseUrl = @json(route('core.utility-bills.index'));
-      if (window.flatpickr) {
-        document.querySelectorAll('.flatpickr').forEach((el) => {
-          flatpickr(el, { dateFormat: 'Y-m-d' });
+      const initDatePickers = (scope) => {
+        if (!window.flatpickr) {
+          return;
+        }
+        (scope || document).querySelectorAll('.flatpickr').forEach((el) => {
+          const modal = el.closest('.modal');
+          if (el._flatpickr) {
+            el._flatpickr.destroy();
+          }
+          flatpickr(el, {
+            altInput: true,
+            altFormat: 'F j, Y',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            static: !modal,
+            altInputClass: 'form-control',
+            appendTo: modal || document.body
+          });
         });
-      }
+      };
+      initDatePickers();
 
       if (window.$ && $.fn.select2) {
         $('.select2').each(function () {
@@ -459,7 +457,6 @@
           document.getElementById('editBillContract').value = trigger.getAttribute('data-bill-contract') || '';
           document.getElementById('editBillType').value = trigger.getAttribute('data-bill-type') || '';
           document.getElementById('editBillMeter').value = trigger.getAttribute('data-bill-meter') || '';
-          document.getElementById('editBillProvider').value = trigger.getAttribute('data-bill-provider') || '';
           document.getElementById('editBillStart').value = trigger.getAttribute('data-bill-start') || '';
           document.getElementById('editBillEnd').value = trigger.getAttribute('data-bill-end') || '';
           document.getElementById('editBillStartReading').value = trigger.getAttribute('data-bill-start-reading') || '';
@@ -477,10 +474,16 @@
             $('#editBillContract').trigger('change');
             $('#editBillType').trigger('change');
             $('#editBillMeter').trigger('change');
-            $('#editBillProvider').trigger('change');
             $('#editBillStartReading').trigger('change');
             $('#editBillEndReading').trigger('change');
           }
+          initDatePickers(editModal);
+        });
+      }
+      const addModal = document.getElementById('addBillModal');
+      if (addModal) {
+        addModal.addEventListener('show.bs.modal', function () {
+          initDatePickers(addModal);
         });
       }
     });

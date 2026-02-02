@@ -56,7 +56,7 @@
             id="from"
             name="from"
             class="form-control dob-picker"
-            placeholder="YYYY-MM-DD"
+            placeholder="Month DD, YYYY"
             value="{{ request('from') }}" />
         </div>
         <div class="col-sm-6 col-lg-3">
@@ -66,7 +66,7 @@
             id="to"
             name="to"
             class="form-control dob-picker"
-            placeholder="YYYY-MM-DD"
+            placeholder="Month DD, YYYY"
             value="{{ request('to') }}" />
         </div>
         <div class="col-12">
@@ -186,7 +186,14 @@
       });
     }
     if (window.flatpickr) {
-      flatpickr('.dob-picker', { dateFormat: 'Y-m-d' });
+      flatpickr('.dob-picker', {
+        altInput: true,
+        altFormat: 'F j, Y',
+        dateFormat: 'Y-m-d',
+        disableMobile: true,
+        static: true,
+        altInputClass: 'form-control'
+      });
     }
 
     const table = document.querySelector('.datatables-audit');

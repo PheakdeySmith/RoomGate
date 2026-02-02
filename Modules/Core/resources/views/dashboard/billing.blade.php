@@ -9,85 +9,88 @@
 
 @section('content')
   <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="row">
-      <div class="col-lg-5 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="card-title mb-0">Current Subscription</h5>
-          </div>
-          <div class="card-body">
-            @if ($subscription)
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <div>
-                  <h6 class="mb-1">{{ $subscription->plan?->name ?? 'Plan' }}</h6>
-                  <small class="text-body-secondary">{{ ucfirst($subscription->status) }}</small>
-                </div>
-                <span class="badge bg-label-primary text-uppercase">{{ $subscription->plan?->interval ?? 'monthly' }}</span>
-              </div>
-              @if ($subscription->status === 'past_due')
-                <div class="alert alert-warning">
-                  Your subscription is past due. Please record a payment to restore access.
-                </div>
-              @endif
-              <div class="mb-3">
-                <div class="d-flex justify-content-between">
-                  <span>Period Start</span>
-                  <span>{{ optional($subscription->current_period_start)->format('Y-m-d') }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span>Period End</span>
-                  <span>{{ optional($subscription->current_period_end)->format('Y-m-d') }}</span>
-                </div>
-              </div>
-              <form method="POST" action="{{ route('core.billing.cancel', ['tenant' => request()->route('tenant')]) }}" data-confirm="Cancel this subscription?">
-                @csrf
-                <button class="btn btn-label-danger w-100" type="submit">Cancel Subscription</button>
-              </form>
-            @else
-              <p class="text-body-secondary mb-0">No active subscription yet.</p>
-            @endif
-          </div>
-        </div>
-      </div>
+    @php
+      $planCards = [
+          'Basic' => 'bg-label-primary',
+          'Professional' => 'bg-label-success',
+          'Enterprise' => 'bg-label-warning',
+      ];
+      $statusBadges = [
+          'paid' => 'bg-label-success',
+          'unpaid' => 'bg-label-warning',
+          'sent' => 'bg-label-info',
+          'void' => 'bg-label-secondary',
+      ];
+    @endphp
 
-      <div class="col-lg-7 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="card-title mb-0">Change Plan</h5>
-          </div>
-          <div class="card-body">
-            <form method="POST" action="{{ route('core.billing.change-plan', ['tenant' => request()->route('tenant')]) }}">
-              @csrf
-              <div class="row g-3 align-items-end">
-                <div class="col-md-8">
-                  <label class="form-label" for="plan_id">Plan</label>
-                  <select class="form-select" id="plan_id" name="plan_id" required>
-                    @foreach ($plans as $plan)
-                      <option value="{{ $plan->id }}" @selected($subscription && $subscription->plan_id === $plan->id)>
-                        {{ $plan->name }} - ${{ number_format($plan->price_cents / 100, 2) }}/{{ $plan->interval }}
-                      </option>
-                    @endforeach
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <button class="btn btn-primary w-100" type="submit">Update Plan</button>
-                </div>
-              </div>
-            </form>
-            <p class="text-body-secondary mt-3 mb-0">
-              Plan changes take effect immediately. Billing is manual until a payment provider is configured.
-            </p>
-          </div>
-        </div>
+    <div class="row mb-4">
+      <div class="col-12">
+        <h4 class="mb-1">Plans & Billing</h4>
+        <p class="text-body-secondary mb-0">Choose the plan that fits your business today.</p>
       </div>
     </div>
 
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div class="text-body-secondary">Billing window</div>
+      <label class="switch switch-sm m-0">
+        <span class="switch-label fs-6 text-body">Monthly</span>
+        <input type="checkbox" class="switch-input price-duration-toggler" />
+        <span class="switch-toggle-slider">
+          <span class="switch-on"></span>
+          <span class="switch-off"></span>
+        </span>
+        <span class="switch-label fs-6 text-body">Yearly</span>
+      </label>
+    </div>
+
+    <div class="row g-4 mb-5">
+      @foreach ($plans as $plan)
+        @php
+          $cardTone = $planCards[$plan->name] ?? 'bg-label-primary';
+          $isCurrent = $subscription && $subscription->plan_id === $plan->id && in_array($subscription->status, ['active', 'trialing', 'past_due'], true);
+          $duration = $plan->interval === 'yearly' ? '/ year' : '/ month';
+          $priceClass = $plan->interval === 'yearly' ? 'price-yearly d-none' : 'price-monthly';
+        @endphp
+        <div class="col-xl-4 col-md-6 {{ $priceClass }}">
+          <div class="card h-100 border-0 shadow-sm {{ $cardTone }}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h5 class="mb-1">{{ $plan->name }}</h5>
+                  <small class="text-body-secondary text-uppercase">{{ $plan->interval }}</small>
+                </div>
+                @if ($isCurrent)
+                  <span class="badge bg-white text-heading">Current</span>
+                @endif
+              </div>
+              <div class="d-flex align-items-end gap-2 mb-4">
+                <h2 class="mb-0">${{ number_format($plan->price_cents / 100, 0) }}</h2>
+                <span class="text-body-secondary">{{ $duration }}</span>
+              </div>
+              <ul class="list-unstyled mb-4 text-body-secondary">
+                <li class="mb-2"><i class="icon-base ti tabler-check me-2"></i>Tenant management</li>
+                <li class="mb-2"><i class="icon-base ti tabler-check me-2"></i>Contracts & invoices</li>
+                <li class="mb-2"><i class="icon-base ti tabler-check me-2"></i>Maintenance & utilities</li>
+              </ul>
+              <form method="POST" action="{{ route('core.billing.change-plan', ['tenant' => request()->route('tenant')]) }}">
+                @csrf
+                <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                <button class="btn btn-primary w-100" type="submit" {{ $isCurrent ? 'disabled' : '' }}>
+                  {{ $isCurrent ? 'Current Plan' : 'Select Plan' }}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+
     <div class="row">
-      <div class="col-xl-6 mb-4">
+      <div class="col-12 mb-4">
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center w-100">
-              <h5 class="card-title mb-0">Subscription Invoices</h5>
+              <h5 class="card-title mb-0">Purchase History</h5>
               <a class="btn btn-sm btn-label-secondary" href="{{ route('core.billing.invoices.export', ['tenant' => request()->route('tenant')]) }}">
                 Export CSV
               </a>
@@ -99,9 +102,11 @@
                 <tr>
                   <th></th>
                   <th>Invoice</th>
-                  <th>Status</th>
+                  <th>Plan</th>
                   <th>Amount</th>
-                  <th>Due</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,79 +114,19 @@
                   <tr>
                     <td></td>
                     <td>{{ $invoice->invoice_number }}</td>
-                    <td>{{ ucfirst($invoice->status) }}</td>
+                    <td>{{ $subscription?->plan?->name ?? 'Plan' }}</td>
                     <td>${{ number_format($invoice->amount_cents / 100, 2) }}</td>
-                    <td>{{ $invoice->due_date }}</td>
+                    <td>{{ $invoice->billing_period_start }}</td>
+                    <td>${{ number_format($invoice->amount_cents / 100, 2) }}</td>
+                    <td>
+                      <span class="badge {{ $statusBadges[$invoice->status] ?? 'bg-label-secondary' }}">
+                        {{ ucfirst($invoice->status) }}
+                      </span>
+                    </td>
                   </tr>
                 @endforeach
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-6 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center w-100">
-              <h5 class="card-title mb-0">Subscription Payments</h5>
-              <a class="btn btn-sm btn-label-secondary" href="{{ route('core.billing.payments.export', ['tenant' => request()->route('tenant')]) }}">
-                Export CSV
-              </a>
-            </div>
-          </div>
-          <div class="card-datatable table-responsive">
-            <table class="datatables-sub-payments table border-top">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Invoice</th>
-                  <th>Status</th>
-                  <th>Amount</th>
-                  <th>Paid</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach ($payments as $payment)
-                  <tr>
-                    <td></td>
-                    <td>#{{ $payment->subscription_invoice_id }}</td>
-                    <td>{{ ucfirst($payment->status) }}</td>
-                    <td>${{ number_format($payment->amount_cents / 100, 2) }}</td>
-                    <td>{{ optional($payment->paid_at)->format('Y-m-d') ?? '-' }}</td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
-          <div class="card-body border-top">
-            <h6 class="mb-3">Record a Manual Payment</h6>
-            <form method="POST" action="{{ route('core.billing.payments.store', ['tenant' => request()->route('tenant')]) }}">
-              @csrf
-              <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                  <label class="form-label">Invoice</label>
-                  <select class="form-select" name="subscription_invoice_id" required {{ $invoices->isEmpty() ? 'disabled' : '' }}>
-                    @forelse ($invoices as $invoice)
-                      <option value="{{ $invoice->id }}">{{ $invoice->invoice_number }}</option>
-                    @empty
-                      <option value="">No invoices</option>
-                    @endforelse
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Amount (cents)</label>
-                  <input type="number" class="form-control" name="amount_cents" min="1" required {{ $invoices->isEmpty() ? 'disabled' : '' }} />
-                </div>
-                <div class="col-md-3">
-                  <button class="btn btn-primary w-100" type="submit" {{ $invoices->isEmpty() ? 'disabled' : '' }}>Submit</button>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Reference</label>
-                  <input type="text" class="form-control" name="provider_ref" placeholder="Receipt or transfer ref" {{ $invoices->isEmpty() ? 'disabled' : '' }} />
-                </div>
-              </div>
-            </form>
           </div>
         </div>
       </div>
@@ -195,8 +140,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const tables = [
-        '.datatables-sub-invoices',
-        '.datatables-sub-payments'
+        '.datatables-sub-invoices'
       ];
       tables.forEach(selector => {
         const table = document.querySelector(selector);
@@ -229,6 +173,19 @@
           });
         }
       });
+
+      const toggler = document.querySelector('.price-duration-toggler');
+      if (toggler) {
+        const monthly = document.querySelectorAll('.price-monthly');
+        const yearly = document.querySelectorAll('.price-yearly');
+        const sync = function () {
+          const showYearly = toggler.checked;
+          monthly.forEach(card => card.classList.toggle('d-none', showYearly));
+          yearly.forEach(card => card.classList.toggle('d-none', !showYearly));
+        };
+        toggler.addEventListener('change', sync);
+        sync();
+      }
     });
   </script>
 @endpush

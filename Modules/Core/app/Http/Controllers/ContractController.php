@@ -17,7 +17,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Modules\Core\App\Services\CurrentTenant;
+use Modules\Core\App\Services\UtilityInvoiceService;
 
 class ContractController extends Controller
 {
@@ -89,6 +91,7 @@ class ContractController extends Controller
         }
 
         $validated = $request->validate($rules);
+        $this->ensureNoOverlap($validated, $tenant->id);
 
         $rentCents = (int) round(((float) $validated['monthly_rent']) * 100);
         unset($validated['monthly_rent']);
@@ -132,6 +135,7 @@ class ContractController extends Controller
 
         $auditLogger->log('created', Contract::class, (string) $contract->id, null, $contract->toArray(), $request);
         event(new ContractCreated($contract));
+        $this->syncRoomStatus($contract->room_id, $tenant->id);
 
         return back()->with('status', 'Contract created.');
     }
@@ -165,8 +169,10 @@ class ContractController extends Controller
         ]);
 
         $before = $contract->toArray();
+        $this->ensureNoOverlap($validated, $tenant->id, $contract->id);
         $rentCents = (int) round(((float) $validated['monthly_rent']) * 100);
         unset($validated['monthly_rent']);
+        $previousRoomId = $contract->room_id;
 
         DB::transaction(function () use ($contract, $validated, $rentCents) {
             $contract->update(array_merge($validated, [
@@ -177,6 +183,10 @@ class ContractController extends Controller
 
         $auditLogger->log('updated', Contract::class, (string) $contract->id, $before, $contract->toArray(), $request);
         event(new ContractStatusChanged($contract, $before['status'] ?? null));
+        $this->syncRoomStatus($previousRoomId, $tenant->id);
+        if ((int) $previousRoomId !== (int) $contract->room_id) {
+            $this->syncRoomStatus($contract->room_id, $tenant->id);
+        }
 
         return back()->with('status', 'Contract updated.');
     }
@@ -187,14 +197,23 @@ class ContractController extends Controller
         $this->authorize('delete', $contract);
 
         $before = $contract->toArray();
+        $roomId = $contract->room_id;
         $contract->delete();
 
         $auditLogger->log('deleted', Contract::class, (string) $contract->id, $before, null, request());
+        $this->syncRoomStatus($roomId, $tenant->id);
 
         return back()->with('status', 'Contract deleted.');
     }
 
-    public function generateInvoice(Request $request, string $tenant, Contract $contract, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
+    public function generateInvoice(
+        Request $request,
+        string $tenant,
+        Contract $contract,
+        AuditLogger $auditLogger,
+        CurrentTenant $currentTenant,
+        UtilityInvoiceService $utilityInvoiceService
+    ): RedirectResponse
     {
         $tenant = $currentTenant->getOrFail();
         $this->authorize('update', $contract);
@@ -205,9 +224,15 @@ class ContractController extends Controller
             $dueDate = $dueDate->addMonthNoOverflow();
         }
 
-        $invoice = DB::transaction(function () use ($contract, $issueDate, $dueDate) {
+        $invoice = DB::transaction(function () use ($contract, $issueDate, $dueDate, $utilityInvoiceService) {
             $sequence = Invoice::where('tenant_id', $contract->tenant_id)->count() + 1;
             $invoiceNumber = sprintf('INV-%s-%04d', $issueDate->format('Y'), $sequence);
+
+            $periodStart = $utilityInvoiceService->resolvePeriodStart($contract);
+            $utilityItems = $utilityInvoiceService->buildUtilityItems($contract, $issueDate, $periodStart);
+            $rentCents = $utilityInvoiceService->calculateRentCents($contract, $issueDate, $periodStart, null, false);
+            $utilityTotal = array_sum(array_column($utilityItems, 'amount_cents'));
+            $subtotal = $rentCents + $utilityTotal;
 
             $invoice = Invoice::create([
                 'tenant_id' => $contract->tenant_id,
@@ -216,9 +241,9 @@ class ContractController extends Controller
                 'issue_date' => $issueDate->toDateString(),
                 'due_date' => $dueDate->toDateString(),
                 'currency_code' => $contract->currency_code ?? 'USD',
-                'subtotal_cents' => $contract->monthly_rent_cents,
+                'subtotal_cents' => $subtotal,
                 'discount_cents' => 0,
-                'total_cents' => $contract->monthly_rent_cents,
+                'total_cents' => $subtotal,
                 'paid_cents' => 0,
                 'status' => 'sent',
                 'sent_at' => $issueDate,
@@ -227,10 +252,19 @@ class ContractController extends Controller
             InvoiceItem::create([
                 'tenant_id' => $contract->tenant_id,
                 'invoice_id' => $invoice->id,
-                'description' => 'Monthly rent',
-                'amount_cents' => $contract->monthly_rent_cents,
+                'description' => 'Rent',
+                'amount_cents' => $rentCents,
                 'item_type' => 'rent',
+                'ref_table' => 'contracts',
+                'ref_id' => $contract->id,
             ]);
+
+            foreach ($utilityItems as $item) {
+                InvoiceItem::create(array_merge($item, [
+                    'tenant_id' => $contract->tenant_id,
+                    'invoice_id' => $invoice->id,
+                ]));
+            }
 
             $contract->update([
                 'last_invoiced_through' => $issueDate->toDateString(),
@@ -246,4 +280,58 @@ class ContractController extends Controller
         return back()->with('status', 'Invoice generated.');
     }
 
+    private function ensureNoOverlap(array $validated, int $tenantId, ?int $ignoreId = null): void
+    {
+        if (($validated['status'] ?? null) !== 'active') {
+            return;
+        }
+
+        $start = Carbon::parse($validated['start_date']);
+        $end = Carbon::parse($validated['end_date']);
+
+        $query = Contract::query()
+            ->where('tenant_id', $tenantId)
+            ->where('room_id', $validated['room_id'])
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', $end->toDateString())
+            ->whereDate('end_date', '>=', $start->toDateString());
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'room_id' => 'Room already has an active contract for that period.',
+            ]);
+        }
+    }
+
+    private function syncRoomStatus(int $roomId, int $tenantId): void
+    {
+        $room = Room::query()
+            ->where('tenant_id', $tenantId)
+            ->find($roomId);
+
+        if (! $room) {
+            return;
+        }
+
+        $hasActive = Contract::query()
+            ->where('tenant_id', $tenantId)
+            ->where('room_id', $roomId)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($hasActive) {
+            if ($room->status !== 'occupied') {
+                $room->update(['status' => 'occupied']);
+            }
+            return;
+        }
+
+        if ($room->status === 'occupied') {
+            $room->update(['status' => 'available']);
+        }
+    }
 }

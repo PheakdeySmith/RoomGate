@@ -335,13 +335,10 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="pages-account-settings-billing.html">
+                                        <a class="dropdown-item" href="{{ route('core.billing.index', ['tenant' => request()->route('tenant')]) }}">
                                             <span class="d-flex align-items-center align-middle">
-                                                <i
-                                                    class="flex-shrink-0 icon-base ti tabler-file-dollar me-3 icon-md"></i><span
-                                                    class="flex-grow-1 align-middle">Billing</span>
-                                                <span
-                                                    class="flex-shrink-0 badge bg-danger d-flex align-items-center justify-content-center">4</span>
+                                                <i class="flex-shrink-0 icon-base ti tabler-credit-card me-3 icon-md"></i>
+                                                <span class="flex-grow-1 align-middle">Billing</span>
                                             </span>
                                         </a>
                                     </li>

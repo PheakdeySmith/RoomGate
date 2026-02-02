@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/select2/select2.css" />
+  <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/flatpickr/flatpickr.css" />
 @endpush
 
 @section('content')
@@ -26,7 +27,6 @@
             <th>Meter</th>
             <th>Type</th>
             <th>Scope</th>
-            <th>Provider</th>
             <th>Last Reading</th>
             <th>Status</th>
             <th>Actions</th>
@@ -44,7 +44,6 @@
                   <small class="text-body-secondary">{{ $meter->room?->room_number ?? 'Property level' }}</small>
                 </div>
               </td>
-              <td>{{ $meter->provider?->name ?? '-' }}</td>
               <td>
                 <div class="d-flex flex-column">
                   <span>{{ $meter->last_reading_value ?? '-' }} {{ $meter->unit_of_measure }}</span>
@@ -63,7 +62,6 @@
                      data-meter-id="{{ $meter->id }}"
                      data-meter-code="{{ $meter->meter_code }}"
                      data-meter-type="{{ $meter->utility_type_id }}"
-                     data-meter-provider="{{ $meter->provider_id }}"
                      data-meter-property="{{ $meter->property_id }}"
                      data-meter-room="{{ $meter->room_id }}"
                      data-meter-unit="{{ $meter->unit_of_measure }}"
@@ -129,15 +127,6 @@
               @endforeach
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="meterProvider">Provider</label>
-            <select id="meterProvider" name="provider_id" class="select2 form-select">
-              <option value="">Select provider</option>
-              @foreach ($providers as $provider)
-                <option value="{{ $provider->id }}">{{ $provider->name }}</option>
-              @endforeach
-            </select>
-          </div>
           <div class="col-md-3">
             <label class="form-label" for="meterUnit">Unit</label>
             <input type="text" id="meterUnit" name="unit_of_measure" class="form-control" />
@@ -151,7 +140,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label" for="meterInstalled">Installed At</label>
-            <input type="text" id="meterInstalled" name="installed_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="meterInstalled" name="installed_at" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Create Meter</button>
@@ -204,15 +193,6 @@
               @endforeach
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="editMeterProvider">Provider</label>
-            <select id="editMeterProvider" name="provider_id" class="select2 form-select">
-              <option value="">Select provider</option>
-              @foreach ($providers as $provider)
-                <option value="{{ $provider->id }}">{{ $provider->name }}</option>
-              @endforeach
-            </select>
-          </div>
           <div class="col-md-3">
             <label class="form-label" for="editMeterUnit">Unit</label>
             <input type="text" id="editMeterUnit" name="unit_of_measure" class="form-control" />
@@ -226,7 +206,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label" for="editMeterInstalled">Installed At</label>
-            <input type="text" id="editMeterInstalled" name="installed_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editMeterInstalled" name="installed_at" class="form-control flatpickr" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -248,7 +228,19 @@
       const metersBaseUrl = @json(route('core.utility-meters.index'));
       if (window.flatpickr) {
         document.querySelectorAll('.flatpickr').forEach((el) => {
-          flatpickr(el, { dateFormat: 'Y-m-d' });
+          const modal = el.closest('.modal');
+          if (el._flatpickr) {
+            el._flatpickr.destroy();
+          }
+          flatpickr(el, {
+            altInput: true,
+            altFormat: 'F j, Y',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            static: !modal,
+            altInputClass: 'form-control',
+            appendTo: modal || document.body
+          });
         });
       }
 
@@ -407,7 +399,6 @@
           form.action = `${metersBaseUrl}/${meterId}`;
           document.getElementById('editMeterCode').value = trigger.getAttribute('data-meter-code') || '';
           document.getElementById('editMeterType').value = trigger.getAttribute('data-meter-type') || '';
-          document.getElementById('editMeterProvider').value = trigger.getAttribute('data-meter-provider') || '';
           document.getElementById('editMeterProperty').value = trigger.getAttribute('data-meter-property') || '';
           document.getElementById('editMeterRoom').value = trigger.getAttribute('data-meter-room') || '';
           document.getElementById('editMeterUnit').value = trigger.getAttribute('data-meter-unit') || '';
@@ -419,7 +410,6 @@
 
           if (window.$ && $.fn.select2) {
             $('#editMeterType').trigger('change');
-            $('#editMeterProvider').trigger('change');
             $('#editMeterProperty').trigger('change');
             $('#editMeterRoom').trigger('change');
           }

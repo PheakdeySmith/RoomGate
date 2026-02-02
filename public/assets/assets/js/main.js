@@ -458,23 +458,96 @@ function isMacOS() {
   return /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 }
 
+// Build search data from sidebar menu
+function buildMenuSearchData() {
+  const menu = document.getElementById('layout-menu');
+  if (!menu) {
+    return null;
+  }
+
+  const nav = {};
+  const suggestions = {};
+
+  let currentSection = 'Navigation';
+
+  const setSection = section => {
+    const label = section || 'Navigation';
+    currentSection = label;
+    if (!nav[currentSection]) {
+      nav[currentSection] = [];
+    }
+  };
+
+  const getIconFromItem = item => {
+    const iconEl =
+      item.querySelector(':scope > a .menu-icon') ||
+      item.querySelector(':scope > .menu-link .menu-icon') ||
+      item.closest('.menu-item')?.querySelector(':scope > a .menu-icon');
+    if (iconEl) {
+      const className = Array.from(iconEl.classList).find(cls => cls.startsWith('tabler-'));
+      return className || 'tabler-circle';
+    }
+    return 'tabler-circle';
+  };
+
+  const items = menu.querySelectorAll('.menu-inner > li');
+  items.forEach(item => {
+    if (item.classList.contains('menu-header')) {
+      const header = item.querySelector('.menu-header-text')?.textContent?.trim();
+      setSection(header);
+      return;
+    }
+
+    const link = item.querySelector(':scope > a.menu-link');
+    const isToggle = link?.classList.contains('menu-toggle');
+    const href = link?.getAttribute('href') || '';
+
+    if (link && !isToggle && href && !href.startsWith('javascript')) {
+      const name = link.textContent?.trim();
+      if (name) {
+        nav[currentSection] = nav[currentSection] || [];
+        nav[currentSection].push({
+          name,
+          url: href,
+          icon: getIconFromItem(item)
+        });
+      }
+    }
+
+    const subLinks = item.querySelectorAll(':scope .menu-sub .menu-item > a.menu-link');
+    subLinks.forEach(subLink => {
+      const subHref = subLink.getAttribute('href') || '';
+      if (!subHref || subHref.startsWith('javascript')) {
+        return;
+      }
+      const name = subLink.textContent?.trim();
+      if (!name) {
+        return;
+      }
+      nav[currentSection] = nav[currentSection] || [];
+      nav[currentSection].push({
+        name,
+        url: subHref,
+        icon: getIconFromItem(item)
+      });
+    });
+  });
+
+  Object.keys(nav).forEach(section => {
+    suggestions[section] = nav[section].slice(0, 6);
+  });
+
+  return { navigation: nav, suggestions };
+}
+
 // Load search data
 function loadSearchData() {
-  if (!document.getElementById('layout-menu')) {
+  const built = buildMenuSearchData();
+  if (!built) {
     return;
   }
-  const searchJson = $('#layout-menu').hasClass('menu-horizontal') ? 'search-horizontal.json' : 'search-vertical.json';
-
-  fetch(assetsPath + 'json/' + searchJson)
-    .then(response => {
-      if (!response.ok) throw new Error('Failed to fetch data');
-      return response.json();
-    })
-    .then(json => {
-      data = json;
-      initializeAutocomplete();
-    })
-    .catch(error => console.error('Error loading JSON:', error));
+  data = built;
+  initializeAutocomplete();
 }
 
 // Initialize autocomplete
@@ -521,26 +594,42 @@ function initializeAutocomplete() {
 
       // Initial Suggestions
       if (!state.query) {
+        const sections = Object.entries(data.suggestions || {});
+        const columns = [[], []];
+        const heights = [0, 0];
+
+        sections.forEach(([section, items]) => {
+          const weight = (items?.length || 0) + 1;
+          const columnIndex = heights[0] <= heights[1] ? 0 : 1;
+          heights[columnIndex] += weight;
+          columns[columnIndex].push([section, items]);
+        });
+
+        const renderSection = (section, items) => html`
+          <div class="suggestion-section">
+            <p class="search-headings mb-2">${section}</p>
+            <div class="suggestion-items">
+              ${(items || []).map(
+                item => html`
+                  <a href="${item.url}" class="suggestion-item d-flex align-items-center">
+                    <i class="icon-base ti ${item.icon}"></i>
+                    <span>${item.name}</span>
+                  </a>
+                `
+              )}
+            </div>
+          </div>
+        `;
+
         const initialSuggestions = html`
           <div class="p-5 p-lg-12">
             <div class="row g-4">
-              ${Object.entries(data.suggestions || {}).map(
-                ([section, items]) => html`
-                  <div class="col-md-6 suggestion-section">
-                    <p class="search-headings mb-2">${section}</p>
-                    <div class="suggestion-items">
-                      ${items.map(
-                        item => html`
-                          <a href="${item.url}" class="suggestion-item d-flex align-items-center">
-                            <i class="icon-base ti ${item.icon}"></i>
-                            <span>${item.name}</span>
-                          </a>
-                        `
-                      )}
-                    </div>
-                  </div>
-                `
-              )}
+              <div class="col-md-6 d-flex flex-column gap-4">
+                ${columns[0].map(([section, items]) => renderSection(section, items))}
+              </div>
+              <div class="col-md-6 d-flex flex-column gap-4">
+                ${columns[1].map(([section, items]) => renderSection(section, items))}
+              </div>
             </div>
           </div>
         `;

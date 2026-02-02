@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/select2/select2.css" />
+  <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/flatpickr/flatpickr.css" />
 @endpush
 
 @section('content')
@@ -91,7 +92,7 @@
           </div>
           <div class="col-md-3">
             <label class="form-label" for="readingAt">Reading At</label>
-            <input type="text" id="readingAt" name="reading_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="readingAt" name="reading_at" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-12">
             <label class="form-label" for="readingNotes">Notes</label>
@@ -132,7 +133,7 @@
           </div>
           <div class="col-md-3">
             <label class="form-label" for="editReadingAt">Reading At</label>
-            <input type="text" id="editReadingAt" name="reading_at" class="form-control flatpickr" placeholder="YYYY-MM-DD" required />
+            <input type="text" id="editReadingAt" name="reading_at" class="form-control flatpickr" placeholder="Month DD, YYYY" required />
           </div>
           <div class="col-12">
             <label class="form-label" for="editReadingNotes">Notes</label>
@@ -158,7 +159,19 @@
       const readingsBaseUrl = @json(route('core.utility-readings.index'));
       if (window.flatpickr) {
         document.querySelectorAll('.flatpickr').forEach((el) => {
-          flatpickr(el, { dateFormat: 'Y-m-d' });
+          const modal = el.closest('.modal');
+          if (el._flatpickr) {
+            el._flatpickr.destroy();
+          }
+          flatpickr(el, {
+            altInput: true,
+            altFormat: 'F j, Y',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            static: !modal,
+            altInputClass: 'form-control',
+            appendTo: modal || document.body
+          });
         });
       }
 

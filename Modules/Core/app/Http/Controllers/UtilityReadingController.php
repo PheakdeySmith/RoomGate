@@ -8,6 +8,7 @@ use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Modules\Core\App\Services\CurrentTenant;
 
@@ -48,14 +49,41 @@ class UtilityReadingController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $reading = UtilityMeterReading::create([
-            'tenant_id' => $tenant->id,
-            'meter_id' => $validated['meter_id'],
-            'reading_value' => $validated['reading_value'],
-            'reading_at' => $validated['reading_at'],
-            'recorded_by_user_id' => auth()->id(),
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        $reading = DB::transaction(function () use ($validated, $tenant) {
+            $reading = UtilityMeterReading::create([
+                'tenant_id' => $tenant->id,
+                'meter_id' => $validated['meter_id'],
+                'reading_value' => $validated['reading_value'],
+                'reading_at' => $validated['reading_at'],
+                'recorded_by_user_id' => auth()->id(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $previous = UtilityMeterReading::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('meter_id', $validated['meter_id'])
+                ->where('id', '!=', $reading->id)
+                ->where('reading_at', '<', $validated['reading_at'])
+                ->orderByDesc('reading_at')
+                ->first();
+
+            $usageValue = $previous ? (float) $validated['reading_value'] - (float) $previous->reading_value : null;
+            $reading->update(['usage_value' => $usageValue]);
+
+            $next = UtilityMeterReading::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('meter_id', $validated['meter_id'])
+                ->where('reading_at', '>', $validated['reading_at'])
+                ->orderBy('reading_at')
+                ->first();
+
+            if ($next) {
+                $nextUsage = (float) $next->reading_value - (float) $validated['reading_value'];
+                $next->update(['usage_value' => $nextUsage]);
+            }
+
+            return $reading;
+        });
 
         $meter = UtilityMeter::query()->find($validated['meter_id']);
         if ($meter) {
@@ -89,12 +117,39 @@ class UtilityReadingController extends Controller
         ]);
 
         $before = $reading->toArray();
-        $reading->update([
-            'meter_id' => $validated['meter_id'],
-            'reading_value' => $validated['reading_value'],
-            'reading_at' => $validated['reading_at'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        $reading = DB::transaction(function () use ($validated, $reading, $tenant) {
+            $reading->update([
+                'meter_id' => $validated['meter_id'],
+                'reading_value' => $validated['reading_value'],
+                'reading_at' => $validated['reading_at'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $previous = UtilityMeterReading::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('meter_id', $validated['meter_id'])
+                ->where('id', '!=', $reading->id)
+                ->where('reading_at', '<', $validated['reading_at'])
+                ->orderByDesc('reading_at')
+                ->first();
+
+            $usageValue = $previous ? (float) $validated['reading_value'] - (float) $previous->reading_value : null;
+            $reading->update(['usage_value' => $usageValue]);
+
+            $next = UtilityMeterReading::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('meter_id', $validated['meter_id'])
+                ->where('reading_at', '>', $validated['reading_at'])
+                ->orderBy('reading_at')
+                ->first();
+
+            if ($next) {
+                $nextUsage = (float) $next->reading_value - (float) $validated['reading_value'];
+                $next->update(['usage_value' => $nextUsage]);
+            }
+
+            return $reading;
+        });
 
         $meter = UtilityMeter::query()->find($validated['meter_id']);
         if ($meter) {
@@ -121,7 +176,27 @@ class UtilityReadingController extends Controller
         $this->authorize('delete', $reading);
 
         $before = $reading->toArray();
-        $reading->delete();
+        DB::transaction(function () use ($reading, $tenant) {
+            $next = UtilityMeterReading::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('meter_id', $reading->meter_id)
+                ->where('reading_at', '>', $reading->reading_at)
+                ->orderBy('reading_at')
+                ->first();
+
+            $reading->delete();
+
+            if ($next) {
+                $previous = UtilityMeterReading::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->where('meter_id', $next->meter_id)
+                    ->where('reading_at', '<', $next->reading_at)
+                    ->orderByDesc('reading_at')
+                    ->first();
+                $nextUsage = $previous ? (float) $next->reading_value - (float) $previous->reading_value : null;
+                $next->update(['usage_value' => $nextUsage]);
+            }
+        });
 
         $auditLogger->log('deleted', UtilityMeterReading::class, (string) $reading->id, $before, null, request());
 

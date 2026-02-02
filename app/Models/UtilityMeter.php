@@ -18,7 +18,6 @@ class UtilityMeter extends Model
         'property_id',
         'room_id',
         'utility_type_id',
-        'provider_id',
         'meter_code',
         'unit_of_measure',
         'status',
@@ -52,11 +51,6 @@ class UtilityMeter extends Model
     public function utilityType(): BelongsTo
     {
         return $this->belongsTo(UtilityType::class);
-    }
-
-    public function provider(): BelongsTo
-    {
-        return $this->belongsTo(UtilityProvider::class, 'provider_id');
     }
 
     public function readings(): HasMany

@@ -19,7 +19,6 @@ class UtilityBill extends Model
         'room_id',
         'utility_type_id',
         'meter_id',
-        'provider_id',
         'billing_period_start',
         'billing_period_end',
         'start_reading_id',
@@ -73,11 +72,6 @@ class UtilityBill extends Model
     public function meter(): BelongsTo
     {
         return $this->belongsTo(UtilityMeter::class, 'meter_id');
-    }
-
-    public function provider(): BelongsTo
-    {
-        return $this->belongsTo(UtilityProvider::class, 'provider_id');
     }
 
     public function startReading(): BelongsTo

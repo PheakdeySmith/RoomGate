@@ -28,11 +28,6 @@ class UtilityType extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function providers(): HasMany
-    {
-        return $this->hasMany(UtilityProvider::class);
-    }
-
     public function meters(): HasMany
     {
         return $this->hasMany(UtilityMeter::class);

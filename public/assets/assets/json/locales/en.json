@@ -206,5 +206,6 @@
     "menu.invoices": "Invoices",
     "menu.notifications": "Notifications",
     "menu.iot_control": "IoT Control",
-    "menu.tenant_members": "Members"
+    "menu.tenant_members": "Members",
+    "menu.utility_providers": "Utility Providers"
 }

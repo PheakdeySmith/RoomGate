@@ -279,6 +279,8 @@ class MaintenanceController extends Controller
         $validator->validate();
 
         $file = $request->file('file');
+        $fileSize = $file->getSize();
+        $mimeType = $file->getClientMimeType();
         $filename = uniqid('maintenance_', true).'.'.$file->getClientOriginalExtension();
         $baseDir = public_path('uploads/private/maintenance/'.$tenant->id.'/'.$maintenanceRequest->id);
         if (!is_dir($baseDir)) {
@@ -293,8 +295,8 @@ class MaintenanceController extends Controller
             'comment_id' => $request->integer('comment_id') ?: null,
             'uploaded_by_user_id' => $request->user()->id,
             'file_path' => $path,
-            'mime_type' => $file->getClientMimeType(),
-            'file_size_bytes' => $file->getSize(),
+            'mime_type' => $mimeType,
+            'file_size_bytes' => $fileSize,
             'created_at' => now(),
         ]);
 

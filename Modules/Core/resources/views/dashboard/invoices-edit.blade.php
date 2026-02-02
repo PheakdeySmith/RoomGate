@@ -56,13 +56,13 @@
                   <span class="fw-normal">Date Issued:</span>
                 </dt>
                 <dd class="col-sm-7">
-                  <input type="text" name="issue_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" value="{{ optional($invoice->issue_date)->format('Y-m-d') }}" required />
+                  <input type="text" name="issue_date" class="form-control flatpickr" placeholder="Month DD, YYYY" value="{{ optional($invoice->issue_date)->format('Y-m-d') }}" required />
                 </dd>
                 <dt class="col-sm-5 d-md-flex align-items-center justify-content-end">
                   <span class="fw-normal">Due Date:</span>
                 </dt>
                 <dd class="col-sm-7 mb-0">
-                  <input type="text" name="due_date" class="form-control flatpickr" placeholder="YYYY-MM-DD" value="{{ optional($invoice->due_date)->format('Y-m-d') }}" required />
+                  <input type="text" name="due_date" class="form-control flatpickr" placeholder="Month DD, YYYY" value="{{ optional($invoice->due_date)->format('Y-m-d') }}" required />
                 </dd>
               </dl>
             </div>
@@ -87,6 +87,7 @@
                     <option
                       value="{{ $contract->id }}"
                       data-rent-cents="{{ (int) ($contract->monthly_rent_cents ?? 0) }}"
+                      data-room-rent-cents="{{ (int) ($contract->room?->monthly_rent_cents ?? 0) }}"
                       data-occupant-name="{{ $occupantName }}"
                       data-occupant-email="{{ $occupantEmail }}"
                       data-room="{{ $roomLabel }}"
@@ -121,9 +122,21 @@
 
         <hr class="mt-0 mb-6" />
         <div class="card-body pt-0 px-0">
-          <div class="mb-4">
-            <label class="form-label" for="utilitySelect">Utility Bills (optional)</label>
-            <select id="utilitySelect" class="form-select" multiple></select>
+          <div class="row g-3 mb-4 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label" for="rentOverride">Rent override ({{ $currency }})</label>
+              <input type="number" class="form-control" id="rentOverride" name="rent_override" placeholder="Auto" min="0" step="0.01" />
+            </div>
+            <div class="col-md-4">
+              <div class="form-check form-switch mt-4">
+                <input type="hidden" name="prorate_rent" value="0" />
+                <input class="form-check-input" type="checkbox" id="prorateRent" name="prorate_rent" value="1" />
+                <label class="form-check-label" for="prorateRent">Pro-rate rent</label>
+              </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <div class="text-body-secondary small">Period: <span id="utilityPeriod">-</span></div>
+            </div>
           </div>
           <div class="table-responsive border border-bottom-0 border-top-0 rounded">
             <table class="table m-0">
@@ -131,6 +144,7 @@
                 <tr>
                   <th>Item</th>
                   <th>Description</th>
+                  <th>Unit</th>
                   <th>Amount</th>
                   <th></th>
                 </tr>
@@ -204,7 +218,10 @@
     document.addEventListener('DOMContentLoaded', function () {
       const currency = @json($currency);
       const contractSelect = document.getElementById('contractSelect');
-      const utilitySelect = document.getElementById('utilitySelect');
+      const rentOverride = document.getElementById('rentOverride');
+      const prorateRent = document.getElementById('prorateRent');
+      const issueDateInput = document.querySelector('input[name="issue_date"]');
+      const utilityPeriod = document.getElementById('utilityPeriod');
       const itemsBody = document.getElementById('invoiceItemsBody');
       const addManualButton = document.getElementById('addManualItem');
       const invoiceToName = document.getElementById('invoiceToName');
@@ -214,9 +231,9 @@
       const totalDisplay = document.getElementById('totalDisplay');
       const totalDue = document.getElementById('totalDue');
 
-      let utilityBills = [];
+      let utilityItems = [];
+      let autoRentCents = 0;
       let manualItems = @json($manualItems);
-      const selectedUtilityIds = @json($selectedUtilityIds);
 
       function formatMoney(cents) {
         return `${currency} ${(cents / 100).toFixed(2)}`;
@@ -229,22 +246,12 @@
         }
         return {
           rentCents: parseInt(option.getAttribute('data-rent-cents') || '0', 10),
+          roomRentCents: parseInt(option.getAttribute('data-room-rent-cents') || '0', 10),
           occupantName: option.getAttribute('data-occupant-name') || '-',
           occupantEmail: option.getAttribute('data-occupant-email') || '-',
           room: option.getAttribute('data-room') || '-',
           property: option.getAttribute('data-property') || '-'
         };
-      }
-
-      function buildHiddenInputs() {
-        document.querySelectorAll('input[name="utility_bill_ids[]"]').forEach((el) => el.remove());
-        utilityBills.filter((bill) => bill.selected).forEach((bill) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'utility_bill_ids[]';
-          input.value = bill.id;
-          document.getElementById('invoiceForm').appendChild(input);
-        });
       }
 
       function rebuildManualInputs() {
@@ -271,42 +278,41 @@
       }
 
       function updateTotals() {
-        const contractData = getSelectedContractData();
-        const rentCents = contractData ? contractData.rentCents : 0;
         const manualCents = manualItems.reduce((sum, item) => {
           const amount = parseFloat(item.amount || '0');
           return sum + Math.round(amount * 100);
         }, 0);
-        const utilitiesCents = utilityBills.filter((bill) => bill.selected).reduce((sum, bill) => sum + bill.amount_cents, 0);
-        const subtotal = rentCents + utilitiesCents + manualCents;
+        const utilitiesCents = utilityItems.reduce((sum, item) => sum + item.amount_cents, 0);
+        const subtotal = autoRentCents + utilitiesCents + manualCents;
 
         subtotalDisplay.textContent = formatMoney(subtotal);
         totalDisplay.textContent = formatMoney(subtotal);
         totalDue.textContent = formatMoney(subtotal);
 
-        buildHiddenInputs();
       }
 
       function renderItems() {
         itemsBody.innerHTML = '';
-        const contractData = getSelectedContractData();
-        const rentCents = contractData ? contractData.rentCents : 0;
-
         const rentRow = document.createElement('tr');
         rentRow.innerHTML = `
           <td class="text-heading">Rent</td>
-          <td>Monthly rent</td>
-          <td>${formatMoney(rentCents)}</td>
+          <td>Rent</td>
+          <td>-</td>
+          <td>${formatMoney(autoRentCents)}</td>
           <td></td>
         `;
         itemsBody.appendChild(rentRow);
 
-        utilityBills.filter((bill) => bill.selected).forEach((bill) => {
+        utilityItems.forEach((item) => {
           const row = document.createElement('tr');
+          const usageLabel = item.usage_value !== undefined && item.unit
+            ? `${Number(item.usage_value).toFixed(2)} ${item.unit}`
+            : '-';
           row.innerHTML = `
             <td class="text-heading">Utility</td>
-            <td>${bill.label}</td>
-            <td>${formatMoney(bill.amount_cents)}</td>
+            <td>${item.description}</td>
+            <td>${usageLabel}</td>
+            <td>${formatMoney(item.amount_cents)}</td>
             <td></td>
           `;
           itemsBody.appendChild(row);
@@ -339,29 +345,39 @@
       }
 
       function loadUtilities(contractId) {
-        utilitySelect.innerHTML = '';
-        utilityBills = [];
+        utilityItems = [];
+        autoRentCents = 0;
+        utilityPeriod.textContent = '-';
+
+        const issueDate = issueDateInput?.value;
         if (!contractId) {
           renderItems();
           return;
         }
+        if (!issueDate) {
+          const contractData = getSelectedContractData();
+          if (contractData) {
+            autoRentCents = contractData.rentCents > 0 ? contractData.rentCents : contractData.roomRentCents;
+          }
+          renderItems();
+          return;
+        }
 
-        fetch(`{{ route('core.invoices.utilities') }}?contract_id=${contractId}`)
+        const params = new URLSearchParams({
+          contract_id: contractId,
+          issue_date: issueDate,
+          rent_override: rentOverride.value || '',
+          prorate_rent: prorateRent.checked ? '1' : '0'
+        });
+
+        fetch(`{{ route('core.invoices.utilities') }}?${params.toString()}`)
           .then((response) => response.json())
           .then((payload) => {
-            utilityBills = (payload.data || []).map((bill) => ({
-              ...bill,
-              selected: selectedUtilityIds.includes(bill.id)
-            }));
-            utilityBills.forEach((bill) => {
-              const option = document.createElement('option');
-              option.value = bill.id;
-              option.textContent = `${bill.label} - ${formatMoney(bill.amount_cents)}`;
-              if (bill.selected) {
-                option.selected = true;
-              }
-              utilitySelect.appendChild(option);
-            });
+            utilityItems = payload.data || [];
+            autoRentCents = payload.rent_cents || 0;
+            if (payload.period_start && payload.period_end) {
+              utilityPeriod.textContent = `${payload.period_start} to ${payload.period_end}`;
+            }
             renderItems();
           });
       }
@@ -380,13 +396,18 @@
         loadUtilities(contractSelect.value);
       });
 
-      utilitySelect.addEventListener('change', function () {
-        const selected = Array.from(utilitySelect.selectedOptions).map((opt) => parseInt(opt.value, 10));
-        utilityBills = utilityBills.map((bill) => ({
-          ...bill,
-          selected: selected.includes(bill.id)
-        }));
-        renderItems();
+      if (issueDateInput) {
+        issueDateInput.addEventListener('change', function () {
+          loadUtilities(contractSelect.value);
+        });
+      }
+
+      rentOverride.addEventListener('input', function () {
+        loadUtilities(contractSelect.value);
+      });
+
+      prorateRent.addEventListener('change', function () {
+        loadUtilities(contractSelect.value);
       });
 
       addManualButton.addEventListener('click', function () {
@@ -395,12 +416,41 @@
       });
 
       if (window.flatpickr) {
+        const issueInput = document.querySelector('input[name="issue_date"]');
+        const dueInput = document.querySelector('input[name="due_date"]');
+        let duePicker = null;
+
         document.querySelectorAll('.flatpickr').forEach((el) => {
           if (el._flatpickr) {
             el._flatpickr.destroy();
           }
-          flatpickr(el, { dateFormat: 'Y-m-d', disableMobile: true });
+          const picker = flatpickr(el, {
+            altInput: true,
+            altFormat: 'F j, Y',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            static: true,
+            altInputClass: 'form-control'
+          });
+          if (el.name === 'due_date') {
+            duePicker = picker;
+          }
         });
+
+        if (issueInput && duePicker) {
+          issueInput.addEventListener('change', function () {
+            if (dueInput && dueInput.value) {
+              return;
+            }
+            const issueDate = new Date(issueInput.value);
+            if (Number.isNaN(issueDate.getTime())) {
+              return;
+            }
+            const dueDate = new Date(issueDate);
+            dueDate.setDate(dueDate.getDate() + 7);
+            duePicker.setDate(dueDate, true);
+          });
+        }
       }
 
       contractSelect.dispatchEvent(new Event('change'));

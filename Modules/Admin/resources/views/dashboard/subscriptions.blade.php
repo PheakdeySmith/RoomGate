@@ -159,15 +159,15 @@
           </div>
           <div class="col-6">
             <label class="form-label" for="subscriptionStart">Period Start</label>
-            <input type="text" id="subscriptionStart" name="current_period_start" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="subscriptionStart" name="current_period_start" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="subscriptionEnd">Period End</label>
-            <input type="text" id="subscriptionEnd" name="current_period_end" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="subscriptionEnd" name="current_period_end" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="subscriptionTrial">Trial Ends At</label>
-            <input type="text" id="subscriptionTrial" name="trial_ends_at" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="subscriptionTrial" name="trial_ends_at" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="subscriptionProvider">Provider</label>
@@ -221,19 +221,19 @@
           </div>
           <div class="col-6">
             <label class="form-label" for="editSubscriptionStart">Period Start</label>
-            <input type="text" id="editSubscriptionStart" name="current_period_start" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editSubscriptionStart" name="current_period_start" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="editSubscriptionEnd">Period End</label>
-            <input type="text" id="editSubscriptionEnd" name="current_period_end" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editSubscriptionEnd" name="current_period_end" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="editSubscriptionTrial">Trial Ends At</label>
-            <input type="text" id="editSubscriptionTrial" name="trial_ends_at" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editSubscriptionTrial" name="trial_ends_at" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="editSubscriptionCancelled">Cancelled At</label>
-            <input type="text" id="editSubscriptionCancelled" name="cancelled_at" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editSubscriptionCancelled" name="cancelled_at" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-6">
             <label class="form-label" for="editSubscriptionProvider">Provider</label>
@@ -295,8 +295,13 @@
           }
           const modal = input.closest('.modal');
           flatpickr(input, {
+            altInput: true,
+            altFormat: 'F j, Y',
             dateFormat: 'Y-m-d',
             allowInput: true,
+            disableMobile: true,
+            static: !modal,
+            altInputClass: 'form-control',
             appendTo: modal || document.body
           });
         });

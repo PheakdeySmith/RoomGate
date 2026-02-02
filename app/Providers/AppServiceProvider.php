@@ -12,7 +12,6 @@ use App\Models\RoomType;
 use App\Models\UtilityBill;
 use App\Models\UtilityMeter;
 use App\Models\UtilityMeterReading;
-use App\Models\UtilityProvider;
 use App\Models\UtilityRate;
 use App\Models\MaintenanceRequest;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -94,7 +93,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Amenity::class, TenantOwnedPolicy::class);
         Gate::policy(Contract::class, TenantOwnedPolicy::class);
         Gate::policy(Invoice::class, TenantOwnedPolicy::class);
-        Gate::policy(UtilityProvider::class, TenantOwnedPolicy::class);
         Gate::policy(UtilityMeter::class, TenantOwnedPolicy::class);
         Gate::policy(UtilityRate::class, TenantOwnedPolicy::class);
         Gate::policy(UtilityBill::class, TenantOwnedPolicy::class);

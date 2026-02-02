@@ -13,6 +13,7 @@ class UtilityMeterReading extends Model
         'tenant_id',
         'meter_id',
         'reading_value',
+        'usage_value',
         'reading_at',
         'recorded_by_user_id',
         'notes',
@@ -20,6 +21,7 @@ class UtilityMeterReading extends Model
 
     protected $casts = [
         'reading_at' => 'datetime',
+        'usage_value' => 'decimal:3',
     ];
 
     public function tenant(): BelongsTo

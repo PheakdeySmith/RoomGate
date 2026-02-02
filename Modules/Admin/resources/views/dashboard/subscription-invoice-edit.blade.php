@@ -206,7 +206,14 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       if (window.flatpickr) {
-        flatpickr('.dob-picker', { dateFormat: 'Y-m-d' });
+        flatpickr('.dob-picker', {
+          altInput: true,
+          altFormat: 'F j, Y',
+          dateFormat: 'Y-m-d',
+          disableMobile: true,
+          static: true,
+          altInputClass: 'form-control'
+        });
       }
       if (window.$ && $.fn.select2) {
         $('.select2').each(function () {

@@ -32,5 +32,6 @@
     "menu.invoices": "វិក្កយបត្រ",
     "menu.notifications": "ការជូនដំណឹង",
     "menu.iot_control": "គ្រប់គ្រង IoT",
-    "menu.tenant_members": "សមាជិក"
+    "menu.tenant_members": "សមាជិក",
+    "menu.utility_providers": "អ្នកផ្គត់ផ្គង់"
 }

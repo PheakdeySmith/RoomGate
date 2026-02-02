@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AdminContractController extends Controller
 {
@@ -52,6 +53,7 @@ class AdminContractController extends Controller
             'auto_renew' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
         ]);
+        $this->ensureNoOverlap($validated, (int) $validated['tenant_id']);
 
         $rentCents = (int) round(((float) $validated['monthly_rent']) * 100);
         unset($validated['monthly_rent']);
@@ -65,6 +67,7 @@ class AdminContractController extends Controller
         });
 
         $auditLogger->log('created', Contract::class, (string) $contract->id, null, $contract->toArray(), $request);
+        $this->syncRoomStatus((int) $contract->room_id, (int) $contract->tenant_id);
 
         return back()->with('status', 'Contract created.');
     }
@@ -91,8 +94,10 @@ class AdminContractController extends Controller
         ]);
 
         $before = $contract->toArray();
+        $this->ensureNoOverlap($validated, (int) $validated['tenant_id'], (int) $contract->id);
         $rentCents = (int) round(((float) $validated['monthly_rent']) * 100);
         unset($validated['monthly_rent']);
+        $previousRoomId = $contract->room_id;
 
         DB::transaction(function () use ($contract, $validated, $rentCents) {
             $validated['monthly_rent_cents'] = $rentCents;
@@ -102,6 +107,10 @@ class AdminContractController extends Controller
         });
 
         $auditLogger->log('updated', Contract::class, (string) $contract->id, $before, $contract->toArray(), $request);
+        $this->syncRoomStatus((int) $previousRoomId, (int) $validated['tenant_id']);
+        if ((int) $previousRoomId !== (int) $contract->room_id) {
+            $this->syncRoomStatus((int) $contract->room_id, (int) $validated['tenant_id']);
+        }
 
         return back()->with('status', 'Contract updated.');
     }
@@ -109,9 +118,12 @@ class AdminContractController extends Controller
     public function destroy(Contract $contract, AuditLogger $auditLogger): RedirectResponse
     {
         $before = $contract->toArray();
+        $roomId = $contract->room_id;
+        $tenantId = $contract->tenant_id;
         $contract->delete();
 
         $auditLogger->log('deleted', Contract::class, (string) $contract->id, $before, null, request());
+        $this->syncRoomStatus((int) $roomId, (int) $tenantId);
 
         return back()->with('status', 'Contract deleted.');
     }
@@ -162,5 +174,60 @@ class AdminContractController extends Controller
         $auditLogger->log('created', Invoice::class, (string) $invoice->id, null, $invoice->toArray(), $request);
 
         return back()->with('status', 'Invoice generated.');
+    }
+
+    private function ensureNoOverlap(array $validated, int $tenantId, ?int $ignoreId = null): void
+    {
+        if (($validated['status'] ?? null) !== 'active') {
+            return;
+        }
+
+        $start = Carbon::parse($validated['start_date']);
+        $end = Carbon::parse($validated['end_date']);
+
+        $query = Contract::query()
+            ->where('tenant_id', $tenantId)
+            ->where('room_id', $validated['room_id'])
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', $end->toDateString())
+            ->whereDate('end_date', '>=', $start->toDateString());
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'room_id' => 'Room already has an active contract for that period.',
+            ]);
+        }
+    }
+
+    private function syncRoomStatus(int $roomId, int $tenantId): void
+    {
+        $room = Room::query()
+            ->where('tenant_id', $tenantId)
+            ->find($roomId);
+
+        if (! $room) {
+            return;
+        }
+
+        $hasActive = Contract::query()
+            ->where('tenant_id', $tenantId)
+            ->where('room_id', $roomId)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($hasActive) {
+            if ($room->status !== 'occupied') {
+                $room->update(['status' => 'occupied']);
+            }
+            return;
+        }
+
+        if ($room->status === 'occupied') {
+            $room->update(['status' => 'available']);
+        }
     }
 }

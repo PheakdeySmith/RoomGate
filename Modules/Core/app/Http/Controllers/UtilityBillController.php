@@ -6,7 +6,6 @@ use App\Models\Contract;
 use App\Models\UtilityBill;
 use App\Models\UtilityMeter;
 use App\Models\UtilityMeterReading;
-use App\Models\UtilityProvider;
 use App\Models\UtilityType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +23,7 @@ class UtilityBillController extends Controller
         $this->authorize('viewAny', [UtilityBill::class, $tenant->id]);
 
         $bills = UtilityBill::query()
-            ->with(['contract.occupant', 'room', 'property', 'utilityType', 'meter', 'provider'])
+            ->with(['contract.occupant', 'room', 'property', 'utilityType', 'meter'])
             ->where('tenant_id', $tenant->id)
             ->orderByDesc('billing_period_end')
             ->get();
@@ -39,11 +38,6 @@ class UtilityBillController extends Controller
             ->with(['property', 'room', 'utilityType'])
             ->where('tenant_id', $tenant->id)
             ->orderBy('meter_code')
-            ->get();
-
-        $providers = UtilityProvider::query()
-            ->where('tenant_id', $tenant->id)
-            ->orderBy('name')
             ->get();
 
         $utilityTypes = UtilityType::query()
@@ -61,7 +55,7 @@ class UtilityBillController extends Controller
             ->orderByDesc('reading_at')
             ->get();
 
-        return view('core::dashboard.utilities.bills', compact('bills', 'contracts', 'meters', 'providers', 'utilityTypes', 'readings'));
+        return view('core::dashboard.utilities.bills', compact('bills', 'contracts', 'meters', 'utilityTypes', 'readings'));
     }
 
     public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
@@ -84,10 +78,6 @@ class UtilityBillController extends Controller
             'meter_id' => [
                 'nullable',
                 Rule::exists('utility_meters', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'provider_id' => [
-                'nullable',
-                Rule::exists('utility_providers', 'id')->where('tenant_id', $tenant->id),
             ],
             'billing_period_start' => ['required', 'date'],
             'billing_period_end' => ['required', 'date', 'after_or_equal:billing_period_start'],
@@ -178,7 +168,6 @@ class UtilityBillController extends Controller
                 'room_id' => $room?->id,
                 'utility_type_id' => $validated['utility_type_id'],
                 'meter_id' => $meter?->id,
-                'provider_id' => $validated['provider_id'] ?? $meter?->provider_id,
                 'billing_period_start' => $validated['billing_period_start'],
                 'billing_period_end' => $validated['billing_period_end'],
                 'start_reading_id' => $startReading?->id,
@@ -222,10 +211,6 @@ class UtilityBillController extends Controller
             'meter_id' => [
                 'nullable',
                 Rule::exists('utility_meters', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'provider_id' => [
-                'nullable',
-                Rule::exists('utility_providers', 'id')->where('tenant_id', $tenant->id),
             ],
             'billing_period_start' => ['required', 'date'],
             'billing_period_end' => ['required', 'date', 'after_or_equal:billing_period_start'],
@@ -315,7 +300,6 @@ class UtilityBillController extends Controller
             'room_id' => $room?->id,
             'utility_type_id' => $validated['utility_type_id'],
             'meter_id' => $meter?->id,
-            'provider_id' => $validated['provider_id'] ?? $meter?->provider_id,
             'billing_period_start' => $validated['billing_period_start'],
             'billing_period_end' => $validated['billing_period_end'],
             'start_reading_id' => $startReading?->id,

@@ -15,3 +15,4 @@ Schedule::command('notifications:send-queued')->everyFiveMinutes();
 Schedule::command('notifications:retry-failed')->hourly();
 Schedule::command('subscriptions:renew')->dailyAt('03:00');
 Schedule::command('subscriptions:send-trial-ending')->dailyAt('00:45');
+Schedule::command('rooms:reconcile-status')->dailyAt('02:30');

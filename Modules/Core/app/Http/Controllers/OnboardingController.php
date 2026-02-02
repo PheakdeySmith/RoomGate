@@ -8,6 +8,7 @@ use App\Models\Property;
 use App\Models\PropertyType;
 use App\Models\Role;
 use App\Models\Subscription;
+use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -136,6 +137,8 @@ class OnboardingController extends Controller
                 'provider' => 'manual',
             ]);
 
+            $this->createSubscriptionInvoice($tenant, $subscription, $plan, $now);
+
             $auditLogger->log('created', Tenant::class, (string) $tenant->id, null, $tenant->toArray(), $request);
             $auditLogger->log('created', Property::class, (string) $property->id, null, $property->toArray(), $request);
             $auditLogger->log('created', Subscription::class, (string) $subscription->id, null, $subscription->toArray(), $request);
@@ -201,6 +204,8 @@ class OnboardingController extends Controller
             $auditLogger->log('created', Subscription::class, (string) $subscription->id, null, $subscription->toArray(), $request);
         }
 
+        $this->createSubscriptionInvoice($tenant, $subscription, $plan, $now);
+
         return $this->redirectToTenantDashboard($user)->with('status', 'Plan selected.');
     }
 
@@ -212,5 +217,29 @@ class OnboardingController extends Controller
         }
 
         return redirect()->route('core.onboarding');
+    }
+
+    private function createSubscriptionInvoice(Tenant $tenant, Subscription $subscription, Plan $plan, $now): SubscriptionInvoice
+    {
+        $sequence = SubscriptionInvoice::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereYear('billing_period_start', $now->year)
+            ->count() + 1;
+
+        $periodEnd = $plan->interval === 'yearly'
+            ? $now->copy()->addYear()
+            : $now->copy()->addMonth();
+
+        return SubscriptionInvoice::create([
+            'tenant_id' => $tenant->id,
+            'subscription_id' => $subscription->id,
+            'invoice_number' => sprintf('SUB-%s-%04d', $now->format('Y'), $sequence),
+            'amount_cents' => $plan->price_cents,
+            'currency_code' => $plan->currency_code ?? 'USD',
+            'status' => 'unpaid',
+            'billing_period_start' => $now->toDateString(),
+            'billing_period_end' => $periodEnd->toDateString(),
+            'due_date' => $now->copy()->addDays(7)->toDateString(),
+        ]);
     }
 }

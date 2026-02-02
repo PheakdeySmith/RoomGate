@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Contract;
-use App\Models\UtilityBill;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Modules\Core\App\Services\CurrentTenant;
+use Modules\Core\App\Services\UtilityInvoiceService;
+use Carbon\Carbon;
 
 class CoreInvoiceController extends Controller
 {
@@ -42,12 +43,16 @@ class CoreInvoiceController extends Controller
             'tenant' => $tenant,
             'contracts' => $contracts,
             'invoice' => null,
-            'selectedUtilityIds' => [],
             'manualItems' => [],
         ]);
     }
 
-    public function store(Request $request, CurrentTenant $currentTenant, AuditLogger $auditLogger): RedirectResponse
+    public function store(
+        Request $request,
+        CurrentTenant $currentTenant,
+        AuditLogger $auditLogger,
+        UtilityInvoiceService $utilityInvoiceService
+    ): RedirectResponse
     {
         $tenant = $this->requireInvoiceManager($currentTenant);
 
@@ -60,11 +65,8 @@ class CoreInvoiceController extends Controller
             'due_date' => ['required', 'date', 'after_or_equal:issue_date'],
             'notes' => ['nullable', 'string'],
             'status' => ['nullable', 'in:draft,sent,paid,partial,overdue,void'],
-            'utility_bill_ids' => ['nullable', 'array'],
-            'utility_bill_ids.*' => [
-                'integer',
-                Rule::exists('utility_bills', 'id')->where('tenant_id', $tenant->id),
-            ],
+            'prorate_rent' => ['nullable', 'boolean'],
+            'rent_override' => ['nullable', 'numeric', 'min:0'],
             'manual_items' => ['nullable', 'array'],
             'manual_items.*.description' => ['required_with:manual_items', 'string', 'max:255'],
             'manual_items.*.amount' => ['required_with:manual_items', 'numeric', 'min:0.01'],
@@ -75,7 +77,7 @@ class CoreInvoiceController extends Controller
             ->with(['room.property', 'occupant'])
             ->findOrFail($validated['contract_id']);
 
-        $invoice = DB::transaction(function () use ($validated, $tenant, $contract, $auditLogger, $request) {
+        $invoice = DB::transaction(function () use ($validated, $tenant, $contract, $auditLogger, $request, $utilityInvoiceService) {
             $year = now()->format('Y');
             $sequence = Invoice::query()
                 ->where('tenant_id', $tenant->id)
@@ -98,7 +100,7 @@ class CoreInvoiceController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            $items = $this->buildItemsPayload($tenant, $contract, $validated);
+            $items = $this->buildItemsPayload($tenant, $contract, $validated, $utilityInvoiceService);
             $totals = $this->persistItems($invoice, $items);
 
             $invoice->update($totals);
@@ -133,14 +135,6 @@ class CoreInvoiceController extends Controller
 
         $invoice->load(['items', 'contract.room.property', 'contract.occupant']);
 
-        $selectedUtilityIds = $invoice->items()
-            ->where('item_type', 'utility')
-            ->pluck('ref_id')
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->values()
-            ->all();
-
         $manualItems = $invoice->items()
             ->where('item_type', 'other')
             ->get()
@@ -155,12 +149,18 @@ class CoreInvoiceController extends Controller
             'tenant' => $tenant,
             'contracts' => $contracts,
             'invoice' => $invoice,
-            'selectedUtilityIds' => $selectedUtilityIds,
             'manualItems' => $manualItems,
         ]);
     }
 
-    public function update(Request $request, string $tenant, CurrentTenant $currentTenant, string $invoice, AuditLogger $auditLogger): RedirectResponse
+    public function update(
+        Request $request,
+        string $tenant,
+        CurrentTenant $currentTenant,
+        string $invoice,
+        AuditLogger $auditLogger,
+        UtilityInvoiceService $utilityInvoiceService
+    ): RedirectResponse
     {
         $tenant = $this->requireInvoiceManager($currentTenant);
         if (!ctype_digit($invoice)) {
@@ -180,11 +180,8 @@ class CoreInvoiceController extends Controller
             'due_date' => ['required', 'date', 'after_or_equal:issue_date'],
             'notes' => ['nullable', 'string'],
             'status' => ['nullable', 'in:draft,sent,paid,partial,overdue,void'],
-            'utility_bill_ids' => ['nullable', 'array'],
-            'utility_bill_ids.*' => [
-                'integer',
-                Rule::exists('utility_bills', 'id')->where('tenant_id', $tenant->id),
-            ],
+            'prorate_rent' => ['nullable', 'boolean'],
+            'rent_override' => ['nullable', 'numeric', 'min:0'],
             'manual_items' => ['nullable', 'array'],
             'manual_items.*.description' => ['required_with:manual_items', 'string', 'max:255'],
             'manual_items.*.amount' => ['required_with:manual_items', 'numeric', 'min:0.01'],
@@ -197,7 +194,7 @@ class CoreInvoiceController extends Controller
 
         $before = $invoice->toArray();
 
-        DB::transaction(function () use ($invoice, $tenant, $contract, $validated, $auditLogger, $request, $before) {
+        DB::transaction(function () use ($invoice, $tenant, $contract, $validated, $auditLogger, $request, $before, $utilityInvoiceService) {
             $invoice->update([
                 'contract_id' => $contract->id,
                 'issue_date' => $validated['issue_date'],
@@ -208,7 +205,7 @@ class CoreInvoiceController extends Controller
 
             $invoice->items()->delete();
 
-            $items = $this->buildItemsPayload($tenant, $contract, $validated);
+            $items = $this->buildItemsPayload($tenant, $contract, $validated, $utilityInvoiceService);
             $totals = $this->persistItems($invoice, $items);
 
             $invoice->update($totals);
@@ -241,32 +238,43 @@ class CoreInvoiceController extends Controller
         ]);
     }
 
-    public function utilities(Request $request, CurrentTenant $currentTenant): JsonResponse
+    public function utilities(
+        Request $request,
+        CurrentTenant $currentTenant,
+        UtilityInvoiceService $utilityInvoiceService
+    ): JsonResponse
     {
         $tenant = $currentTenant->getOrFail();
         $contractId = (int) $request->input('contract_id');
+        $issueDate = $request->input('issue_date');
+        $prorate = $request->boolean('prorate_rent');
+        $overrideRent = $request->filled('rent_override')
+            ? (float) $request->input('rent_override')
+            : null;
 
-        $bills = UtilityBill::query()
-            ->with('utilityType')
+        if (! $contractId || ! $issueDate) {
+            return response()->json([
+                'data' => [],
+                'rent_cents' => 0,
+                'period_start' => null,
+                'period_end' => null,
+            ]);
+        }
+
+        $contract = Contract::query()
             ->where('tenant_id', $tenant->id)
-            ->where('contract_id', $contractId)
-            ->orderByDesc('billing_period_end')
-            ->get()
-            ->map(function (UtilityBill $bill) {
-                $label = $bill->utilityType?->name ?? 'Utility';
-                $period = $bill->billing_period_start && $bill->billing_period_end
-                    ? $bill->billing_period_start->format('Y-m-d') . ' to ' . $bill->billing_period_end->format('Y-m-d')
-                    : null;
-                return [
-                    'id' => $bill->id,
-                    'label' => $period ? $label . ' (' . $period . ')' : $label,
-                    'amount_cents' => (int) ($bill->total_cents ?? 0),
-                    'currency_code' => $bill->currency_code ?? 'USD',
-                ];
-            });
+            ->findOrFail($contractId);
+
+        $periodEnd = Carbon::parse($issueDate)->startOfDay();
+        $periodStart = $utilityInvoiceService->resolvePeriodStart($contract);
+        $rentCents = $utilityInvoiceService->calculateRentCents($contract, $periodEnd, $periodStart, $overrideRent, $prorate);
+        $items = $utilityInvoiceService->buildUtilityItems($contract, $periodEnd, $periodStart);
 
         return response()->json([
-            'data' => $bills,
+            'data' => $items,
+            'rent_cents' => $rentCents,
+            'period_start' => $periodStart->toDateString(),
+            'period_end' => $periodEnd->toDateString(),
         ]);
     }
 
@@ -442,14 +450,23 @@ class CoreInvoiceController extends Controller
         return $tenant;
     }
 
-    private function buildItemsPayload($tenant, Contract $contract, array $validated): array
+    private function buildItemsPayload(
+        $tenant,
+        Contract $contract,
+        array $validated,
+        UtilityInvoiceService $utilityInvoiceService
+    ): array
     {
         $items = [];
 
-        $rentCents = (int) ($contract->monthly_rent_cents ?? 0);
+        $periodEnd = Carbon::parse($validated['issue_date'])->startOfDay();
+        $periodStart = $utilityInvoiceService->resolvePeriodStart($contract);
+        $overrideRent = isset($validated['rent_override']) ? (float) $validated['rent_override'] : null;
+        $prorate = (bool) ($validated['prorate_rent'] ?? false);
+        $rentCents = $utilityInvoiceService->calculateRentCents($contract, $periodEnd, $periodStart, $overrideRent, $prorate);
         if ($rentCents > 0) {
             $items[] = [
-                'description' => 'Monthly rent',
+                'description' => 'Rent',
                 'amount_cents' => $rentCents,
                 'item_type' => 'rent',
                 'ref_table' => 'contracts',
@@ -457,29 +474,9 @@ class CoreInvoiceController extends Controller
             ];
         }
 
-        $utilityIds = array_map('intval', $validated['utility_bill_ids'] ?? []);
-        if (!empty($utilityIds)) {
-            $bills = UtilityBill::query()
-                ->with('utilityType')
-                ->where('tenant_id', $tenant->id)
-                ->where('contract_id', $contract->id)
-                ->whereIn('id', $utilityIds)
-                ->get();
-
-            foreach ($bills as $bill) {
-                $label = $bill->utilityType?->name ?? 'Utility';
-                $period = $bill->billing_period_start && $bill->billing_period_end
-                    ? $bill->billing_period_start->format('Y-m-d') . ' to ' . $bill->billing_period_end->format('Y-m-d')
-                    : null;
-                $description = $period ? $label . ' (' . $period . ')' : $label;
-                $items[] = [
-                    'description' => $description,
-                    'amount_cents' => (int) ($bill->total_cents ?? 0),
-                    'item_type' => 'utility',
-                    'ref_table' => 'utility_bills',
-                    'ref_id' => $bill->id,
-                ];
-            }
+        $utilityItems = $utilityInvoiceService->buildUtilityItems($contract, $periodEnd, $periodStart);
+        foreach ($utilityItems as $item) {
+            $items[] = $item;
         }
 
         $manualItems = $validated['manual_items'] ?? [];

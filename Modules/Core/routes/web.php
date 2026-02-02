@@ -13,7 +13,6 @@ use Modules\Core\App\Http\Controllers\RoomTypeController;
 use Modules\Core\App\Http\Controllers\TenantMemberController;
 use Modules\Core\App\Http\Controllers\UtilityBillController;
 use Modules\Core\App\Http\Controllers\UtilityMeterController;
-use Modules\Core\App\Http\Controllers\UtilityProviderController;
 use Modules\Core\App\Http\Controllers\UtilityRateController;
 use Modules\Core\App\Http\Controllers\UtilityReadingController;
 use Modules\Core\App\Http\Controllers\BillingController;
@@ -59,6 +58,7 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::get('core/properties', [PropertyController::class, 'index'])->name('core.properties.index');
         Route::post('core/properties', [PropertyController::class, 'store'])->name('core.properties.store');
         Route::get('core/properties/{property}', [PropertyController::class, 'show'])->name('core.properties.show');
+        Route::get('core/properties/{property}/utility-rates', [UtilityRateController::class, 'propertyRates'])->name('core.properties.utility-rates');
         Route::patch('core/properties/{property}', [PropertyController::class, 'update'])->name('core.properties.update');
         Route::delete('core/properties/{property}', [PropertyController::class, 'destroy'])->name('core.properties.destroy');
 
@@ -92,11 +92,6 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::post('core/tenant-members/{user}/toggle-status', [TenantMemberController::class, 'toggleStatus'])->name('core.tenant-members.toggle-status');
         Route::post('core/tenant-members/{user}/reset-password', [TenantMemberController::class, 'resetPassword'])->name('core.tenant-members.reset-password');
 
-        Route::get('core/utility-providers', [UtilityProviderController::class, 'index'])->name('core.utility-providers.index');
-        Route::post('core/utility-providers', [UtilityProviderController::class, 'store'])->name('core.utility-providers.store');
-        Route::patch('core/utility-providers/{provider}', [UtilityProviderController::class, 'update'])->name('core.utility-providers.update');
-        Route::delete('core/utility-providers/{provider}', [UtilityProviderController::class, 'destroy'])->name('core.utility-providers.destroy');
-
         Route::get('core/utility-meters', [UtilityMeterController::class, 'index'])->name('core.utility-meters.index');
         Route::post('core/utility-meters', [UtilityMeterController::class, 'store'])->name('core.utility-meters.store');
         Route::patch('core/utility-meters/{meter}', [UtilityMeterController::class, 'update'])->name('core.utility-meters.update');
@@ -107,7 +102,6 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::patch('core/utility-readings/{reading}', [UtilityReadingController::class, 'update'])->name('core.utility-readings.update');
         Route::delete('core/utility-readings/{reading}', [UtilityReadingController::class, 'destroy'])->name('core.utility-readings.destroy');
 
-        Route::get('core/utility-rates', [UtilityRateController::class, 'index'])->name('core.utility-rates.index');
         Route::post('core/utility-rates', [UtilityRateController::class, 'store'])->name('core.utility-rates.store');
         Route::patch('core/utility-rates/{rate}', [UtilityRateController::class, 'update'])->name('core.utility-rates.update');
         Route::delete('core/utility-rates/{rate}', [UtilityRateController::class, 'destroy'])->name('core.utility-rates.destroy');

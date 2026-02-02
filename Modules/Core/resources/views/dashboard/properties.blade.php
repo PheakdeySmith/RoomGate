@@ -3,10 +3,19 @@
 @section('page-title', 'Properties')
 
 @push('page-styles')
-  <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
-  <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/select2/select2.css" />
   <link rel="stylesheet" href="{{ asset('assets/assets') }}/vendor/libs/@form-validation/form-validation.css" />
+  <style>
+    .property-card {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      cursor: pointer;
+    }
+    .property-card:hover {
+      border-color: rgba(105, 108, 255, 0.4);
+      box-shadow: 0 6px 16px rgba(47, 43, 61, 0.12);
+      background-color: rgba(105, 108, 255, 0.04);
+    }
+  </style>
 @endpush
 
 @section('content')
@@ -28,62 +37,111 @@
       </div>
     </div>
   @endif
-  <div class="card">
-    <div class="card-datatable table-responsive">
-      <table class="datatables-properties table border-top">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach ($properties as $property)
-            <tr>
-              <td></td>
-              <td>
-                <a href="{{ route('core.properties.show', $property) }}" class="text-heading">
-                  {{ $property->name }}
-                </a>
-              </td>
-              <td>{{ $property->propertyType?->name ?? '-' }}</td>
-              <td>{{ $property->city ?? '-' }}, {{ $property->country ?? '-' }}</td>
-              <td>
-                <span class="badge {{ $statusLabels[$property->status] ?? 'bg-label-secondary' }}">
-                  {{ ucfirst($property->status) }}
-                </span>
-              </td>
-              <td>
-                <div class="d-flex align-items-center">
-                  <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect me-1" data-bs-toggle="modal" data-bs-target="#editPropertyModal"
-                    data-property-id="{{ $property->id }}"
-                    data-property-name="{{ $property->name }}"
-                    data-property-type="{{ $property->property_type_id }}"
-                    data-property-description="{{ $property->description }}"
-                    data-property-address="{{ $property->address_line_1 }}"
-                    data-property-city="{{ $property->city }}"
-                    data-property-country="{{ $property->country }}"
-                    data-property-status="{{ $property->status }}">
-                    <i class="icon-base ti tabler-edit icon-22px"></i>
-                  </a>
-                  <form method="POST" action="{{ route('core.properties.destroy', $property) }}" data-confirm="Delete this property?">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-icon btn-text-secondary rounded-pill waves-effect">
-                      <i class="icon-base ti tabler-trash icon-22px"></i>
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          @endforeach
-        </tbody>
-      </table>
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <h4 class="mb-1">Your Properties</h4>
+      <p class="text-body-secondary mb-0">Open a property to view details, rooms, and activity.</p>
     </div>
+    @if ($canCreateProperty ?? true)
+      <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+        <i class="icon-base ti tabler-plus me-1"></i>Add Property
+      </button>
+    @else
+      <button class="btn btn-label-secondary" type="button" disabled>
+        Limit reached
+      </button>
+    @endif
+  </div>
+
+  <div class="row g-4">
+    @forelse ($properties as $property)
+      @php
+        $propertyInitial = strtoupper(substr($property->name ?? 'P', 0, 1));
+        $propertyLocation = trim(($property->city ?? '') . ', ' . ($property->country ?? ''), ', ');
+      @endphp
+      <div class="col-xxl-3 col-xl-4 col-md-6">
+        <div class="card h-100 border property-card position-relative">
+          <div class="card-body position-relative">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-primary">{{ $propertyInitial }}</span>
+                </div>
+                <div>
+                  <a href="{{ route('core.properties.show', $property) }}" class="text-heading fw-semibold d-block stretched-link">
+                    {{ $property->name }}
+                  </a>
+                  <div class="text-body-secondary small">{{ $property->propertyType?->name ?? 'Uncategorized' }}</div>
+                </div>
+              </div>
+              <div class="dropdown position-relative" style="z-index: 2;">
+                <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="icon-base ti tabler-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item" href="{{ route('core.properties.show', $property) }}">
+                      <i class="icon-base ti tabler-eye me-2"></i>View
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ route('core.properties.utility-rates', $property) }}">
+                      <i class="icon-base ti tabler-bolt me-2"></i>Utility Rates
+                    </a>
+                  </li>
+                  <li>
+                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPropertyModal"
+                      data-property-id="{{ $property->id }}"
+                      data-property-name="{{ $property->name }}"
+                      data-property-type="{{ $property->property_type_id }}"
+                      data-property-description="{{ $property->description }}"
+                      data-property-address="{{ $property->address_line_1 }}"
+                      data-property-city="{{ $property->city }}"
+                      data-property-country="{{ $property->country }}"
+                      data-property-status="{{ $property->status }}">
+                      <i class="icon-base ti tabler-edit me-2"></i>Edit
+                    </button>
+                  </li>
+                  <li>
+                    <form method="POST" action="{{ route('core.properties.destroy', $property) }}" data-confirm="Delete this property?">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="dropdown-item text-danger">
+                        <i class="icon-base ti tabler-trash me-2"></i>Delete
+                      </button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-body-secondary small">
+                <i class="icon-base ti tabler-map-pin me-1"></i>{{ $propertyLocation !== '' ? $propertyLocation : 'Location not set' }}
+              </div>
+              <span class="badge {{ $statusLabels[$property->status] ?? 'bg-label-secondary' }}">
+                {{ ucfirst($property->status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    @empty
+      <div class="col-12">
+        <div class="card border-dashed shadow-none">
+          <div class="card-body text-center py-5">
+            <i class="icon-base ti tabler-building-skyscraper icon-32px text-body-secondary mb-2"></i>
+            <h6 class="mb-1">No properties yet</h6>
+            <p class="text-body-secondary mb-3">Create your first property to start managing rooms.</p>
+            @if ($canCreateProperty ?? true)
+              <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                <i class="icon-base ti tabler-plus me-1"></i>Add Property
+              </button>
+            @endif
+          </div>
+        </div>
+      </div>
+    @endforelse
   </div>
 </div>
 
@@ -202,12 +260,9 @@
 @endsection
 
 @push('page-scripts')
-  <script src="{{ asset('assets/assets') }}/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
-  <script src="{{ asset('assets/assets') }}/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.js"></script>
   <script src="{{ asset('assets/assets') }}/vendor/libs/select2/select2.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const propertiesBaseUrl = @json(route('core.properties.index'));
       if (window.$ && $.fn.select2) {
         $('.select2').each(function () {
           const placeholder = $(this).find('option[value=""]').first().text() || 'Select';
@@ -221,174 +276,7 @@
         });
       }
 
-      const initTable = (selector, searchPlaceholder, addText, addTarget) => {
-        const table = document.querySelector(selector);
-        if (!table || !window.DataTable) {
-          return;
-        }
-        const addButton = addTarget
-          ? {
-              text: addText,
-              className: 'add-new btn btn-primary rounded-2 waves-effect waves-light',
-              attr: {
-                'data-bs-toggle': 'modal',
-                'data-bs-target': addTarget
-              }
-            }
-          : {
-              text: addText,
-              className: 'add-new btn btn-label-secondary rounded-2 disabled',
-              attr: {
-                'aria-disabled': 'true'
-              }
-            };
-        const options = window.RoomGateDataTables
-          ? RoomGateDataTables.buildOptions({
-              order: [[1, 'asc']],
-              columnDefs: [
-                {
-                  targets: 0,
-                  className: 'control',
-                  orderable: false,
-                  searchable: false,
-                  render: function () {
-                    return '';
-                  }
-                }
-              ],
-              layout: {
-                topStart: {
-                  rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
-                  features: [
-                    {
-                      pageLength: {
-                        menu: [10, 25, 50, 100],
-                        text: '_MENU_'
-                      }
-                    }
-                  ]
-                },
-                topEnd: {
-                  features: [
-                    {
-                      search: {
-                        placeholder: searchPlaceholder,
-                        text: '_INPUT_'
-                      }
-                    },
-                    {
-                      buttons: [
-                        {
-                          extend: 'collection',
-                          className: 'btn btn-label-secondary dropdown-toggle me-4',
-                          text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">Export</span></span>',
-                          buttons: ['print', 'csv', 'excel', 'pdf', 'copy']
-                        },
-                        addButton
-                      ]
-                    }
-                  ]
-                },
-                bottomStart: {
-                  rowClass: 'row mx-3 justify-content-between',
-                  features: ['info']
-                },
-                bottomEnd: 'paging'
-              }
-            })
-          : {
-              order: [[1, 'asc']],
-              columnDefs: [
-                {
-                  targets: 0,
-                  className: 'control',
-                  orderable: false,
-                  searchable: false,
-                  render: function () {
-                    return '';
-                  }
-                }
-              ],
-              layout: {
-                topStart: {
-                  rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
-                  features: [
-                    {
-                      pageLength: {
-                        menu: [10, 25, 50, 100],
-                        text: '_MENU_'
-                      }
-                    }
-                  ]
-                },
-                topEnd: {
-                  features: [
-                    {
-                      search: {
-                        placeholder: searchPlaceholder,
-                        text: '_INPUT_'
-                      }
-                    },
-                    {
-                      buttons: [
-                        {
-                          extend: 'collection',
-                          className: 'btn btn-label-secondary dropdown-toggle me-4',
-                          text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">Export</span></span>',
-                          buttons: ['print', 'csv', 'excel', 'pdf', 'copy']
-                        },
-                        addButton
-                      ]
-                    }
-                  ]
-                },
-                bottomStart: {
-                  rowClass: 'row mx-3 justify-content-between',
-                  features: ['info']
-                },
-                bottomEnd: 'paging'
-              },
-              language: {
-                paginate: {
-                  next: '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
-                  previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>',
-                  first: '<i class="icon-base ti tabler-chevrons-left scaleX-n1-rtl icon-18px"></i>',
-                  last: '<i class="icon-base ti tabler-chevrons-right scaleX-n1-rtl icon-18px"></i>'
-                }
-              },
-              responsive: {
-                details: {
-                  display: DataTable.Responsive.display.modal({
-                    header: function () {
-                      return 'Details';
-                    }
-                  }),
-                  type: 'column'
-                }
-              }
-            };
-        new DataTable(table, options);
-      };
-
-      const canCreateProperty = @json($canCreateProperty ?? true);
-      const propertyLimit = @json($propertyLimit ?? null);
-      const addPropertyText = canCreateProperty
-        ? '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add Property</span>'
-        : '<span class="d-none d-sm-inline-block">Limit reached</span>';
-
-      initTable(
-        '.datatables-properties',
-        'Search Property',
-        addPropertyText,
-        canCreateProperty ? '#addPropertyModal' : null
-      );
-
-      if (window.RoomGateDataTables && RoomGateDataTables.applyLayoutClasses) {
-        setTimeout(() => {
-          RoomGateDataTables.applyLayoutClasses();
-        }, 100);
-      }
-
+      const propertiesBaseUrl = @json(route('core.properties.index'));
       const editModal = document.getElementById('editPropertyModal');
       if (editModal) {
         editModal.addEventListener('show.bs.modal', function (event) {

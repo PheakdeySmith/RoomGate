@@ -130,7 +130,7 @@
           </div>
           <div class="col-12">
             <label class="form-label" for="paymentPaidAt">Paid At</label>
-            <input type="text" id="paymentPaidAt" name="paid_at" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="paymentPaidAt" name="paid_at" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-12 text-center mt-6">
             <button type="submit" class="btn btn-primary me-sm-4 me-1">Create Payment</button>
@@ -168,7 +168,7 @@
           </div>
           <div class="col-12">
             <label class="form-label" for="editPaymentPaidAt">Paid At</label>
-            <input type="text" id="editPaymentPaidAt" name="paid_at" class="form-control dob-picker" placeholder="YYYY-MM-DD" />
+            <input type="text" id="editPaymentPaidAt" name="paid_at" class="form-control dob-picker" placeholder="Month DD, YYYY" />
           </div>
           <div class="col-12 text-center mt-6">
             <button type="submit" class="btn btn-primary me-sm-4 me-1">Update Payment</button>
@@ -202,7 +202,21 @@
         });
       }
       if (window.flatpickr) {
-        flatpickr('.dob-picker', { dateFormat: 'Y-m-d' });
+        document.querySelectorAll('.dob-picker').forEach((input) => {
+          if (input._flatpickr) {
+            input._flatpickr.destroy();
+          }
+          const modal = input.closest('.modal');
+          flatpickr(input, {
+            altInput: true,
+            altFormat: 'F j, Y',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            static: !modal,
+            altInputClass: 'form-control',
+            appendTo: modal || document.body
+          });
+        });
       }
 
       const initTable = (selector, searchPlaceholder, addText, addTarget) => {

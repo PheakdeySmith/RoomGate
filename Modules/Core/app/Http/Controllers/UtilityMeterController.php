@@ -5,7 +5,6 @@ namespace Modules\Core\App\Http\Controllers;
 use App\Models\Property;
 use App\Models\Room;
 use App\Models\UtilityMeter;
-use App\Models\UtilityProvider;
 use App\Models\UtilityType;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +21,7 @@ class UtilityMeterController extends Controller
         $this->authorize('viewAny', [UtilityMeter::class, $tenant->id]);
 
         $meters = UtilityMeter::query()
-            ->with(['property', 'room', 'utilityType', 'provider'])
+            ->with(['property', 'room', 'utilityType'])
             ->where('tenant_id', $tenant->id)
             ->orderByDesc('created_at')
             ->get();
@@ -38,11 +37,6 @@ class UtilityMeterController extends Controller
             ->orderBy('room_number')
             ->get();
 
-        $providers = UtilityProvider::query()
-            ->where('tenant_id', $tenant->id)
-            ->orderBy('name')
-            ->get();
-
         $utilityTypes = UtilityType::query()
             ->where(function ($query) use ($tenant) {
                 $query->whereNull('tenant_id')
@@ -52,7 +46,7 @@ class UtilityMeterController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('core::dashboard.utilities.meters', compact('meters', 'properties', 'rooms', 'providers', 'utilityTypes'));
+        return view('core::dashboard.utilities.meters', compact('meters', 'properties', 'rooms', 'utilityTypes'));
     }
 
     public function store(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
@@ -76,10 +70,6 @@ class UtilityMeterController extends Controller
                         ->orWhere('tenant_id', $tenant->id);
                 }),
             ],
-            'provider_id' => [
-                'nullable',
-                Rule::exists('utility_providers', 'id')->where('tenant_id', $tenant->id),
-            ],
             'meter_code' => ['required', 'string', 'max:64'],
             'unit_of_measure' => ['nullable', 'string', 'max:32'],
             'status' => ['required', 'in:active,inactive'],
@@ -102,7 +92,6 @@ class UtilityMeterController extends Controller
             'property_id' => $validated['property_id'],
             'room_id' => $validated['room_id'] ?? null,
             'utility_type_id' => $validated['utility_type_id'],
-            'provider_id' => $validated['provider_id'] ?? null,
             'meter_code' => $validated['meter_code'],
             'unit_of_measure' => $unit,
             'status' => $validated['status'],
@@ -135,10 +124,6 @@ class UtilityMeterController extends Controller
                         ->orWhere('tenant_id', $tenant->id);
                 }),
             ],
-            'provider_id' => [
-                'nullable',
-                Rule::exists('utility_providers', 'id')->where('tenant_id', $tenant->id),
-            ],
             'meter_code' => ['required', 'string', 'max:64'],
             'unit_of_measure' => ['nullable', 'string', 'max:32'],
             'status' => ['required', 'in:active,inactive'],
@@ -160,7 +145,6 @@ class UtilityMeterController extends Controller
             'property_id' => $validated['property_id'],
             'room_id' => $validated['room_id'] ?? null,
             'utility_type_id' => $validated['utility_type_id'],
-            'provider_id' => $validated['provider_id'] ?? null,
             'meter_code' => $validated['meter_code'],
             'unit_of_measure' => $unit,
             'status' => $validated['status'],
