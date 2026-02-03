@@ -213,7 +213,7 @@ class OnboardingController extends Controller
     {
         $tenant = $user?->tenants()->orderBy('name')->first();
         if ($tenant) {
-            return redirect()->route('Core.crm', ['tenant' => $tenant->slug]);
+            return redirect()->route('core.home', ['tenant' => $tenant->slug]);
         }
 
         return redirect()->route('core.onboarding');

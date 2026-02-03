@@ -485,7 +485,7 @@
       dataLabels: {
         enabled: true,
         formatter: function (val) {
-          return val + 'k';
+          return val;
         },
         offsetY: -30,
         style: {
@@ -507,7 +507,7 @@
         enabled: false
       },
       xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+        categories: (window.RoomGateInvoiceCharts && window.RoomGateInvoiceCharts.labels) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
         axisBorder: {
           show: true,
           color: borderColor
@@ -594,21 +594,29 @@
     };
     return earningReportBarChartOpt;
   }
-  var chartJson = 'earning-reports-charts.json';
-  // Earning Chart JSON data
-  var earningReportsChart = $.ajax({
-    url: assetsPath + 'json/' + chartJson, //? Use your own search api instead
-    dataType: 'json',
-    async: false
-  }).responseJSON;
+  var invoiceCharts = window.RoomGateInvoiceCharts || null;
+  var earningReportsChart = null;
+  var invoiceHighlightIndex = 2;
+  if (invoiceCharts && invoiceCharts.labels && invoiceCharts.labels.length) {
+    const monthIndex = new Date().getMonth();
+    invoiceHighlightIndex = Math.min(Math.max(monthIndex, 0), invoiceCharts.labels.length - 1);
+  }
+  if (!invoiceCharts) {
+    var chartJson = 'earning-reports-charts.json';
+    // Earning Chart JSON data
+    earningReportsChart = $.ajax({
+      url: assetsPath + 'json/' + chartJson,
+      dataType: 'json',
+      async: false
+    }).responseJSON;
+  }
 
   // Earning Reports Tabs Orders
   // --------------------------------------------------------------------
   const earningReportsTabsOrdersEl = document.querySelector('#earningReportsTabsOrders'),
-    earningReportsTabsOrdersConfig = EarningReportsBarChart(
-      earningReportsChart['data'][0]['chart_data'],
-      earningReportsChart['data'][0]['active_option']
-    );
+    earningReportsTabsOrdersConfig = invoiceCharts
+      ? EarningReportsBarChart(invoiceCharts.paid, invoiceHighlightIndex)
+      : EarningReportsBarChart(earningReportsChart['data'][0]['chart_data'], earningReportsChart['data'][0]['active_option']);
   if (typeof earningReportsTabsOrdersEl !== undefined && earningReportsTabsOrdersEl !== null) {
     const earningReportsTabsOrders = new ApexCharts(earningReportsTabsOrdersEl, earningReportsTabsOrdersConfig);
     earningReportsTabsOrders.render();
@@ -616,10 +624,9 @@
   // Earning Reports Tabs Sales
   // --------------------------------------------------------------------
   const earningReportsTabsSalesEl = document.querySelector('#earningReportsTabsSales'),
-    earningReportsTabsSalesConfig = EarningReportsBarChart(
-      earningReportsChart['data'][1]['chart_data'],
-      earningReportsChart['data'][1]['active_option']
-    );
+    earningReportsTabsSalesConfig = invoiceCharts
+      ? EarningReportsBarChart(invoiceCharts.unpaid, invoiceHighlightIndex)
+      : EarningReportsBarChart(earningReportsChart['data'][1]['chart_data'], earningReportsChart['data'][1]['active_option']);
   if (typeof earningReportsTabsSalesEl !== undefined && earningReportsTabsSalesEl !== null) {
     const earningReportsTabsSales = new ApexCharts(earningReportsTabsSalesEl, earningReportsTabsSalesConfig);
     earningReportsTabsSales.render();
@@ -627,10 +634,9 @@
   // Earning Reports Tabs Profit
   // --------------------------------------------------------------------
   const earningReportsTabsProfitEl = document.querySelector('#earningReportsTabsProfit'),
-    earningReportsTabsProfitConfig = EarningReportsBarChart(
-      earningReportsChart['data'][2]['chart_data'],
-      earningReportsChart['data'][2]['active_option']
-    );
+    earningReportsTabsProfitConfig = invoiceCharts
+      ? EarningReportsBarChart(invoiceCharts.overdue, invoiceHighlightIndex)
+      : EarningReportsBarChart(earningReportsChart['data'][2]['chart_data'], earningReportsChart['data'][2]['active_option']);
   if (typeof earningReportsTabsProfitEl !== undefined && earningReportsTabsProfitEl !== null) {
     const earningReportsTabsProfit = new ApexCharts(earningReportsTabsProfitEl, earningReportsTabsProfitConfig);
     earningReportsTabsProfit.render();
@@ -638,10 +644,9 @@
   // Earning Reports Tabs Income
   // --------------------------------------------------------------------
   const earningReportsTabsIncomeEl = document.querySelector('#earningReportsTabsIncome'),
-    earningReportsTabsIncomeConfig = EarningReportsBarChart(
-      earningReportsChart['data'][3]['chart_data'],
-      earningReportsChart['data'][3]['active_option']
-    );
+    earningReportsTabsIncomeConfig = invoiceCharts
+      ? EarningReportsBarChart(invoiceCharts.total, invoiceHighlightIndex)
+      : EarningReportsBarChart(earningReportsChart['data'][3]['chart_data'], earningReportsChart['data'][3]['active_option']);
   if (typeof earningReportsTabsIncomeEl !== undefined && earningReportsTabsIncomeEl !== null) {
     const earningReportsTabsIncome = new ApexCharts(earningReportsTabsIncomeEl, earningReportsTabsIncomeConfig);
     earningReportsTabsIncome.render();
@@ -649,16 +654,17 @@
 
   // Sales Last 6 Months - Radar Chart
   // --------------------------------------------------------------------
+  const contractsChart = window.RoomGateContractCharts || null;
   const salesLastMonthEl = document.querySelector('#salesLastMonth'),
     salesLastMonthConfig = {
       series: [
         {
-          name: 'Sales',
-          data: [32, 27, 27, 30, 25, 25]
+          name: 'New Contracts',
+          data: contractsChart ? contractsChart.new : [32, 27, 27, 30, 25, 25]
         },
         {
-          name: 'Visits',
-          data: [25, 35, 20, 20, 20, 20]
+          name: 'Renewals',
+          data: contractsChart ? contractsChart.renewal : [25, 35, 20, 20, 20, 20]
         }
       ],
       chart: {
@@ -714,7 +720,7 @@
         }
       },
       xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        categories: contractsChart ? contractsChart.labels : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         labels: {
           show: true,
           style: {

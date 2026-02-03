@@ -32,7 +32,8 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
     ->prefix('t/{tenant}')
     ->group(function () {
         Route::get('dashboard', [CoreController::class, 'index'])->name('core.dashboard');
-        Route::get('core/crm-dashboard', [CoreController::class, 'crmDashboard'])->name('Core.crm');
+        Route::get('core', [CoreController::class, 'crmDashboard'])->name('core.home');
+        Route::redirect('core/crm-dashboard', 'core');
         Route::get('core/access-roles', [CoreController::class, 'accessRoles'])->name('Core.access-roles');
         Route::get('core/access-permission', [CoreController::class, 'accessPermission'])->name('Core.access-permission');
         Route::get('core/users', [CoreController::class, 'userList'])->name('Core.users.index');
@@ -135,5 +136,4 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::post('core/message-templates/{template}/test', [TemplateController::class, 'test'])->name('core.templates.test');
         Route::get('core/audit-logs', [AuditLogController::class, 'index'])->name('core.audit-logs.index');
         Route::get('core/audit-logs/export', [AuditLogController::class, 'export'])->name('core.audit-logs.export');
-        Route::resource('core', CoreController::class)->names('Core');
     });

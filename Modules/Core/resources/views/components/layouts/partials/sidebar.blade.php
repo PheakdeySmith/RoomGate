@@ -52,24 +52,17 @@
 
                 <div class="menu-inner-shadow"></div>
 
+                @php
+                    $tenantParam = request()->route('tenant');
+                    $tenantSlug = $currentTenant?->slug ?? (is_object($tenantParam) ? $tenantParam->slug : $tenantParam);
+                    $dashboardUrl = $tenantSlug ? url("/t/{$tenantSlug}/core") : url('/core');
+                @endphp
                 <ul class="menu-inner py-1">
-                    <li class="menu-item {{ request()->routeIs('Core.index', 'Core.crm') ? 'active open' : '' }}">
-                        <a href="javascript:void(0);" class="menu-link menu-toggle">
-                            <i class="menu-icon icon-base ti tabler-smart-home"></i>
-                            <div data-i18n="Dashboards">Dashboards</div>
+                    <li class="menu-item {{ request()->is('t/*/core') ? 'active' : '' }}">
+                        <a href="{{ $dashboardUrl }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-layout-dashboard"></i>
+                            <div data-i18n="menu.dashboard">Dashboard</div>
                         </a>
-                        <ul class="menu-sub">
-                            <li class="menu-item {{ request()->routeIs('Core.index') ? 'active' : '' }}">
-                                <a href="{{ route('Core.index') }}" class="menu-link">
-                                    <div data-i18n="Analytics">Analytics</div>
-                                </a>
-                            </li>
-                            <li class="menu-item {{ request()->routeIs('Core.crm') ? 'active' : '' }}">
-                                <a href="{{ route('Core.crm') }}" class="menu-link">
-                                    <div data-i18n="CRM">CRM</div>
-                                </a>
-                            </li>
-                        </ul>
                     </li>
 
                     <li class="menu-header small text-uppercase">
