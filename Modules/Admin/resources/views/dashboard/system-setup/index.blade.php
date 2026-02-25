@@ -312,20 +312,21 @@
     <div class="card">
       <h5 class="card-header">Cron Job Visibility</h5>
       <div class="card-body">
-        <div class="mb-3">
-          @php($state = data_get($cronHealth ?? [], 'state'))
-          <span class="badge {{ $state === 'running' ? 'bg-label-success' : ($state === 'stale' ? 'bg-label-warning' : 'bg-label-secondary') }}">
-            Cron Status: {{ data_get($cronHealth ?? [], 'label', 'Unknown') }}
-          </span>
-          @if(data_get($cronHealth ?? [], 'last_heartbeat_at'))
-            <small class="text-body-secondary ms-2">Last heartbeat: {{ data_get($cronHealth, 'last_heartbeat_at') }}</small>
-          @endif
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            @php($state = data_get($cronHealth ?? [], 'state'))
+            <span class="badge {{ $state === 'running' ? 'bg-label-success' : ($state === 'stale' ? 'bg-label-warning' : 'bg-label-secondary') }}">
+              Cron Status: {{ data_get($cronHealth ?? [], 'label', 'Unknown') }}
+            </span>
+            @if(data_get($cronHealth ?? [], 'last_heartbeat_at'))
+              <small class="text-body-secondary ms-2">Last heartbeat: {{ data_get($cronHealth, 'last_heartbeat_at') }}</small>
+            @endif
+          </div>
+          <form method="POST" action="{{ route('admin.system-setup.cron.run') }}">
+            @csrf
+            <button type="submit" class="btn btn-primary">Run Cron Now</button>
+          </form>
         </div>
-        <p class="text-body-secondary">Configure your server cron to run: <code>* * * * * php artisan schedule:run</code></p>
-        <form method="POST" action="{{ route('admin.system-setup.cron.run') }}" class="mb-3">
-          @csrf
-          <button type="submit" class="btn btn-primary">Run Cron Now</button>
-        </form>
         <pre class="bg-light p-3 rounded" style="max-height:320px; overflow:auto;">{{ $cronList }}</pre>
       </div>
     </div>

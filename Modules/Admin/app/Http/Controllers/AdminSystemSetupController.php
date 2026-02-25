@@ -557,6 +557,12 @@ class AdminSystemSetupController extends Controller
     {
         $this->enforceOptionalPermission($request, 'system_setup.manage');
 
+        // Record an immediate heartbeat for manual run visibility.
+        $settings = BusinessSetting::current();
+        $settings->putMetaValue('cron.last_heartbeat_at', now()->toDateTimeString());
+        $settings->save();
+        Cache::forget('business_settings:current');
+
         Artisan::call('schedule:run');
         $output = trim(Artisan::output());
         if ($output !== '') {
