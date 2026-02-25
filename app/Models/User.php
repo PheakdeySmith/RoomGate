@@ -71,4 +71,11 @@ class User extends Authenticatable
             ->withPivot(['role', 'status'])
             ->withTimestamps();
     }
+
+    public function assignedProperties(): BelongsToMany
+    {
+        return $this->belongsToMany(Property::class, 'property_users')
+            ->withPivot(['tenant_id', 'status', 'assigned_by_user_id'])
+            ->withTimestamps();
+    }
 }

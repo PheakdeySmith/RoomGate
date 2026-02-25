@@ -25,3 +25,4 @@
 - Enforce unique constraint to prevent double processing.
 - Support replay from stored payloads.
 - Outbound message webhooks: `docs/WEBHOOKS.md` (use `OUTBOUND_WEBHOOK_SECRET`).
+- Bakong payment webhooks: `docs/WEBHOOKS.md` (use `BAKONG_WEBHOOK_SECRET`).

@@ -11,7 +11,6 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UtilityType;
-use App\Models\UtilityProvider;
 use App\Models\UtilityMeter;
 use App\Models\UtilityRate;
 use App\Models\UtilityBill;
@@ -55,22 +54,12 @@ class TenantUtilitiesTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('core.utility-providers.store', ['tenant' => $tenant->slug]), [
-                'utility_type_id' => $utilityType->id,
-                'name' => 'Water Co',
-                'status' => 'active',
-            ])
-            ->assertRedirect();
-
-        $provider = UtilityProvider::query()->where('tenant_id', $tenant->id)->firstOrFail();
-
-        $this->actingAs($user)
             ->post(route('core.utility-meters.store', ['tenant' => $tenant->slug]), [
                 'property_id' => $property->id,
                 'room_id' => $room->id,
                 'utility_type_id' => $utilityType->id,
-                'provider_id' => $provider->id,
                 'meter_code' => 'WM-1001',
+                'unit_of_measure' => 'm3',
                 'status' => 'active',
             ])
             ->assertRedirect();
@@ -113,7 +102,6 @@ class TenantUtilitiesTest extends TestCase
                 'contract_id' => $contract->id,
                 'utility_type_id' => $utilityType->id,
                 'meter_id' => $meter->id,
-                'provider_id' => $provider->id,
                 'billing_period_start' => now()->subMonth()->toDateString(),
                 'billing_period_end' => now()->toDateString(),
                 'amount' => 15.50,
@@ -127,20 +115,12 @@ class TenantUtilitiesTest extends TestCase
         $reading = UtilityMeterReading::query()->where('tenant_id', $tenant->id)->firstOrFail();
 
         $this->actingAs($user)
-            ->patch(route('core.utility-providers.update', ['tenant' => $tenant->slug, 'provider' => $provider->id]), [
-                'utility_type_id' => $utilityType->id,
-                'name' => 'Water Co Updated',
-                'status' => 'inactive',
-            ])
-            ->assertRedirect();
-
-        $this->actingAs($user)
             ->patch(route('core.utility-meters.update', ['tenant' => $tenant->slug, 'meter' => $meter->id]), [
                 'property_id' => $property->id,
                 'room_id' => $room->id,
                 'utility_type_id' => $utilityType->id,
-                'provider_id' => $provider->id,
                 'meter_code' => 'WM-1002',
+                'unit_of_measure' => 'm3',
                 'status' => 'inactive',
             ])
             ->assertRedirect();
@@ -167,7 +147,6 @@ class TenantUtilitiesTest extends TestCase
                 'contract_id' => $contract->id,
                 'utility_type_id' => $utilityType->id,
                 'meter_id' => $meter->id,
-                'provider_id' => $provider->id,
                 'billing_period_start' => now()->subMonth()->toDateString(),
                 'billing_period_end' => now()->toDateString(),
                 'amount' => 20.00,
@@ -186,10 +165,6 @@ class TenantUtilitiesTest extends TestCase
 
         $this->actingAs($user)
             ->delete(route('core.utility-meters.destroy', ['tenant' => $tenant->slug, 'meter' => $meter->id]))
-            ->assertRedirect();
-
-        $this->actingAs($user)
-            ->delete(route('core.utility-providers.destroy', ['tenant' => $tenant->slug, 'provider' => $provider->id]))
             ->assertRedirect();
     }
 

@@ -18,17 +18,17 @@ Use this section to mark progress.
 - [x] Plans + limits
 - [x] Subscriptions + subscription invoices + payments
 - [x] Notification templates + outbound messages + queue
+- [x] Utilities (types/meters/readings/rates/bills)
+- [x] Maintenance (requests, assignments, attachments, work orders)
+- [x] Bakong callback flow + payment reconciliation
 
 ### In Progress
-- [ ] Utilities (types/providers/meters/readings/rates/bills)
 - [ ] Tenant onboarding flow (self-serve signup -> tenant -> default plan)
 - [ ] Notification event routing coverage (final pass)
 
 ### Next
-- [ ] Maintenance (requests, assignments, attachments, work orders)
 - [ ] Access control (doors/keys/QR/access logs)
 - [ ] Reporting & analytics (occupancy/vacancy/rent collection)
-- [ ] Bakong callback flow + payment reconciliation
 - [ ] Feature flags strategy + ownership
 
 ## Phase 0 - Foundations (Must-Have)

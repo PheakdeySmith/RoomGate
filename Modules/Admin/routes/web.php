@@ -11,6 +11,7 @@ use Modules\Admin\App\Http\Controllers\AdminSubscriptionController;
 use Modules\Admin\App\Http\Controllers\AdminTranslationController;
 use Modules\Admin\App\Http\Controllers\AdminTenantController;
 use Modules\Admin\App\Http\Controllers\AdminUserViewController;
+use Modules\Admin\App\Http\Controllers\AdminPaymentMethodSettingsController;
 use Modules\Admin\App\Http\Controllers\AdminPropertyController;
 use Modules\Admin\App\Http\Controllers\AdminRoomTypeController;
 use Modules\Admin\App\Http\Controllers\AdminRoomController;
@@ -22,6 +23,12 @@ use Modules\Admin\App\Http\Controllers\AdminOutboundMessageController;
 use Modules\Admin\App\Http\Controllers\AdminIoTController;
 use Modules\Admin\App\Http\Controllers\AdminMessageTemplateController;
 use Modules\Admin\App\Http\Controllers\AdminMaintenanceController;
+use Modules\Admin\App\Http\Controllers\AdminReportsController;
+use Modules\Admin\App\Http\Controllers\AdminFeatureFlagController;
+use Modules\Admin\App\Http\Controllers\AdminPlanUsageController;
+use Modules\Admin\App\Http\Controllers\AdminOpsToolingController;
+use Modules\Admin\App\Http\Controllers\AdminEnterpriseAssignmentController;
+use Modules\Admin\App\Http\Controllers\AdminSystemSetupController;
 
 Route::middleware(['auth', 'role:platform_admin|admin'])
     ->prefix('admin')
@@ -82,6 +89,44 @@ Route::middleware(['auth', 'role:platform_admin|admin'])
 
         Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings');
         Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+        Route::get('/system-setup', [AdminSystemSetupController::class, 'index'])->name('system-setup.index');
+        Route::get('/system-setup/{section}', [AdminSystemSetupController::class, 'section'])->name('system-setup.section');
+        Route::put('/system-setup/general', [AdminSystemSetupController::class, 'updateGeneral'])->name('system-setup.general.update');
+        Route::put('/system-setup/two-factor', [AdminSystemSetupController::class, 'updateTwoFactor'])->name('system-setup.two-factor.update');
+        Route::put('/system-setup/email', [AdminSystemSetupController::class, 'updateEmail'])->name('system-setup.email.update');
+        Route::post('/system-setup/email/test', [AdminSystemSetupController::class, 'sendTestEmail'])->name('system-setup.email.test');
+        Route::put('/system-setup/sms', [AdminSystemSetupController::class, 'updateSms'])->name('system-setup.sms.update');
+        Route::post('/system-setup/sms/test', [AdminSystemSetupController::class, 'sendTestSms'])->name('system-setup.sms.test');
+        Route::put('/system-setup/api', [AdminSystemSetupController::class, 'updateApi'])->name('system-setup.api.update');
+        Route::put('/system-setup/notifications', [AdminSystemSetupController::class, 'updateNotifications'])->name('system-setup.notifications.update');
+        Route::put('/system-setup/language', [AdminSystemSetupController::class, 'updateLanguage'])->name('system-setup.language.update');
+        Route::put('/system-setup/utility', [AdminSystemSetupController::class, 'updateUtility'])->name('system-setup.utility.update');
+        Route::post('/system-setup/utility/clear-cache', [AdminSystemSetupController::class, 'clearCache'])->name('system-setup.utility.clear-cache');
+        Route::post('/system-setup/utility/clear-log', [AdminSystemSetupController::class, 'clearLog'])->name('system-setup.utility.clear-log');
+        Route::post('/system-setup/utility/toggle-debug', [AdminSystemSetupController::class, 'toggleDebug'])->name('system-setup.utility.toggle-debug');
+        Route::post('/system-setup/utility/toggle-force-https', [AdminSystemSetupController::class, 'toggleForceHttps'])->name('system-setup.utility.toggle-force-https');
+        Route::post('/system-setup/cron/run', [AdminSystemSetupController::class, 'runCron'])->name('system-setup.cron.run');
+        Route::post('/system-setup/currencies', [AdminSystemSetupController::class, 'storeCurrency'])->name('system-setup.currencies.store');
+        Route::patch('/system-setup/currencies/{currency}', [AdminSystemSetupController::class, 'updateCurrency'])->name('system-setup.currencies.update');
+        Route::delete('/system-setup/currencies/{currency}', [AdminSystemSetupController::class, 'deleteCurrency'])->name('system-setup.currencies.delete');
+        Route::post('/system-setup/backups/run', [AdminSystemSetupController::class, 'runBackup'])->name('system-setup.backups.run');
+        Route::get('/system-setup/backups/download/{target}', [AdminSystemSetupController::class, 'downloadLatestBackup'])->name('system-setup.backups.download');
+        Route::get('/payment-method-settings', [AdminPaymentMethodSettingsController::class, 'index'])->name('payment-method-settings.index');
+        Route::post('/payment-method-settings/active', [AdminPaymentMethodSettingsController::class, 'updateActive'])->name('payment-method-settings.active');
+        Route::put('/payment-method-settings/{gatewaySetting}', [AdminPaymentMethodSettingsController::class, 'update'])->name('payment-method-settings.update');
+        Route::post('/payment-method-settings/{gatewaySetting}/health-check', [AdminPaymentMethodSettingsController::class, 'healthCheck'])->name('payment-method-settings.health-check');
+        Route::get('/reports-analytics', [AdminReportsController::class, 'index'])->name('reports-analytics.index');
+        Route::get('/feature-flags', [AdminFeatureFlagController::class, 'index'])->name('feature-flags.index');
+        Route::post('/feature-flags', [AdminFeatureFlagController::class, 'store'])->name('feature-flags.store');
+        Route::patch('/feature-flags/{featureFlag}', [AdminFeatureFlagController::class, 'update'])->name('feature-flags.update');
+        Route::post('/feature-flags/{featureFlag}/toggle', [AdminFeatureFlagController::class, 'toggle'])->name('feature-flags.toggle');
+        Route::get('/plan-usage', [AdminPlanUsageController::class, 'index'])->name('plan-usage.index');
+        Route::get('/ops-tooling', [AdminOpsToolingController::class, 'index'])->name('ops-tooling.index');
+        Route::post('/ops-tooling/webhooks/{webhookEvent}/replay', [AdminOpsToolingController::class, 'replayWebhook'])->name('ops-tooling.webhooks.replay');
+        Route::post('/ops-tooling/failed-jobs/retry', [AdminOpsToolingController::class, 'retryFailedJobs'])->name('ops-tooling.failed-jobs.retry');
+        Route::get('/enterprise-assignments', [AdminEnterpriseAssignmentController::class, 'index'])->name('enterprise-assignments.index');
+        Route::post('/enterprise-assignments', [AdminEnterpriseAssignmentController::class, 'store'])->name('enterprise-assignments.store');
+        Route::delete('/enterprise-assignments/{assignment}', [AdminEnterpriseAssignmentController::class, 'destroy'])->name('enterprise-assignments.destroy');
 
         Route::get('/plans', [AdminPlanController::class, 'index'])->name('plans.index');
         Route::post('/plans', [AdminPlanController::class, 'store'])->name('plans.store');

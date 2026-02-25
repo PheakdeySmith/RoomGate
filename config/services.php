@@ -69,6 +69,7 @@ return [
 
     'webhooks' => [
         'outbound_messages_secret' => env('OUTBOUND_WEBHOOK_SECRET'),
+        'bakong_secret' => env('BAKONG_WEBHOOK_SECRET'),
     ],
 
 ];

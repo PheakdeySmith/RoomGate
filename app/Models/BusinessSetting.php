@@ -32,6 +32,11 @@ class BusinessSetting extends Model
         'login_logo_path',
         'footer_logo_path',
         'favicon_path',
+        'meta',
+    ];
+
+    protected $casts = [
+        'meta' => 'array',
     ];
 
     public static function current(): self
@@ -48,5 +53,17 @@ class BusinessSetting extends Model
 
             return $settings;
         });
+    }
+
+    public function metaValue(string $key, mixed $default = null): mixed
+    {
+        return data_get($this->meta ?? [], $key, $default);
+    }
+
+    public function putMetaValue(string $key, mixed $value): void
+    {
+        $meta = $this->meta ?? [];
+        data_set($meta, $key, $value);
+        $this->meta = $meta;
     }
 }

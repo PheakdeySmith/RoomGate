@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Property;
 use App\Models\PropertyType;
 use App\Models\Role;
+use App\Models\BusinessSetting;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
@@ -79,8 +80,8 @@ class OnboardingController extends Controller
                 'name' => $tenantName,
                 'slug' => $slug,
                 'status' => 'active',
-                'default_currency' => $plan->currency_code,
-                'timezone' => 'UTC',
+                'default_currency' => strtoupper((string) BusinessSetting::current()->metaValue('general.default_currency', $plan->currency_code ?? 'USD')),
+                'timezone' => (string) BusinessSetting::current()->metaValue('general.default_timezone', 'UTC'),
             ]);
 
             if (method_exists($user, 'assignRole')) {

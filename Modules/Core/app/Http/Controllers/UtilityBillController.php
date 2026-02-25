@@ -3,6 +3,7 @@
 namespace Modules\Core\App\Http\Controllers;
 
 use App\Models\Contract;
+use App\Models\BusinessSetting;
 use App\Models\UtilityBill;
 use App\Models\UtilityMeter;
 use App\Models\UtilityMeterReading;
@@ -161,6 +162,9 @@ class UtilityBillController extends Controller
         }
 
         $bill = DB::transaction(function () use ($validated, $tenant, $contract, $room, $property, $meter, $startReading, $endReading, $usage, $unitCostCents, $subtotalCents, $taxCents, $totalCents) {
+            $settings = BusinessSetting::current();
+            $currencyCode = strtoupper((string) $settings->metaValue('utility.default_unit_currency', $tenant->default_currency ?? 'USD'));
+            $dueDays = max(1, (int) $settings->metaValue('utility.billing_due_days', 7));
             return UtilityBill::create([
                 'tenant_id' => $tenant->id,
                 'contract_id' => $contract->id,
@@ -177,10 +181,10 @@ class UtilityBillController extends Controller
                 'subtotal_cents' => $subtotalCents,
                 'tax_cents' => $taxCents,
                 'total_cents' => $totalCents,
-                'currency_code' => 'USD',
+                'currency_code' => $currencyCode,
                 'status' => $validated['status'],
                 'issued_at' => $validated['issued_at'] ?? null,
-                'due_date' => $validated['due_date'] ?? null,
+                'due_date' => $validated['due_date'] ?? now()->addDays($dueDays)->toDateString(),
                 'paid_at' => $validated['paid_at'] ?? null,
                 'notes' => $validated['notes'] ?? null,
             ]);
@@ -293,6 +297,10 @@ class UtilityBillController extends Controller
             }
         }
 
+        $settings = BusinessSetting::current();
+        $currencyCode = strtoupper((string) $settings->metaValue('utility.default_unit_currency', $tenant->default_currency ?? 'USD'));
+        $dueDays = max(1, (int) $settings->metaValue('utility.billing_due_days', 7));
+
         $before = $bill->toArray();
         $bill->update([
             'contract_id' => $contract->id,
@@ -309,10 +317,10 @@ class UtilityBillController extends Controller
             'subtotal_cents' => $subtotalCents,
             'tax_cents' => $taxCents,
             'total_cents' => $totalCents,
-            'currency_code' => 'USD',
+            'currency_code' => $currencyCode,
             'status' => $validated['status'],
             'issued_at' => $validated['issued_at'] ?? null,
-            'due_date' => $validated['due_date'] ?? null,
+            'due_date' => $validated['due_date'] ?? now()->addDays($dueDays)->toDateString(),
             'paid_at' => $validated['paid_at'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ]);

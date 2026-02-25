@@ -32,7 +32,8 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
     ->prefix('t/{tenant}')
     ->group(function () {
         Route::get('dashboard', [CoreController::class, 'index'])->name('core.dashboard');
-        Route::get('core', [CoreController::class, 'crmDashboard'])->name('core.home');
+        Route::get('core', [CoreController::class, 'crmDashboard'])->name('Core.crm');
+        Route::redirect('core-home', 'core')->name('core.home');
         Route::redirect('core/crm-dashboard', 'core');
         Route::get('core/access-roles', [CoreController::class, 'accessRoles'])->name('Core.access-roles');
         Route::get('core/access-permission', [CoreController::class, 'accessPermission'])->name('Core.access-permission');
@@ -115,6 +116,9 @@ Route::middleware(['auth', 'tenant', 'tenant.onboarded'])
         Route::get('core/billing', [BillingController::class, 'index'])->name('core.billing.index');
         Route::post('core/billing/change-plan', [BillingController::class, 'changePlan'])->name('core.billing.change-plan');
         Route::post('core/billing/cancel', [BillingController::class, 'cancel'])->name('core.billing.cancel');
+        Route::post('core/billing/gateway/checkout', [BillingController::class, 'startGatewayCheckout'])->name('core.billing.gateway.checkout');
+        Route::get('core/billing/gateway/{provider}/return', [BillingController::class, 'gatewayReturn'])->name('core.billing.gateway.return');
+        Route::get('core/billing/gateway/{provider}/cancel', [BillingController::class, 'gatewayCancel'])->name('core.billing.gateway.cancel');
         Route::post('core/billing/payments', [BillingController::class, 'storePayment'])->name('core.billing.payments.store');
         Route::get('core/billing/invoices/export', [BillingController::class, 'exportInvoices'])->name('core.billing.invoices.export');
         Route::get('core/billing/payments/export', [BillingController::class, 'exportPayments'])->name('core.billing.payments.export');

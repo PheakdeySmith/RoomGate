@@ -1,0 +1,6 @@
+{
+    "driver": "pgsql",
+    "database": "roomgate_db",
+    "created_at": "2026-02-25T16:49:58.593215Z",
+    "note": "No native dump handler for this driver."
+}

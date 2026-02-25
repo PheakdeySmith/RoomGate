@@ -107,6 +107,7 @@
                   <th>Date</th>
                   <th>Amount</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,6 +123,25 @@
                       <span class="badge {{ $statusBadges[$invoice->status] ?? 'bg-label-secondary' }}">
                         {{ ucfirst($invoice->status) }}
                       </span>
+                    </td>
+                    <td>
+                      @if ($invoice->status !== 'paid' && ($gatewaySettings->count() > 0))
+                        <form method="POST" action="{{ route('core.billing.gateway.checkout', ['tenant' => request()->route('tenant')]) }}" class="d-flex gap-2 align-items-center">
+                          @csrf
+                          <input type="hidden" name="subscription_invoice_id" value="{{ $invoice->id }}">
+                          <input type="hidden" name="amount_cents" value="{{ $invoice->amount_cents }}">
+                          <select name="provider" class="form-select form-select-sm">
+                            @foreach ($gatewaySettings as $gateway)
+                              <option value="{{ $gateway->gateway_name }}">{{ strtoupper($gateway->gateway_name) }}</option>
+                            @endforeach
+                          </select>
+                          <button type="submit" class="btn btn-sm btn-primary">Pay</button>
+                        </form>
+                      @elseif($invoice->status !== 'paid')
+                        <span class="text-body-secondary">No active gateway</span>
+                      @else
+                        <span class="text-body-secondary">Completed</span>
+                      @endif
                     </td>
                   </tr>
                 @endforeach

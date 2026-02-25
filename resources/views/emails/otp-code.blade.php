@@ -13,7 +13,7 @@
                 </div>
 
                 <h2 style="margin:0 0 10px;color:#1f2a44;font-size:22px;">
-                  {{ $type === 'password_reset' ? 'Reset your password' : 'Complete registration' }}
+                  {{ $type === 'password_reset' ? 'Reset your password' : ($type === 'login_2fa' ? 'Confirm your sign in' : 'Complete registration') }}
                 </h2>
                 <p style="margin:0 0 18px;color:#6b7280;font-size:14px;line-height:1.6;">
                   Please enter this confirmation code in the window where you started creating your account:

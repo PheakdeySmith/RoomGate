@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            \App\Http\Middleware\CheckPlatformMaintenanceMode::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'tenant' => \Modules\Core\App\Http\Middleware\SetTenant::class,
             'tenant.onboarded' => \App\Http\Middleware\EnsureTenantOnboarded::class,
+            'api.access' => \App\Http\Middleware\EnsureApiAccessEnabled::class,
         ]);
 
         //

@@ -20,7 +20,7 @@ class OtpCodeMail extends Mailable
     {
         $subject = $this->type === 'password_reset'
             ? 'RoomGate password reset code'
-            : 'RoomGate email verification code';
+            : ($this->type === 'login_2fa' ? 'RoomGate login authentication code' : 'RoomGate email verification code');
 
         return $this->subject($subject)
             ->view('emails.otp-code')

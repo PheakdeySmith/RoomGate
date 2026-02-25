@@ -190,13 +190,31 @@
                         <div data-i18n="menu.subscription_invoices">Invoices</div>
                     </a>
                 </li>
-        <li class="menu-item {{ request()->routeIs('admin.subscriptions.payments') ? 'active' : '' }}">
-            <a href="{{ route('admin.subscriptions.payments') }}" class="menu-link">
-                <div data-i18n="menu.subscription_payments">Payments</div>
+                <li class="menu-item {{ request()->routeIs('admin.subscriptions.payments') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscriptions.payments') }}" class="menu-link">
+                        <div data-i18n="menu.subscription_payments">Payments</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.plan-usage.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.plan-usage.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chart-bar"></i>
+                <div data-i18n="menu.plan_usage">Plan Usage</div>
             </a>
         </li>
-    </ul>
-</li>
+        <li class="menu-item {{ request()->routeIs('admin.reports-analytics.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.reports-analytics.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chart-pie"></i>
+                <div data-i18n="menu.reports_analytics">Reports &amp; Analytics</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.enterprise-assignments.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.enterprise-assignments.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-users-group"></i>
+                <div data-i18n="menu.enterprise_assignments">Enterprise Assignments</div>
+            </a>
+        </li>
         <li class="menu-item {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
             <a href="{{ route('admin.notifications.index') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-bell"></i>
@@ -219,6 +237,65 @@
             <a href="{{ route('admin.settings') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-settings"></i>
                 <div data-i18n="menu.settings">Settings</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.system-setup.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-adjustments-horizontal"></i>
+                <div data-i18n="menu.system_setup">System Setup</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'general' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'general']) }}" class="menu-link"><div data-i18n="menu.system_setup_general">General</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'two-factor' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'two-factor']) }}" class="menu-link"><div data-i18n="menu.system_setup_two_factor">Two Factor</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'email' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'email']) }}" class="menu-link"><div data-i18n="menu.system_setup_email">Email</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'sms' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'sms']) }}" class="menu-link"><div data-i18n="menu.system_setup_sms">SMS</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'api' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'api']) }}" class="menu-link"><div data-i18n="menu.system_setup_api_permission">API Permission</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'notifications' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'notifications']) }}" class="menu-link"><div data-i18n="menu.system_setup_notifications">Notifications</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'language' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'language']) }}" class="menu-link"><div data-i18n="menu.system_setup_language">Language</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'currency' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'currency']) }}" class="menu-link"><div data-i18n="menu.system_setup_currency">Currency</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'utility' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'utility']) }}" class="menu-link"><div data-i18n="menu.system_setup_utility">Utility</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'cron' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'cron']) }}" class="menu-link"><div data-i18n="menu.system_setup_cron">Cron</div></a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('admin.system-setup.section') && request()->route('section') === 'backup' ? 'active' : '' }}">
+                    <a href="{{ route('admin.system-setup.section', ['section' => 'backup']) }}" class="menu-link"><div data-i18n="menu.system_setup_backup">Backup</div></a>
+                </li>
+            </ul>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.payment-method-settings.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.payment-method-settings.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-credit-card-pay"></i>
+                <div data-i18n="menu.payment_method_settings">Payment Method Settings</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.feature-flags.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.feature-flags.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-toggle-left"></i>
+                <div data-i18n="menu.feature_flags">Feature Flags</div>
+            </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('admin.ops-tooling.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.ops-tooling.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-server-cog"></i>
+                <div data-i18n="menu.ops_tooling">Ops Tooling</div>
             </a>
         </li>
         <li class="menu-item {{ request()->routeIs('admin.iot.*') ? 'active' : '' }}">

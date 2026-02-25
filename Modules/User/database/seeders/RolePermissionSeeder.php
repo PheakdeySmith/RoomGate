@@ -22,6 +22,12 @@ class RolePermissionSeeder extends Seeder
             'users.delete',
             'roles.manage',
             'permissions.manage',
+            'reports.analytics.view',
+            'feature_flags.manage',
+            'plan_usage.view',
+            'ops_tooling.manage',
+            'enterprise_assignments.manage',
+            'system_setup.manage',
         ];
 
         foreach ($permissions as $permission) {
@@ -34,9 +40,9 @@ class RolePermissionSeeder extends Seeder
         $rolePermissions = [
             'platform_admin' => $permissions,
             'support' => ['users.view'],
-            'billing_admin' => ['users.view'],
+            'billing_admin' => ['users.view', 'reports.analytics.view', 'plan_usage.view'],
             'owner' => [],
-            'admin' => [],
+            'admin' => ['system_setup.manage'],
             'staff' => [],
             'tenant' => [],
         ];

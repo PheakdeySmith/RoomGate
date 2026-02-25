@@ -11,6 +11,7 @@ class OtpCode extends Model
 {
     public const TYPE_EMAIL_VERIFY = 'email_verify';
     public const TYPE_PASSWORD_RESET = 'password_reset';
+    public const TYPE_LOGIN_2FA = 'login_2fa';
 
     protected $fillable = [
         'user_id',

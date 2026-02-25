@@ -24,6 +24,8 @@ class TenantOperationsTest extends TestCase
     public function test_tenant_can_create_property_room_and_contract(): void
     {
         [$tenant, $user] = $this->createTenantWithActiveSubscription();
+        $occupant = User::factory()->create(['status' => 'active']);
+        $tenant->users()->attach($occupant->id, ['role' => 'tenant', 'status' => 'active']);
 
         $this->actingAs($user)
             ->post(route('core.properties.store', ['tenant' => $tenant->slug]), [
@@ -60,7 +62,7 @@ class TenantOperationsTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('core.contracts.store', ['tenant' => $tenant->slug]), [
-                'occupant_user_id' => $user->id,
+                'occupant_user_id' => $occupant->id,
                 'room_id' => $room->id,
                 'start_date' => now()->toDateString(),
                 'end_date' => now()->addMonth()->toDateString(),
@@ -76,7 +78,7 @@ class TenantOperationsTest extends TestCase
         $this->assertDatabaseHas('contracts', [
             'tenant_id' => $tenant->id,
             'room_id' => $room->id,
-            'occupant_user_id' => $user->id,
+            'occupant_user_id' => $occupant->id,
         ]);
     }
 

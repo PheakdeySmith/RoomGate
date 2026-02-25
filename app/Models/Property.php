@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Concerns\BelongsToTenant;
 
@@ -47,5 +48,12 @@ class Property extends Model
     public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);
+    }
+
+    public function staff(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'property_users')
+            ->withPivot(['tenant_id', 'status', 'assigned_by_user_id'])
+            ->withTimestamps();
     }
 }

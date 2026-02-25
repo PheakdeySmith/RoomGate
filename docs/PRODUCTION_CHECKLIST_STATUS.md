@@ -1,4 +1,4 @@
-# Production Checklist Status (as of 2026-01-31)
+# Production Checklist Status (as of 2026-02-25)
 
 This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 
@@ -14,7 +14,7 @@ This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 - Plans + plan limits tables: **Done** (`Modules/Core/database/migrations/2026_01_21_000001_create_core_tenant_and_subscription_tables.php`).
 - Subscriptions table wired to tenants: **Done** (same migration + tenant relations).
 - Subscription invoices + payments tables: **Done** (same migration).
-- Bakong callback flow documented/handled: **Missing** (no webhook/controller/job found).
+- Bakong callback flow documented/handled: **Done** (`app/Http/Controllers/Webhooks/BakongPaymentWebhookController.php`, `app/Jobs/ProcessBakongPaymentWebhook.php`, `docs/WEBHOOKS.md`).
 - Renewal + grace period logic: **Done** (`app/Console/Commands/ProcessSubscriptionRenewals.php` + `routes/console.php`).
 
 ## Data & Ops
@@ -43,7 +43,7 @@ This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 - Idempotency keys enforced: **Done** (webhook payloads + unique index in `webhook_events`).
 - Unique constraints prevent double billing: **Partial** (subscription payments lack provider/idempotency unique constraints).
 - Webhook events stored/replayable: **Done** (`webhook_events` + `docs/WEBHOOKS.md`).
-- Payment state machine documented: **Missing**.
+- Payment state machine documented: **Done** (`docs/PAYMENT_STATE_MACHINE.md`).
 
 ## Observability
 - Error monitoring configured: **Done** (Sentry/Bugsnag hooks in `bootstrap/app.php`).
@@ -65,6 +65,4 @@ This tracks the current implementation vs `docs/PRODUCTION_CHECKLIST.md`.
 - Feature flags strategy: **Missing**.
 
 ## Remaining Next (Not Started)
-- Bakong callback flow + payment reconciliation jobs
-- Payment state machine documentation
 - Feature flags strategy + ownership

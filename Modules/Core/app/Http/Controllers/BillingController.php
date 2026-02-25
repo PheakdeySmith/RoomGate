@@ -5,11 +5,15 @@ namespace Modules\Core\App\Http\Controllers;
 use App\Events\SubscriptionCancelled;
 use App\Events\SubscriptionCreated;
 use App\Http\Controllers\Controller;
+use App\Models\PaymentGatewaySetting;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPayment;
 use App\Services\AuditLogger;
+use App\Services\Payments\PayPalGatewayService;
+use App\Services\Payments\StripeGatewayService;
+use App\Services\SubscriptionPaymentStateService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +49,13 @@ class BillingController extends Controller
             ->limit(200)
             ->get();
 
-        return view('core::dashboard.billing', compact('subscription', 'plans', 'invoices', 'payments', 'tenant'));
+        $gatewaySettings = PaymentGatewaySetting::query()
+            ->whereIn('gateway_name', ['paypal', 'stripe', 'bakong'])
+            ->where('is_active', true)
+            ->orderBy('gateway_name')
+            ->get();
+
+        return view('core::dashboard.billing', compact('subscription', 'plans', 'invoices', 'payments', 'tenant', 'gatewaySettings'));
     }
 
     public function changePlan(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
@@ -112,6 +122,160 @@ class BillingController extends Controller
         event(new SubscriptionCancelled($subscription));
 
         return back()->with('status', 'Subscription cancelled.');
+    }
+
+    public function startGatewayCheckout(
+        Request $request,
+        AuditLogger $auditLogger,
+        CurrentTenant $currentTenant,
+        StripeGatewayService $stripe,
+        PayPalGatewayService $paypal
+    ): RedirectResponse
+    {
+        $tenant = $this->requireBillingAccess($currentTenant);
+
+        $validated = $request->validate([
+            'subscription_invoice_id' => [
+                'required',
+                Rule::exists('subscription_invoices', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'provider' => ['required', 'in:stripe,paypal,bakong'],
+            'amount_cents' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->where('tenant_id', $tenant->id)->findOrFail($validated['subscription_invoice_id']);
+        if ($invoice->status === 'paid') {
+            return back()->with('warning', 'Invoice is already paid.');
+        }
+
+        $provider = strtolower((string) $validated['provider']);
+        $gateway = PaymentGatewaySetting::query()
+            ->where('gateway_name', $provider)
+            ->where('is_active', true)
+            ->first();
+        if (!$gateway) {
+            return back()->with('warning', ucfirst($provider).' is not active.');
+        }
+
+        $amountCents = (int) ($validated['amount_cents'] ?? $invoice->amount_cents);
+        $existingPending = SubscriptionPayment::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('subscription_invoice_id', $invoice->id)
+            ->where('provider', $provider)
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if ($existingPending) {
+            $existingMeta = (array) ($existingPending->metadata ?? []);
+            $checkoutUrl = (string) (($existingMeta[$provider]['checkout_url'] ?? ''));
+            if ($checkoutUrl !== '') {
+                return redirect()->away($checkoutUrl);
+            }
+
+            if ($provider === 'bakong') {
+                return back()->with('status', 'Bakong payment already initialized. Await provider callback.');
+            }
+        }
+
+        $payment = SubscriptionPayment::create([
+            'tenant_id' => $tenant->id,
+            'subscription_invoice_id' => $invoice->id,
+            'amount_cents' => $amountCents,
+            'currency_code' => $invoice->currency_code ?? 'USD',
+            'provider' => $provider,
+            'status' => 'pending',
+            'metadata' => ['initiated_at' => now()->toIso8601String()],
+        ]);
+
+        try {
+            if ($provider === 'stripe') {
+                $checkout = $stripe->createCheckoutSession($payment, $invoice, $tenant);
+            } elseif ($provider === 'paypal') {
+                $checkout = $paypal->createOrder($payment, $invoice, $tenant);
+            } else {
+                $payment->update([
+                    'provider_ref' => 'RG-BK-'.$payment->id,
+                    'metadata' => array_merge($payment->metadata ?? [], [
+                        'bakong' => [
+                            'instruction' => 'Awaiting Bakong callback.',
+                        ],
+                    ]),
+                ]);
+
+                return back()->with('status', 'Bakong payment initialized. Await provider callback.');
+            }
+
+            $payment->update([
+                'provider_ref' => (string) $checkout['reference'],
+                'metadata' => array_replace_recursive($payment->metadata ?? [], [
+                    $provider => [
+                        'checkout' => $checkout['payload'],
+                        'checkout_url' => (string) $checkout['checkout_url'],
+                    ],
+                ]),
+            ]);
+
+            $auditLogger->log('created', SubscriptionPayment::class, (string) $payment->id, null, $payment->toArray(), $request, $tenant->id);
+
+            return redirect()->away((string) $checkout['checkout_url']);
+        } catch (\Throwable $e) {
+            $payment->update([
+                'status' => 'failed',
+                'metadata' => array_merge($payment->metadata ?? [], ['error' => $e->getMessage()]),
+            ]);
+
+            return back()->with('warning', 'Unable to start checkout: '.$e->getMessage());
+        }
+    }
+
+    public function gatewayReturn(
+        Request $request,
+        string $tenant,
+        string $provider,
+        CurrentTenant $currentTenant,
+        PayPalGatewayService $paypal,
+        SubscriptionPaymentStateService $states
+    ): RedirectResponse
+    {
+        $tenantModel = $this->requireBillingAccess($currentTenant);
+        $payment = SubscriptionPayment::query()
+            ->where('tenant_id', $tenantModel->id)
+            ->findOrFail((int) $request->query('payment'));
+
+        if (strtolower($provider) === 'paypal') {
+            $orderId = (string) ($request->query('token') ?: $payment->provider_ref);
+            if ($orderId !== '') {
+                $capture = $paypal->captureOrder($orderId);
+                $status = strtoupper((string) ($capture['status'] ?? ''));
+                if ($status === 'COMPLETED') {
+                    $states->markPaid($payment, ['paypal' => ['capture' => $capture]]);
+                    return redirect()->route('core.billing.index', ['tenant' => $tenantModel->slug])->with('status', 'PayPal payment captured.');
+                }
+                $states->markFailed($payment, ['paypal' => ['capture' => $capture]]);
+                return redirect()->route('core.billing.index', ['tenant' => $tenantModel->slug])->with('warning', 'PayPal capture did not complete.');
+            }
+        }
+
+        return redirect()->route('core.billing.index', ['tenant' => $tenantModel->slug])
+            ->with('status', ucfirst($provider).' checkout completed. Waiting for confirmation.');
+    }
+
+    public function gatewayCancel(Request $request, string $tenant, string $provider, CurrentTenant $currentTenant, SubscriptionPaymentStateService $states): RedirectResponse
+    {
+        $tenantModel = $this->requireBillingAccess($currentTenant);
+        $paymentId = (int) $request->query('payment');
+        if ($paymentId > 0) {
+            $payment = SubscriptionPayment::query()
+                ->where('tenant_id', $tenantModel->id)
+                ->find($paymentId);
+            if ($payment && $payment->status === 'pending') {
+                $states->markCancelled($payment, ['cancelled_by_user' => true, 'provider' => $provider]);
+            }
+        }
+
+        return redirect()->route('core.billing.index', ['tenant' => $tenantModel->slug])
+            ->with('warning', ucfirst($provider).' checkout was cancelled.');
     }
 
     public function storePayment(Request $request, AuditLogger $auditLogger, CurrentTenant $currentTenant): RedirectResponse
